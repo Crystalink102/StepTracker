@@ -64,13 +64,17 @@ export async function startBackgroundLocation() {
     }
 
     // Foreground-only fallback (web / Expo Go)
+    // On web, skip watchPositionAsync entirely (Web Locks API issues) and use polling
+    if (Platform.OS === 'web') {
+      startWebPolling();
+      return;
+    }
+
     try {
       foregroundSub = await Location.watchPositionAsync(
         {
-          accuracy: Platform.OS === 'web'
-            ? Location.Accuracy.High
-            : Location.Accuracy.BestForNavigation,
-          timeInterval: 3000,
+          accuracy: Location.Accuracy.BestForNavigation,
+          timeInterval: 2000,
           distanceInterval: 3,
         },
         (loc) => {
@@ -78,13 +82,8 @@ export async function startBackgroundLocation() {
         }
       );
     } catch (err: any) {
-      // Web Locks API can throw AbortError — fall back to polling
-      if (Platform.OS === 'web') {
-        console.warn('[BackgroundLocation] watchPosition failed on web, using polling fallback:', err.message);
-        startWebPolling();
-      } else {
-        throw err;
-      }
+      console.warn('[BackgroundLocation] watchPosition failed, using polling fallback:', err.message);
+      startWebPolling();
     }
     return;
   }
@@ -113,18 +112,37 @@ export async function startBackgroundLocation() {
 // Web polling fallback when watchPositionAsync fails
 let webPollingInterval: ReturnType<typeof setInterval> | null = null;
 
+// Track last web position to skip duplicates (browser cache)
+let lastWebLat = 0;
+let lastWebLng = 0;
+
 function startWebPolling() {
   stopWebPolling();
+  lastWebLat = 0;
+  lastWebLng = 0;
+
   webPollingInterval = setInterval(async () => {
     try {
       const loc = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
+        ...({ maximumAge: 0 } as any), // Force fresh position, never use browser cache
       });
+
+      // Skip if browser returned identical cached coordinates
+      if (
+        loc.coords.latitude === lastWebLat &&
+        loc.coords.longitude === lastWebLng
+      ) {
+        return;
+      }
+      lastWebLat = loc.coords.latitude;
+      lastWebLng = loc.coords.longitude;
+
       if (globalLocationCallback) globalLocationCallback(loc);
     } catch {
       // Skip this tick if getCurrentPosition fails
     }
-  }, 3000);
+  }, 2000);
 }
 
 function stopWebPolling() {

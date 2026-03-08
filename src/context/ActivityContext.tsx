@@ -108,7 +108,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         if (!location?.coords) return;
 
         // Skip low-accuracy GPS readings (relaxed on web where browser GPS is less precise)
-        const maxAccuracy = Platform.OS === 'web' ? 100 : 20;
+        const maxAccuracy = Platform.OS === 'web' ? 50 : 20;
         if (location.coords.accuracy != null && location.coords.accuracy > maxAccuracy) return;
 
         const wp: Waypoint = {
@@ -119,8 +119,17 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
           timestamp: new Date(location.timestamp).toISOString(),
         };
 
-        // Calculate distance from last waypoint using ref (avoids reading full array)
+        // Skip exact duplicate positions (browser cache or stale readings)
         const last = lastWaypointRef.current;
+        if (
+          last &&
+          last.latitude === wp.latitude &&
+          last.longitude === wp.longitude
+        ) {
+          return;
+        }
+
+        // Calculate distance from last waypoint using ref (avoids reading full array)
         if (last) {
           const dist = haversineDistance(
             last.latitude,
@@ -128,7 +137,15 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
             wp.latitude,
             wp.longitude
           );
-          if (isPlausibleGPSMove(dist)) {
+
+          // Velocity check: reject teleport-like jumps (>12 m/s = 43 km/h)
+          const timeDelta =
+            (new Date(wp.timestamp).getTime() -
+              new Date(last.timestamp).getTime()) /
+            1000;
+          const velocity = timeDelta > 0 ? dist / timeDelta : 0;
+
+          if (isPlausibleGPSMove(dist) && velocity <= 12) {
             setDistanceMeters((d) => d + dist);
           }
         }

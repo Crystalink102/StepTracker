@@ -113,7 +113,7 @@ export function activeMinutesFromSteps(steps: number): number {
 export const GPS_MAX_JUMP_M = 50;
 
 /** Minimum distance (meters) to count - filters GPS noise at standstill. */
-export const GPS_MIN_MOVE_M = 2;
+export const GPS_MIN_MOVE_M = 1;
 
 /**
  * Check if a GPS distance reading is plausible.
