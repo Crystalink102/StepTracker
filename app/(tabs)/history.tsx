@@ -31,6 +31,8 @@ export default function HistoryScreen() {
   const [personalBests, setPersonalBests] = useState<PersonalBest[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const [routes, setRoutes] = useState<Record<string, { latitude: number; longitude: number }[]>>({});
+
   const loadData = useCallback(async () => {
     if (!user) return;
     try {
@@ -40,6 +42,14 @@ export default function HistoryScreen() {
       ]);
       setActivities(acts);
       setPersonalBests(pbs);
+
+      // Batch-load routes for all activities (single query)
+      if (acts.length > 0) {
+        const routeData = await ActivityService.getRoutesForActivities(
+          acts.map((a) => a.id)
+        );
+        setRoutes(routeData);
+      }
     } catch (err) {
       console.warn('[History] Failed to load data:', err);
     }
@@ -92,6 +102,7 @@ export default function HistoryScreen() {
         renderItem={({ item }) => (
           <RunListItem
             activity={item}
+            route={routes[item.id]}
             onPress={() => router.push(`/run/${item.id}` as any)}
           />
         )}

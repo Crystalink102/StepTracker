@@ -123,12 +123,18 @@ export function StepProvider({ children }: { children: ReactNode }) {
     todayStepsRef.current = todaySteps;
   }, [todaySteps]);
 
-  // Periodic sync to Supabase
+  // Keep syncSteps ref in sync for stable interval/callback references
+  const syncStepsRef = useRef(syncSteps);
+  useEffect(() => {
+    syncStepsRef.current = syncSteps;
+  }, [syncSteps]);
+
+  // Periodic sync to Supabase (stable interval, no re-creation)
   useEffect(() => {
     if (!isAuthenticated) return;
 
     syncIntervalRef.current = setInterval(() => {
-      syncSteps(todayStepsRef.current);
+      syncStepsRef.current(todayStepsRef.current);
     }, STEP_SYNC_INTERVAL_MS);
 
     return () => {
@@ -136,18 +142,18 @@ export function StepProvider({ children }: { children: ReactNode }) {
         clearInterval(syncIntervalRef.current);
       }
     };
-  }, [isAuthenticated, syncSteps]);
+  }, [isAuthenticated]);
 
   // Sync on app background
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'background') {
-        syncSteps(todayStepsRef.current);
+        syncStepsRef.current(todayStepsRef.current);
       }
     });
 
     return () => subscription.remove();
-  }, [syncSteps]);
+  }, []);
 
   return (
     <StepContext.Provider value={{ todaySteps, isAvailable, isTracking }}>

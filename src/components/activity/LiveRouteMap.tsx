@@ -1,4 +1,4 @@
-import { useRef, useEffect } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import { View, StyleSheet, Platform } from 'react-native';
 import { Colors, BorderRadius, Spacing } from '@/src/constants/theme';
 
@@ -56,10 +56,15 @@ const DARK_MAP_STYLE = [
 
 export default function LiveRouteMap({ waypoints, isActive }: LiveRouteMapProps) {
   const mapRef = useRef<any>(null);
+  const lastAnimateRef = useRef(0);
 
-  // Animate to latest position as waypoints update
+  // Animate to latest position, throttled to every 3 seconds
   useEffect(() => {
     if (!mapRef.current || waypoints.length === 0) return;
+
+    const now = Date.now();
+    if (now - lastAnimateRef.current < 3000) return;
+    lastAnimateRef.current = now;
 
     const latest = waypoints[waypoints.length - 1];
     mapRef.current.animateToRegion(
@@ -72,6 +77,13 @@ export default function LiveRouteMap({ waypoints, isActive }: LiveRouteMapProps)
       500
     );
   }, [waypoints.length]);
+
+  // Downsample waypoints for rendering performance (max 500 points on map)
+  const displayCoords = useMemo(() => {
+    if (waypoints.length <= 500) return waypoints;
+    const step = Math.ceil(waypoints.length / 500);
+    return waypoints.filter((_, i) => i % step === 0 || i === waypoints.length - 1);
+  }, [waypoints]);
 
   if (!MapView) return null;
 
@@ -106,16 +118,16 @@ export default function LiveRouteMap({ waypoints, isActive }: LiveRouteMapProps)
         showsPointsOfInterest={false}
         toolbarEnabled={false}
       >
-        {/* Route trail */}
-        {waypoints.length > 1 && (
+        {/* Route trail (downsampled for performance) */}
+        {displayCoords.length > 1 && (
           <>
             <Polyline
-              coordinates={waypoints}
+              coordinates={displayCoords}
               strokeColor="rgba(168, 85, 247, 0.3)"
               strokeWidth={12}
             />
             <Polyline
-              coordinates={waypoints}
+              coordinates={displayCoords}
               strokeColor={Colors.primary}
               strokeWidth={4}
             />

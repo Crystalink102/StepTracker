@@ -125,6 +125,44 @@ export async function getActivityHistory(userId: string, limit = 50) {
 }
 
 /**
+ * Get simplified waypoints (lat/lng only) for multiple activities in one query.
+ * Returns a map of activityId → coordinate array.
+ */
+export async function getRoutesForActivities(
+  activityIds: string[]
+): Promise<Record<string, { latitude: number; longitude: number }[]>> {
+  if (activityIds.length === 0) return {};
+
+  const { data, error } = await supabase
+    .from('activity_waypoints')
+    .select('activity_id, latitude, longitude, order_index')
+    .in('activity_id', activityIds)
+    .order('order_index', { ascending: true });
+
+  if (error) throw error;
+
+  const routes: Record<string, { latitude: number; longitude: number }[]> = {};
+  for (const wp of data ?? []) {
+    if (!routes[wp.activity_id]) routes[wp.activity_id] = [];
+    routes[wp.activity_id].push({
+      latitude: wp.latitude,
+      longitude: wp.longitude,
+    });
+  }
+
+  // Downsample long routes to max ~100 points per activity for mini maps
+  for (const id of Object.keys(routes)) {
+    const coords = routes[id];
+    if (coords.length > 100) {
+      const step = Math.ceil(coords.length / 100);
+      routes[id] = coords.filter((_, i) => i % step === 0 || i === coords.length - 1);
+    }
+  }
+
+  return routes;
+}
+
+/**
  * Get any currently active activity.
  */
 export async function getActiveActivity(userId: string) {

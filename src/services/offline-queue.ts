@@ -3,6 +3,7 @@ import { supabase } from './supabase';
 
 const QUEUE_KEY = 'offline_queue';
 const MAX_RETRIES = 5;
+const MAX_QUEUE_SIZE = 100;
 
 type QueuedOperation = {
   id: string;
@@ -38,6 +39,11 @@ async function saveQueue(): Promise<void> {
 
 export async function enqueue(op: Omit<QueuedOperation, 'id' | 'timestamp' | 'retryCount'>): Promise<void> {
   if (queue.length === 0) await loadQueue();
+
+  // Evict oldest operations if queue is full
+  if (queue.length >= MAX_QUEUE_SIZE) {
+    queue = queue.slice(-MAX_QUEUE_SIZE + 1);
+  }
 
   queue.push({
     ...op,
@@ -90,7 +96,7 @@ export async function processQueue(): Promise<void> {
         failed.push({
           ...op,
           retryCount: op.retryCount + 1,
-          timestamp: now, // Reset timestamp for next backoff window
+          // Keep original timestamp so backoff is cumulative from first attempt
         });
       }
     }

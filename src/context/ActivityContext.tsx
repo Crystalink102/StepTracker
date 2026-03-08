@@ -68,6 +68,8 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   const [currentSpeed, setCurrentSpeed] = useState(0);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const isStoppingRef = useRef(false);
+  const lastWaypointRef = useRef<Waypoint | null>(null);
   const isActive = !!currentActivity && currentActivity.status !== 'completed';
 
   // Refs to avoid stale closures in the location callback.
@@ -100,24 +102,24 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   // recreating the callback (which would reset the GPS subscription).
   const handleLocation = useCallback(
     (location: Location.LocationObject) => {
-      if (isPausedRef.current || !isActiveRef.current) return;
+      try {
+        if (isPausedRef.current || !isActiveRef.current) return;
+        if (!location?.coords) return;
 
-      // Skip low-accuracy GPS readings (> 20m uncertainty)
-      if (location.coords.accuracy != null && location.coords.accuracy > 20) return;
+        // Skip low-accuracy GPS readings (> 20m uncertainty)
+        if (location.coords.accuracy != null && location.coords.accuracy > 20) return;
 
-      const wp: Waypoint = {
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        altitude: location.coords.altitude,
-        speed: location.coords.speed,
-        timestamp: new Date(location.timestamp).toISOString(),
-      };
+        const wp: Waypoint = {
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+          altitude: location.coords.altitude,
+          speed: location.coords.speed,
+          timestamp: new Date(location.timestamp).toISOString(),
+        };
 
-      setWaypoints((prev) => {
-        const updated = [...prev, wp];
-
-        if (prev.length > 0) {
-          const last = prev[prev.length - 1];
+        // Calculate distance from last waypoint using ref (avoids reading full array)
+        const last = lastWaypointRef.current;
+        if (last) {
           const dist = haversineDistance(
             last.latitude,
             last.longitude,
@@ -128,15 +130,18 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
             setDistanceMeters((d) => d + dist);
           }
         }
+        lastWaypointRef.current = wp;
 
-        return updated;
-      });
+        setWaypoints((prev) => [...prev, wp]);
 
-      // Update current speed with smoothed pace
-      if (location.coords.speed != null && location.coords.speed > 0) {
-        const speedKmh = location.coords.speed * 3.6;
-        setCurrentSpeed(speedKmh);
-        setCurrentPaceSecPerKm((prev) => smoothedPace(speedKmh, prev));
+        // Update current speed with smoothed pace
+        if (location.coords.speed != null && location.coords.speed > 0) {
+          const speedKmh = location.coords.speed * 3.6;
+          setCurrentSpeed(speedKmh);
+          setCurrentPaceSecPerKm((prev) => smoothedPace(speedKmh, prev));
+        }
+      } catch (err) {
+        console.warn('[Activity] Location processing error:', err);
       }
     },
     [] // Stable callback - reads isPaused/isActive from refs
@@ -164,6 +169,8 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       setWaypoints([]);
       setCurrentSpeed(0);
       setIsPaused(false);
+      lastWaypointRef.current = null;
+      isStoppingRef.current = false;
 
       await startBackgroundLocation();
     },
@@ -191,6 +198,10 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   const stopActivity = useCallback(
     async (avgHeartRate?: number, hrSource?: 'manual' | 'auto') => {
       if (!currentActivity || !user) return null;
+
+      // Prevent double-stop race condition
+      if (isStoppingRef.current) return null;
+      isStoppingRef.current = true;
 
       await stopBackgroundLocation();
 
@@ -243,24 +254,27 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         completed = { ...currentActivity, ...activityUpdate } as Activity;
       }
 
-      // Save waypoints (queue offline if it fails)
+      // Save waypoints in chunks (queue offline if it fails)
       if (waypoints.length > 0) {
-        const waypointRows = waypoints.map((wp, idx) => ({
-          activity_id: currentActivity.id,
+        const CHUNK_SIZE = 500;
+        const waypointData = waypoints.map((wp, idx) => ({
           ...wp,
           order_index: idx,
         }));
         try {
-          await ActivityService.saveWaypoints(currentActivity.id, waypoints.map((wp, idx) => ({
-            ...wp,
-            order_index: idx,
-          })));
+          for (let i = 0; i < waypointData.length; i += CHUNK_SIZE) {
+            const chunk = waypointData.slice(i, i + CHUNK_SIZE);
+            await ActivityService.saveWaypoints(currentActivity.id, chunk);
+          }
         } catch (wpErr) {
           console.warn('[Activity] Waypoint save failed, queuing offline:', wpErr);
           await enqueue({
             table: 'activity_waypoints',
             operation: 'insert',
-            data: waypointRows as any,
+            data: waypointData.map((wp) => ({
+              activity_id: currentActivity.id,
+              ...wp,
+            })) as any,
           });
         }
       }
@@ -299,6 +313,8 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       setWaypoints([]);
       setCurrentSpeed(0);
       setIsPaused(false);
+      lastWaypointRef.current = null;
+      isStoppingRef.current = false;
 
       return completed;
     },

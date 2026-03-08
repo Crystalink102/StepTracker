@@ -1,13 +1,11 @@
-import { useState, useEffect } from 'react';
 import { TouchableOpacity, View, Text, StyleSheet, Platform } from 'react-native';
 import { Badge } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 import { formatDistance, formatDuration, formatPace } from '@/src/utils/formatters';
 import { formatRelativeDate, formatTime } from '@/src/utils/date-helpers';
-import { Activity, ActivityWaypoint } from '@/src/types/database';
-import { supabase } from '@/src/services/supabase';
+import { Activity } from '@/src/types/database';
 
-// Lazy load map components
+// Lazy load map components once
 let MapView: any = null;
 let Polyline: any = null;
 if (Platform.OS !== 'web') {
@@ -16,30 +14,17 @@ if (Platform.OS !== 'web') {
   Polyline = Maps.Polyline;
 }
 
+type Coord = { latitude: number; longitude: number };
+
 type RunListItemProps = {
   activity: Activity;
+  route?: Coord[];
   onPress: () => void;
 };
 
-function MiniRoute({ activityId }: { activityId: string }) {
-  const [coords, setCoords] = useState<{ latitude: number; longitude: number }[] | null>(null);
+function MiniRoute({ coords }: { coords: Coord[] }) {
+  if (!MapView || coords.length < 2) return null;
 
-  useEffect(() => {
-    supabase
-      .from('activity_waypoints')
-      .select('latitude, longitude')
-      .eq('activity_id', activityId)
-      .order('order_index', { ascending: true })
-      .then(({ data }) => {
-        if (data && data.length > 1) {
-          setCoords(data);
-        }
-      });
-  }, [activityId]);
-
-  if (!MapView || !coords || coords.length < 2) return null;
-
-  // Calculate region
   let minLat = coords[0].latitude, maxLat = coords[0].latitude;
   let minLng = coords[0].longitude, maxLng = coords[0].longitude;
   coords.forEach((c) => {
@@ -97,10 +82,10 @@ const miniStyles = StyleSheet.create({
   },
 });
 
-export default function RunListItem({ activity, onPress }: RunListItemProps) {
+export default function RunListItem({ activity, route, onPress }: RunListItemProps) {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
-      <MiniRoute activityId={activity.id} />
+      {route && route.length > 1 && <MiniRoute coords={route} />}
 
       <View style={styles.header}>
         <View style={styles.headerLeft}>
