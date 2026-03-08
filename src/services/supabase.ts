@@ -1,37 +1,16 @@
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@/src/constants/config';
 import { Database } from '@/src/types/database';
 
-let storage: any;
-
-if (Platform.OS === 'web') {
-  // Web fallback - use localStorage
-  storage = {
-    getItem: (key: string) => {
-      try { return Promise.resolve(localStorage.getItem(key)); }
-      catch { return Promise.resolve(null); }
-    },
-    setItem: (key: string, value: string) => {
-      try { localStorage.setItem(key, value); }
-      catch {}
-      return Promise.resolve();
-    },
-    removeItem: (key: string) => {
-      try { localStorage.removeItem(key); }
-      catch {}
-      return Promise.resolve();
-    },
-  };
-} else {
-  // Native - use SecureStore
-  const SecureStore = require('expo-secure-store');
-  storage = {
-    getItem: (key: string) => SecureStore.getItemAsync(key),
-    setItem: (key: string, value: string) => SecureStore.setItemAsync(key, value),
-    removeItem: (key: string) => SecureStore.deleteItemAsync(key),
-  };
-}
+// Use AsyncStorage on all platforms — SecureStore has a 2048 byte limit
+// that causes Supabase JWTs to fail silently on iOS/Expo Go
+const storage = {
+  getItem: (key: string) => AsyncStorage.getItem(key),
+  setItem: (key: string, value: string) => AsyncStorage.setItem(key, value),
+  removeItem: (key: string) => AsyncStorage.removeItem(key),
+};
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {

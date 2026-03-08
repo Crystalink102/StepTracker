@@ -1,4 +1,4 @@
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from './supabase';
 
 const QUEUE_KEY = 'offline_queue';
@@ -20,7 +20,7 @@ let queue: QueuedOperation[] = [];
 
 async function loadQueue(): Promise<void> {
   try {
-    const stored = await SecureStore.getItemAsync(QUEUE_KEY);
+    const stored = await AsyncStorage.getItem(QUEUE_KEY);
     if (stored) {
       queue = JSON.parse(stored);
     }
@@ -31,7 +31,7 @@ async function loadQueue(): Promise<void> {
 
 async function saveQueue(): Promise<void> {
   try {
-    await SecureStore.setItemAsync(QUEUE_KEY, JSON.stringify(queue));
+    await AsyncStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
   } catch (err) {
     console.warn('[OfflineQueue] Failed to persist queue:', err);
   }

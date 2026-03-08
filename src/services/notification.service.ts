@@ -29,25 +29,35 @@ export async function registerPushToken(userId: string): Promise<string | null> 
   const notif = await getNotifications();
   if (!notif) return null;
 
-  const { status: existing } = await notif.getPermissionsAsync();
-  let finalStatus = existing;
+  try {
+    const { status: existing } = await notif.getPermissionsAsync();
+    let finalStatus = existing;
 
-  if (existing !== 'granted') {
-    const { status } = await notif.requestPermissionsAsync();
-    finalStatus = status;
+    if (existing !== 'granted') {
+      const { status } = await notif.requestPermissionsAsync();
+      finalStatus = status;
+    }
+
+    if (finalStatus !== 'granted') return null;
+
+    // getExpoPushTokenAsync can hang in Expo Go (SDK 53+), so add a timeout
+    const tokenPromise = notif.getExpoPushTokenAsync();
+    const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000));
+    const tokenData = await Promise.race([tokenPromise, timeoutPromise]);
+
+    if (!tokenData || typeof tokenData !== 'object' || !('data' in tokenData)) return null;
+    const token = tokenData.data;
+
+    await supabase
+      .from('profiles')
+      .update({ push_token: token })
+      .eq('id', userId);
+
+    return token;
+  } catch {
+    // Push notifications not supported in this environment
+    return null;
   }
-
-  if (finalStatus !== 'granted') return null;
-
-  const tokenData = await notif.getExpoPushTokenAsync();
-  const token = tokenData.data;
-
-  await supabase
-    .from('profiles')
-    .update({ push_token: token })
-    .eq('id', userId);
-
-  return token;
 }
 
 export async function scheduleDailyReminder(): Promise<void> {
