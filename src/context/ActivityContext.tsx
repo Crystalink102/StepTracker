@@ -18,6 +18,7 @@ import {
   stopBackgroundLocation,
   setLocationCallback,
 } from '@/src/tasks/background-location';
+import { Platform } from 'react-native';
 import { haversineDistance, paceSecondsPerKm } from '@/src/utils/geo';
 import { xpFromActivity } from '@/src/utils/xp-calculator';
 import { isPlausibleGPSMove, smoothedPace, caloriesFromActivity } from '@/src/utils/fitness';
@@ -106,8 +107,9 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         if (isPausedRef.current || !isActiveRef.current) return;
         if (!location?.coords) return;
 
-        // Skip low-accuracy GPS readings (> 20m uncertainty)
-        if (location.coords.accuracy != null && location.coords.accuracy > 20) return;
+        // Skip low-accuracy GPS readings (relaxed on web where browser GPS is less precise)
+        const maxAccuracy = Platform.OS === 'web' ? 100 : 20;
+        if (location.coords.accuracy != null && location.coords.accuracy > maxAccuracy) return;
 
         const wp: Waypoint = {
           latitude: location.coords.latitude,
