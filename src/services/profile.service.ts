@@ -47,6 +47,7 @@ export async function updateProfile(
     | 'notify_streak_warning'
     | 'notify_achievements'
     | 'notify_friend_requests'
+    | 'notify_weekly_summary'
   >>
 ) {
   const { data, error } = await supabase

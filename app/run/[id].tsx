@@ -7,6 +7,8 @@ import {
   ActivityIndicator,
   Dimensions,
   Platform,
+  Share,
+  TouchableOpacity,
 } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
 
@@ -23,6 +25,7 @@ import StatsGrid from '@/src/components/history/StatsGrid';
 import { Badge } from '@/src/components/ui';
 import { Activity, ActivityWaypoint } from '@/src/types/database';
 import { formatRelativeDate, formatTime } from '@/src/utils/date-helpers';
+import { formatDistance, formatDuration, formatPace } from '@/src/utils/formatters';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -40,7 +43,7 @@ export default function RunDetailScreen() {
         setActivity(act);
         setWaypoints(wps);
       })
-      .catch(() => {})
+      .catch((err) => console.warn('[RunDetail] Failed to load activity:', err))
       .finally(() => setIsLoading(false));
   }, [id]);
 
@@ -59,6 +62,31 @@ export default function RunDetailScreen() {
       </View>
     );
   }
+
+  const handleShare = async () => {
+    if (!activity) return;
+    const emoji = activity.type === 'run' ? '🏃' : '🚶';
+    const dist = formatDistance(activity.distance_meters);
+    const dur = formatDuration(activity.duration_seconds);
+    const pace = activity.avg_pace_seconds_per_km
+      ? `${formatPace(activity.avg_pace_seconds_per_km)} /km`
+      : null;
+    const cal = activity.calories_estimate
+      ? `${activity.calories_estimate} cal`
+      : null;
+
+    const lines = [
+      `${emoji} ${activity.type === 'run' ? 'Run' : 'Walk'} Complete!`,
+      `📏 ${dist}`,
+      `⏱️ ${dur}`,
+      pace ? `⚡ ${pace}` : null,
+      cal ? `🔥 ${cal}` : null,
+      '',
+      'Tracked with StepTracker',
+    ].filter(Boolean);
+
+    await Share.share({ message: lines.join('\n') });
+  };
 
   const routeCoords = waypoints.map((wp) => ({
     latitude: wp.latitude,
@@ -121,14 +149,21 @@ export default function RunDetailScreen() {
 
         {/* Header */}
         <View style={styles.header}>
-          <Badge
-            label={activity.type}
-            variant={activity.type === 'run' ? 'primary' : 'secondary'}
-          />
-          <Text style={styles.date}>
-            {formatRelativeDate(activity.started_at)} at{' '}
-            {formatTime(activity.started_at)}
-          </Text>
+          <View style={styles.headerLeft}>
+            <Badge
+              label={activity.type}
+              variant={activity.type === 'run' ? 'primary' : 'secondary'}
+            />
+            <Text style={styles.date}>
+              {formatRelativeDate(activity.started_at)} at{' '}
+              {formatTime(activity.started_at)}
+            </Text>
+          </View>
+          {activity.status === 'completed' && (
+            <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
+              <Text style={styles.shareIcon}>↗</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Stats */}
@@ -166,9 +201,28 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Spacing.md,
+    justifyContent: 'space-between',
     paddingHorizontal: Spacing.lg,
     marginBottom: Spacing.lg,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    flex: 1,
+  },
+  shareButton: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareIcon: {
+    color: Colors.primary,
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
   },
   date: {
     color: Colors.textSecondary,

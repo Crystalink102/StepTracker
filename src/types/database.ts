@@ -27,6 +27,7 @@ export interface Database {
           notify_streak_warning: boolean;
           notify_achievements: boolean;
           notify_friend_requests: boolean;
+          notify_weekly_summary: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -47,6 +48,7 @@ export interface Database {
           notify_streak_warning?: boolean;
           notify_achievements?: boolean;
           notify_friend_requests?: boolean;
+          notify_weekly_summary?: boolean;
         };
         Update: {
           username?: string | null;
@@ -64,6 +66,7 @@ export interface Database {
           notify_streak_warning?: boolean;
           notify_achievements?: boolean;
           notify_friend_requests?: boolean;
+          notify_weekly_summary?: boolean;
         };
         Relationships: [];
       };

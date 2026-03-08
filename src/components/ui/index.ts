@@ -5,3 +5,5 @@ export { default as Avatar } from './Avatar';
 export { default as ProgressBar } from './ProgressBar';
 export { default as Badge } from './Badge';
 export { default as ConfirmModal } from './ConfirmModal';
+export { default as ErrorScreen } from './ErrorScreen';
+export { default as OfflineBanner } from './OfflineBanner';

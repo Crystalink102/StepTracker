@@ -21,6 +21,7 @@ import {
 import { haversineDistance, paceSecondsPerKm } from '@/src/utils/geo';
 import { xpFromActivity } from '@/src/utils/xp-calculator';
 import { isPlausibleGPSMove, smoothedPace, caloriesFromActivity } from '@/src/utils/fitness';
+import { enqueue } from '@/src/services/offline-queue';
 import * as ProfileService from '@/src/services/profile.service';
 import { Activity } from '@/src/types/database';
 
@@ -215,7 +216,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         currentActivity.type as 'run' | 'walk'
       );
 
-      const completed = await ActivityService.updateActivity(currentActivity.id, {
+      const activityUpdate = {
         status: 'completed',
         ended_at: new Date().toISOString(),
         duration_seconds: elapsedSeconds,
@@ -225,7 +226,22 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         hr_source: hrSource ?? null,
         calories_estimate: calories,
         xp_earned: xp,
-      });
+      };
+
+      let completed: Activity;
+      try {
+        completed = await ActivityService.updateActivity(currentActivity.id, activityUpdate);
+      } catch (err) {
+        console.warn('[Activity] Save failed, queuing offline:', err);
+        await enqueue({
+          table: 'activities',
+          operation: 'update',
+          data: activityUpdate,
+          filter: { column: 'id', value: currentActivity.id },
+        });
+        // Use local data as the "completed" activity for state reset
+        completed = { ...currentActivity, ...activityUpdate } as Activity;
+      }
 
       // Save waypoints
       if (waypoints.length > 0) {

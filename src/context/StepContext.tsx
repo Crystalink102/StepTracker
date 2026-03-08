@@ -13,6 +13,8 @@ import { useAuth } from '@/src/context/AuthContext';
 import * as StepService from '@/src/services/step.service';
 import * as AchievementService from '@/src/services/achievement.service';
 import { xpFromSteps } from '@/src/utils/xp-calculator';
+import { enqueue } from '@/src/services/offline-queue';
+import { getTodayString } from '@/src/utils/date-helpers';
 import { STEP_SYNC_INTERVAL_MS } from '@/src/constants/config';
 
 type StepContextValue = {
@@ -58,7 +60,18 @@ export function StepProvider({ children }: { children: ReactNode }) {
           }).catch(() => {});
         }
       } catch (err) {
-        console.warn('[StepContext] Sync failed, will retry:', err);
+        console.warn('[StepContext] Sync failed, queuing offline:', err);
+        enqueue({
+          table: 'daily_steps',
+          operation: 'upsert',
+          data: {
+            user_id: user.id,
+            date: getTodayString(),
+            step_count: steps,
+            xp_earned: xpFromSteps(steps),
+          },
+          onConflict: 'user_id,date',
+        }).catch(() => {});
       }
     },
     [user]

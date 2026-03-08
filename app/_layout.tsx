@@ -6,10 +6,16 @@ import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider, useAuth } from '@/src/context/AuthContext';
 import { StepProvider } from '@/src/context/StepContext';
 import { ActivityProvider } from '@/src/context/ActivityContext';
+import { NetworkProvider } from '@/src/context/NetworkContext';
 import { useNotifications } from '@/src/hooks/useNotifications';
+import { useProfile } from '@/src/hooks/useProfile';
 import { Colors } from '@/src/constants/theme';
 
-export { ErrorBoundary } from 'expo-router';
+import { ErrorScreen } from '@/src/components/ui';
+
+export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
+  return <ErrorScreen error={error} retry={retry} />;
+}
 
 export const unstable_settings = {
   initialRouteName: '(tabs)',
@@ -18,7 +24,8 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 function AuthGate() {
-  const { isAuthenticated, isLoading, hasMFA, mfaVerified } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
+  const { profile, isLoading: profileLoading } = useProfile();
   const segments = useSegments();
   const router = useRouter();
 
@@ -26,20 +33,28 @@ function AuthGate() {
   useNotifications();
 
   useEffect(() => {
-    if (isLoading) return;
+    if (isLoading || (isAuthenticated && profileLoading)) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const inOnboarding = segments[0] === '(onboarding)';
+    const needsOnboarding = isAuthenticated && profile && profile.height_cm === null;
 
     if (!isAuthenticated && !inAuthGroup) {
-      // Not logged in, send to login
       router.replace('/(auth)/login');
     } else if (isAuthenticated && inAuthGroup) {
-      // Logged in, get out of auth screens
+      if (needsOnboarding) {
+        router.replace('/(onboarding)/welcome');
+      } else {
+        router.replace('/(tabs)');
+      }
+    } else if (needsOnboarding && !inOnboarding) {
+      router.replace('/(onboarding)/welcome');
+    } else if (isAuthenticated && inOnboarding && !needsOnboarding) {
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated, isLoading, hasMFA, mfaVerified, segments, router]);
+  }, [isAuthenticated, isLoading, profileLoading, profile, segments, router]);
 
-  if (isLoading) {
+  if (isLoading || (isAuthenticated && profileLoading)) {
     return (
       <View
         style={{
@@ -66,6 +81,7 @@ function AuthGate() {
       >
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(onboarding)" />
         <Stack.Screen
           name="settings"
           options={{
@@ -110,11 +126,13 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      <StepProvider>
-        <ActivityProvider>
-          <AuthGate />
-        </ActivityProvider>
-      </StepProvider>
+      <NetworkProvider>
+        <StepProvider>
+          <ActivityProvider>
+            <AuthGate />
+          </ActivityProvider>
+        </StepProvider>
+      </NetworkProvider>
     </AuthProvider>
   );
 }

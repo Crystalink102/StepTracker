@@ -28,7 +28,6 @@ type AuthActions = {
   enrollMFA: () => Promise<{ qr: string; secret: string; factorId: string }>;
   verifyMFA: (factorId: string, code: string) => Promise<void>;
   logout: () => Promise<void>;
-  refreshMFAStatus: () => Promise<void>;
 };
 
 type AuthContextValue = AuthState & AuthActions;
@@ -43,10 +42,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [mfaVerified, setMfaVerified] = useState(false);
 
   const isAuthenticated = !!session && !!user;
-
-  const refreshMFAStatus = useCallback(async () => {
-    // MFA disabled for now - skip checks
-  }, []);
 
   // Initialize auth state
   useEffect(() => {
@@ -136,7 +131,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         enrollMFA,
         verifyMFA,
         logout,
-        refreshMFAStatus,
       }}
     >
       {children}

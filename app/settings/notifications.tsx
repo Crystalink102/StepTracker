@@ -6,7 +6,7 @@ import { Profile } from '@/src/types/database';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 
 type NotifSetting = {
-  key: keyof Pick<Profile, 'notify_daily_reminder' | 'notify_streak_warning' | 'notify_achievements' | 'notify_friend_requests'>;
+  key: keyof Pick<Profile, 'notify_daily_reminder' | 'notify_streak_warning' | 'notify_achievements' | 'notify_friend_requests' | 'notify_weekly_summary'>;
   label: string;
   description: string;
 };
@@ -31,6 +31,11 @@ const SETTINGS: NotifSetting[] = [
     key: 'notify_friend_requests',
     label: 'Friend Requests',
     description: 'Notify when someone sends you a friend request',
+  },
+  {
+    key: 'notify_weekly_summary',
+    label: 'Weekly Summary',
+    description: 'Sunday evening recap of your week',
   },
 ];
 

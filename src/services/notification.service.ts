@@ -102,6 +102,27 @@ export async function sendAchievementNotification(
   });
 }
 
+export async function scheduleWeeklySummary(weeklySteps: number): Promise<void> {
+  const notif = await getNotifications();
+  if (!notif) return;
+
+  // Cancel existing weekly notifications and reschedule with fresh data
+  const formatted = weeklySteps.toLocaleString('en-US');
+
+  await notif.scheduleNotificationAsync({
+    content: {
+      title: 'Your Week in Steps',
+      body: `You walked ${formatted} steps this week. Keep it up!`,
+    },
+    trigger: {
+      type: notif.SchedulableTriggerInputTypes.WEEKLY,
+      weekday: 1, // Sunday
+      hour: 19,
+      minute: 0,
+    },
+  });
+}
+
 export async function cancelAllNotifications(): Promise<void> {
   const notif = await getNotifications();
   if (!notif) return;
