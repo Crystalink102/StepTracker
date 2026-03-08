@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/src/context/AuthContext';
 import * as AchievementService from '@/src/services/achievement.service';
+import * as NotificationService from '@/src/services/notification.service';
 import { AchievementDefinition, UserAchievement } from '@/src/types/database';
 
 export function useAchievements() {
@@ -48,6 +49,13 @@ export function useAchievements() {
           if (newlyUnlocked.length > 0) {
             // Show popup for first unlocked achievement
             setPendingPopup(newlyUnlocked[0]);
+            // Send notification for each unlocked achievement
+            for (const achievement of newlyUnlocked) {
+              NotificationService.sendAchievementNotification(
+                achievement.title,
+                achievement.xp_reward
+              ).catch(() => {});
+            }
             // Refresh the list
             await refresh();
           }

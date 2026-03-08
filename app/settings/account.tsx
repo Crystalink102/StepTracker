@@ -6,7 +6,7 @@ import { deleteAccount } from '@/src/services/auth.service';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 
 export default function AccountScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, hasMFA } = useAuth();
 
   const [showLogout, setShowLogout] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
@@ -53,8 +53,8 @@ export default function AccountScreen() {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>2FA Status</Text>
-        <Text style={[styles.sectionValue, { color: Colors.secondary }]}>
-          Enabled
+        <Text style={[styles.sectionValue, { color: hasMFA ? Colors.secondary : Colors.textMuted }]}>
+          {hasMFA ? 'Enabled' : 'Disabled'}
         </Text>
       </View>
 

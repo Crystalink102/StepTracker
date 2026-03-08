@@ -80,8 +80,8 @@ export function hrXPBonus(heartRate: number): number {
 export function xpFromSteps(steps: number, avgHeartRate?: number): number {
   const baseXP = Math.floor(steps / STEPS_PER_XP);
   if (avgHeartRate) {
-    const bonus = hrXPBonus(avgHeartRate);
-    return Math.round(baseXP + steps * bonus);
+    const hrBonus = Math.round(baseXP * (hrXPBonus(avgHeartRate) / 10));
+    return baseXP + hrBonus;
   }
   return baseXP;
 }

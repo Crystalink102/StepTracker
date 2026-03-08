@@ -28,6 +28,7 @@ type AuthActions = {
   resendConfirmation: (type: 'email' | 'sms', identifier: string) => Promise<void>;
   enrollMFA: () => Promise<{ qr: string; secret: string; factorId: string }>;
   verifyMFA: (factorId: string, code: string) => Promise<void>;
+  getMFAFactors: () => Promise<any>;
   logout: () => Promise<void>;
 };
 
@@ -140,9 +141,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const verifyMFA = useCallback(
     async (factorId: string, code: string) => {
       await AuthService.verifyMFA(factorId, code);
+      await checkMFAStatus();
     },
-    []
+    [checkMFAStatus]
   );
+
+  const getMFAFactorsAction = useCallback(async () => {
+    return AuthService.getMFAFactors();
+  }, []);
 
   const logout = useCallback(async () => {
     await AuthService.logout();
@@ -167,6 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         resendConfirmation,
         enrollMFA,
         verifyMFA,
+        getMFAFactors: getMFAFactorsAction,
         logout,
       }}
     >

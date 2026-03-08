@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { View, Text, Switch, StyleSheet, ActivityIndicator } from 'react-native';
 import { useAuth } from '@/src/context/AuthContext';
+import { useProfile } from '@/src/hooks/useProfile';
 import * as ProfileService from '@/src/services/profile.service';
 import { Profile } from '@/src/types/database';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
@@ -41,32 +42,31 @@ const SETTINGS: NotifSetting[] = [
 
 export default function NotificationsScreen() {
   const { user } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (!user) return;
-    ProfileService.getProfile(user.id)
-      .then((p) => setProfile(p))
-      .catch(() => {})
-      .finally(() => setIsLoading(false));
-  }, [user]);
+  const { profile, refresh: refreshProfile } = useProfile();
+  const [isLoading, setIsLoading] = useState(false);
+  const [optimistic, setOptimistic] = useState<Partial<Record<NotifSetting['key'], boolean>>>({});
 
   const handleToggle = async (key: NotifSetting['key'], value: boolean) => {
     if (!user || !profile) return;
 
     // Optimistic update
-    setProfile({ ...profile, [key]: value });
+    setOptimistic((prev) => ({ ...prev, [key]: value }));
 
     try {
       await ProfileService.updateProfile(user.id, { [key]: value });
+      await refreshProfile();
     } catch {
       // Revert on error
-      setProfile({ ...profile, [key]: !value });
+      setOptimistic((prev) => ({ ...prev, [key]: !value }));
     }
   };
 
-  if (isLoading) {
+  const getValue = (key: NotifSetting['key']): boolean => {
+    if (key in optimistic) return optimistic[key]!;
+    return profile?.[key] ?? true;
+  };
+
+  if (!profile) {
     return (
       <View style={[styles.container, styles.centered]}>
         <ActivityIndicator size="large" color={Colors.primary} />
@@ -83,10 +83,10 @@ export default function NotificationsScreen() {
             <Text style={styles.description}>{setting.description}</Text>
           </View>
           <Switch
-            value={profile?.[setting.key] ?? true}
+            value={getValue(setting.key)}
             onValueChange={(val) => handleToggle(setting.key, val)}
             trackColor={{ false: Colors.surfaceLight, true: Colors.primaryLight }}
-            thumbColor={profile?.[setting.key] ? Colors.primary : Colors.textMuted}
+            thumbColor={getValue(setting.key) ? Colors.primary : Colors.textMuted}
           />
         </View>
       ))}

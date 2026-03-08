@@ -27,7 +27,7 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 function AuthGate() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, hasMFA, mfaVerified } = useAuth();
   const { profile, isLoading: profileLoading } = useProfile();
   const segments = useSegments();
   const router = useRouter();
@@ -40,22 +40,27 @@ function AuthGate() {
 
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboarding = segments[0] === '(onboarding)';
+    const needsMFAVerification = isAuthenticated && hasMFA && !mfaVerified;
+    const onMFAScreen = inAuthGroup && segments[1] === 'verify-mfa';
     const needsOnboarding = isAuthenticated && profile && profile.height_cm === null;
 
     if (!isAuthenticated && !inAuthGroup) {
       router.replace('/(auth)/login');
-    } else if (isAuthenticated && inAuthGroup) {
+    } else if (needsMFAVerification && !onMFAScreen) {
+      // User logged in but hasn't verified MFA yet
+      router.replace('/(auth)/verify-mfa');
+    } else if (isAuthenticated && !needsMFAVerification && inAuthGroup) {
       if (needsOnboarding) {
         router.replace('/(onboarding)/welcome');
       } else {
         router.replace('/(tabs)');
       }
-    } else if (needsOnboarding && !inOnboarding) {
+    } else if (needsOnboarding && !inOnboarding && !needsMFAVerification) {
       router.replace('/(onboarding)/welcome');
-    } else if (isAuthenticated && inOnboarding && !needsOnboarding) {
+    } else if (isAuthenticated && inOnboarding && !needsOnboarding && !needsMFAVerification) {
       router.replace('/(tabs)');
     }
-  }, [isAuthenticated, isLoading, profileLoading, profile, segments, router]);
+  }, [isAuthenticated, isLoading, profileLoading, profile, hasMFA, mfaVerified, segments, router]);
 
   if (isLoading || (isAuthenticated && profileLoading)) {
     return (
