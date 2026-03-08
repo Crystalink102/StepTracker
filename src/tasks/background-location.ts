@@ -57,13 +57,35 @@ export async function startBackgroundLocation() {
   if (fg !== 'granted') throw new Error('Foreground location permission denied');
 
   if (!hasBackgroundSupport()) {
+    // Clean up any existing subscription first to avoid Web Locks API conflicts
+    if (foregroundSub) {
+      try { foregroundSub.remove(); } catch { /* web compat */ }
+      foregroundSub = null;
+    }
+
     // Foreground-only fallback (web / Expo Go)
-    foregroundSub = await Location.watchPositionAsync(
-      { accuracy: Location.Accuracy.BestForNavigation, timeInterval: 2000, distanceInterval: 3 },
-      (loc) => {
-        if (globalLocationCallback) globalLocationCallback(loc);
+    try {
+      foregroundSub = await Location.watchPositionAsync(
+        {
+          accuracy: Platform.OS === 'web'
+            ? Location.Accuracy.High
+            : Location.Accuracy.BestForNavigation,
+          timeInterval: 3000,
+          distanceInterval: 3,
+        },
+        (loc) => {
+          if (globalLocationCallback) globalLocationCallback(loc);
+        }
+      );
+    } catch (err: any) {
+      // Web Locks API can throw AbortError — fall back to polling
+      if (Platform.OS === 'web') {
+        console.warn('[BackgroundLocation] watchPosition failed on web, using polling fallback:', err.message);
+        startWebPolling();
+      } else {
+        throw err;
       }
-    );
+    }
     return;
   }
 
@@ -88,15 +110,42 @@ export async function startBackgroundLocation() {
   });
 }
 
+// Web polling fallback when watchPositionAsync fails
+let webPollingInterval: ReturnType<typeof setInterval> | null = null;
+
+function startWebPolling() {
+  stopWebPolling();
+  webPollingInterval = setInterval(async () => {
+    try {
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      if (globalLocationCallback) globalLocationCallback(loc);
+    } catch {
+      // Skip this tick if getCurrentPosition fails
+    }
+  }, 3000);
+}
+
+function stopWebPolling() {
+  if (webPollingInterval) {
+    clearInterval(webPollingInterval);
+    webPollingInterval = null;
+  }
+}
+
 /**
  * Stop background location tracking.
  */
 export async function stopBackgroundLocation() {
   // Clean up foreground subscription if it exists
   if (foregroundSub) {
-    foregroundSub.remove();
+    try { foregroundSub.remove(); } catch { /* web compat */ }
     foregroundSub = null;
   }
+
+  // Clean up web polling fallback
+  stopWebPolling();
 
   if (!hasBackgroundSupport()) return;
 
