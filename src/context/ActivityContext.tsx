@@ -147,7 +147,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
             1000;
           const velocity = timeDelta > 0 ? dist / timeDelta : 0;
 
-          if (isPlausibleGPSMove(dist) && velocity <= 12) {
+          if (isPlausibleGPSMove(dist) && velocity <= 12 && isFinite(dist)) {
             setDistanceMeters((d) => d + dist);
           }
         }
