@@ -24,12 +24,16 @@ export default function RunControls({
         <TouchableOpacity
           style={[styles.startButton, { backgroundColor: Colors.primary }]}
           onPress={() => onStart('run')}
+          accessibilityRole="button"
+          accessibilityLabel="Start a run"
         >
           <Text style={styles.startText}>Start Run</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.startButton, { backgroundColor: Colors.secondary }]}
           onPress={() => onStart('walk')}
+          accessibilityRole="button"
+          accessibilityLabel="Start a walk"
         >
           <Text style={styles.startText}>Start Walk</Text>
         </TouchableOpacity>
@@ -43,6 +47,8 @@ export default function RunControls({
         <TouchableOpacity
           style={[styles.controlButton, { backgroundColor: Colors.secondary }]}
           onPress={onResume}
+          accessibilityRole="button"
+          accessibilityLabel="Resume activity"
         >
           <Text style={styles.controlText}>Resume</Text>
         </TouchableOpacity>
@@ -50,6 +56,8 @@ export default function RunControls({
         <TouchableOpacity
           style={[styles.controlButton, { backgroundColor: Colors.accent }]}
           onPress={onPause}
+          accessibilityRole="button"
+          accessibilityLabel="Pause activity"
         >
           <Text style={styles.controlText}>Pause</Text>
         </TouchableOpacity>
@@ -57,6 +65,8 @@ export default function RunControls({
       <TouchableOpacity
         style={[styles.controlButton, { backgroundColor: Colors.danger }]}
         onPress={onStop}
+        accessibilityRole="button"
+        accessibilityLabel="Stop activity"
       >
         <Text style={styles.controlText}>Stop</Text>
       </TouchableOpacity>

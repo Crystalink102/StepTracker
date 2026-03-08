@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useRouter } from 'expo-router';
 import { useActivity } from '@/src/context/ActivityContext';
+import { usePreferences } from '@/src/context/PreferencesContext';
 import { useXP } from '@/src/hooks/useXP';
 import { useAuth } from '@/src/context/AuthContext';
 import ActiveRunCard from '@/src/components/activity/ActiveRunCard';
@@ -17,6 +19,7 @@ export default function ActivityScreen() {
   const { user } = useAuth();
   const router = useRouter();
   const { level } = useXP();
+  const { preferences } = usePreferences();
   const {
     currentActivity,
     isActive,
@@ -31,6 +34,14 @@ export default function ActivityScreen() {
     resumeActivity,
     stopActivity,
   } = useActivity();
+
+  // Keep screen on during active runs
+  useEffect(() => {
+    if (isActive && preferences.keepScreenOn) {
+      activateKeepAwakeAsync('activity').catch(() => {});
+      return () => { deactivateKeepAwake('activity'); };
+    }
+  }, [isActive, preferences.keepScreenOn]);
 
   const [heartRate, setHeartRate] = useState<number | undefined>(undefined);
   const [hrSource, setHrSource] = useState<'manual' | 'auto'>('manual');

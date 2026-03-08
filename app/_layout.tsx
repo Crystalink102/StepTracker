@@ -6,6 +6,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import * as Linking from 'expo-linking';
 import { AuthProvider, useAuth } from '@/src/context/AuthContext';
 import { ProfileProvider } from '@/src/context/ProfileContext';
+import { PreferencesProvider } from '@/src/context/PreferencesContext';
 import { supabase } from '@/src/services/supabase';
 import { StepProvider } from '@/src/context/StepContext';
 import { ActivityProvider } from '@/src/context/ActivityContext';
@@ -162,13 +163,15 @@ export default function RootLayout() {
   return (
     <AuthProvider>
       <ProfileProvider>
-        <NetworkProvider>
-          <StepProvider>
-            <ActivityProvider>
-              <AuthGate />
-            </ActivityProvider>
-          </StepProvider>
-        </NetworkProvider>
+        <PreferencesProvider>
+          <NetworkProvider>
+            <StepProvider>
+              <ActivityProvider>
+                <AuthGate />
+              </ActivityProvider>
+            </StepProvider>
+          </NetworkProvider>
+        </PreferencesProvider>
       </ProfileProvider>
     </AuthProvider>
   );

@@ -7,11 +7,8 @@
 
 // --- Step-to-distance estimation ---
 
-/** Average stride length in meters for a 170cm person. */
-const BASE_STRIDE_M = 0.73;
-
-/** Reference height (cm) the base stride is calibrated against. */
-const BASE_HEIGHT_CM = 170;
+/** Default stride length in meters (matches formula at 170cm: 170 × 0.00415 = 0.7055). */
+const BASE_STRIDE_M = 0.7055;
 
 /**
  * Estimate stride length from user height.

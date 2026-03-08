@@ -9,19 +9,27 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
 import { useProfile } from '@/src/hooks/useProfile';
 import { Button, Input, ConfirmModal } from '@/src/components/ui';
+import { usePreferences } from '@/src/context/PreferencesContext';
 import * as ProfileService from '@/src/services/profile.service';
 import { Profile } from '@/src/types/database';
 import { Colors, Spacing } from '@/src/constants/theme';
+
+const CM_PER_INCH = 2.54;
+const KG_PER_LB = 0.453592;
 
 export default function PersonalInfoScreen() {
   const { user } = useAuth();
   const router = useRouter();
   const { refresh: refreshProfile } = useProfile();
+  const { preferences } = usePreferences();
+
+  const heightUnit = preferences.heightUnit;
+  const weightUnit = preferences.weightUnit;
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [restingHR, setRestingHR] = useState('');
-  const [heightCm, setHeightCm] = useState('');
-  const [weightKg, setWeightKg] = useState('');
+  const [heightValue, setHeightValue] = useState('');
+  const [weightValue, setWeightValue] = useState('');
   const [dob, setDob] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -36,22 +44,46 @@ export default function PersonalInfoScreen() {
       .then((p) => {
         setProfile(p);
         setRestingHR(String(p.resting_hr || ''));
-        setHeightCm(p.height_cm ? String(p.height_cm) : '');
-        setWeightKg(p.weight_kg ? String(p.weight_kg) : '');
+        if (p.height_cm) {
+          setHeightValue(
+            heightUnit === 'ft'
+              ? (p.height_cm / CM_PER_INCH).toFixed(1)
+              : String(p.height_cm)
+          );
+        }
+        if (p.weight_kg) {
+          setWeightValue(
+            weightUnit === 'lb'
+              ? (p.weight_kg / KG_PER_LB).toFixed(1)
+              : String(p.weight_kg)
+          );
+        }
         setDob(p.date_of_birth || '');
       })
       .catch(() => {})
       .finally(() => setIsLoading(false));
-  }, [user]);
+  }, [user, heightUnit, weightUnit]);
 
   const handleSave = async () => {
     if (!user) return;
     setIsSaving(true);
     try {
+      let heightCm: number | null = null;
+      let weightKg: number | null = null;
+
+      if (heightValue) {
+        const val = parseFloat(heightValue);
+        heightCm = heightUnit === 'ft' ? Math.round(val * CM_PER_INCH) : val;
+      }
+      if (weightValue) {
+        const val = parseFloat(weightValue);
+        weightKg = weightUnit === 'lb' ? Math.round(val * KG_PER_LB * 10) / 10 : val;
+      }
+
       await ProfileService.updateProfile(user.id, {
         resting_hr: restingHR ? parseInt(restingHR, 10) : 70,
-        height_cm: heightCm ? parseFloat(heightCm) : null,
-        weight_kg: weightKg ? parseFloat(weightKg) : null,
+        height_cm: heightCm,
+        weight_kg: weightKg,
         date_of_birth: dob || null,
       });
       await refreshProfile();
@@ -82,17 +114,17 @@ export default function PersonalInfoScreen() {
           keyboardType="number-pad"
         />
         <Input
-          label="Height (cm)"
-          value={heightCm}
-          onChangeText={setHeightCm}
-          placeholder="175"
+          label={heightUnit === 'ft' ? 'Height (inches)' : 'Height (cm)'}
+          value={heightValue}
+          onChangeText={setHeightValue}
+          placeholder={heightUnit === 'ft' ? '69' : '175'}
           keyboardType="decimal-pad"
         />
         <Input
-          label="Weight (kg)"
-          value={weightKg}
-          onChangeText={setWeightKg}
-          placeholder="70"
+          label={weightUnit === 'lb' ? 'Weight (lb)' : 'Weight (kg)'}
+          value={weightValue}
+          onChangeText={setWeightValue}
+          placeholder={weightUnit === 'lb' ? '155' : '70'}
           keyboardType="decimal-pad"
         />
         <Input

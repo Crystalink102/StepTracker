@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 import { haversineDistance } from '@/src/utils/geo';
+import { usePreferences, type DistanceUnit } from '@/src/context/PreferencesContext';
 
 // react-native-maps doesn't support web
 let MapView: any = null;
@@ -73,12 +74,17 @@ const DARK_MAP_STYLE = [
  * Calculate km split positions along a route.
  * Returns array of { coord, km } for each full kilometer.
  */
-function getKmSplits(coordinates: Coord[]): { coord: Coord; km: number }[] {
+/**
+ * Calculate distance split positions along a route.
+ * When unit is 'mi', splits at each mile (1609.34m) instead of each km.
+ */
+function getDistanceSplits(coordinates: Coord[], unit: DistanceUnit = 'km'): { coord: Coord; label: number }[] {
   if (coordinates.length < 2) return [];
 
-  const splits: { coord: Coord; km: number }[] = [];
+  const splitDistance = unit === 'mi' ? 1609.34 : 1000;
+  const splits: { coord: Coord; label: number }[] = [];
   let accumulatedMeters = 0;
-  let nextKm = 1;
+  let nextSplit = 1;
 
   for (let i = 1; i < coordinates.length; i++) {
     const prev = coordinates[i - 1];
@@ -90,19 +96,16 @@ function getKmSplits(coordinates: Coord[]): { coord: Coord; km: number }[] {
       curr.longitude
     );
 
-    const prevAccumulated = accumulatedMeters;
     accumulatedMeters += segmentDist;
 
-    // Check if we crossed a km boundary
-    while (accumulatedMeters >= nextKm * 1000) {
-      // Interpolate position at the exact km mark
-      const overshoot = accumulatedMeters - nextKm * 1000;
+    while (accumulatedMeters >= nextSplit * splitDistance) {
+      const overshoot = accumulatedMeters - nextSplit * splitDistance;
       const ratio = 1 - overshoot / segmentDist;
       const lat = prev.latitude + (curr.latitude - prev.latitude) * ratio;
       const lng = prev.longitude + (curr.longitude - prev.longitude) * ratio;
 
-      splits.push({ coord: { latitude: lat, longitude: lng }, km: nextKm });
-      nextKm++;
+      splits.push({ coord: { latitude: lat, longitude: lng }, label: nextSplit });
+      nextSplit++;
     }
   }
 
@@ -144,12 +147,15 @@ export default function RouteMap({
   strokeWidth = 4,
   borderRadius = BorderRadius.lg,
 }: RouteMapProps) {
+  const { preferences } = usePreferences();
+  const unit = preferences.distanceUnit;
+
   if (!MapView || coordinates.length < 2) {
     return null;
   }
 
   const region = getRegion(coordinates);
-  const kmSplits = showKmSplits ? getKmSplits(coordinates) : [];
+  const distSplits = showKmSplits ? getDistanceSplits(coordinates, unit) : [];
   const start = coordinates[0];
   const finish = coordinates[coordinates.length - 1];
 
@@ -189,16 +195,16 @@ export default function RouteMap({
           strokeWidth={strokeWidth}
         />
 
-        {/* Km split markers */}
-        {kmSplits.map((split) => (
+        {/* Distance split markers (km or mi) */}
+        {distSplits.map((split) => (
           <Marker
-            key={`km-${split.km}`}
+            key={`split-${split.label}`}
             coordinate={split.coord}
             anchor={{ x: 0.5, y: 0.5 }}
             tracksViewChanges={false}
           >
             <View style={styles.kmMarker}>
-              <Text style={styles.kmText}>{split.km}</Text>
+              <Text style={styles.kmText}>{split.label}</Text>
             </View>
           </Marker>
         ))}

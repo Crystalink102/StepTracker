@@ -1,7 +1,8 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Card } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
-import { formatNumber } from '@/src/utils/formatters';
+import { formatNumber, distanceUnitShort } from '@/src/utils/formatters';
+import { usePreferences } from '@/src/context/PreferencesContext';
 
 type StatsOverviewProps = {
   totalXP: number;
@@ -16,11 +17,15 @@ export default function StatsOverview({
   totalActivities,
   totalDistanceKm,
 }: StatsOverviewProps) {
+  const { preferences } = usePreferences();
+  const unit = preferences.distanceUnit;
+  const displayDist = unit === 'mi' ? totalDistanceKm * 0.621371 : totalDistanceKm;
+
   const stats = [
     { label: 'Total XP', value: formatNumber(totalXP) },
     { label: 'Steps', value: formatNumber(totalSteps) },
     { label: 'Activities', value: String(totalActivities) },
-    { label: 'Distance', value: `${totalDistanceKm.toFixed(1)} km` },
+    { label: 'Distance', value: `${displayDist.toFixed(1)} ${distanceUnitShort(unit)}` },
   ];
 
   return (

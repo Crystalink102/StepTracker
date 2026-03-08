@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
-import { formatDistance, formatDuration, formatPace } from '@/src/utils/formatters';
+import { formatDistance, formatDuration, formatPace, paceUnitLabel } from '@/src/utils/formatters';
+import { usePreferences } from '@/src/context/PreferencesContext';
 import { Activity } from '@/src/types/database';
 
 type StatsGridProps = {
@@ -8,13 +9,16 @@ type StatsGridProps = {
 };
 
 export default function StatsGrid({ activity }: StatsGridProps) {
+  const { preferences } = usePreferences();
+  const unit = preferences.distanceUnit;
+
   const stats = [
-    { label: 'Distance', value: formatDistance(activity.distance_meters) },
+    { label: 'Distance', value: formatDistance(activity.distance_meters, unit) },
     { label: 'Duration', value: formatDuration(activity.duration_seconds) },
     {
       label: 'Avg Pace',
       value: activity.avg_pace_seconds_per_km
-        ? `${formatPace(activity.avg_pace_seconds_per_km)} /km`
+        ? `${formatPace(activity.avg_pace_seconds_per_km, unit)} ${paceUnitLabel(unit)}`
         : '--',
     },
     {

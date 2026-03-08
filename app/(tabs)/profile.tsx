@@ -54,6 +54,7 @@ export default function ProfileScreen() {
   const settingsItems = [
     { label: 'Edit Profile', route: '/settings/edit-profile' as const },
     { label: 'Personal Info', route: '/settings/personal-info' as const },
+    { label: 'Preferences', route: '/settings/preferences' as const },
     { label: 'Account', route: '/settings/account' as const },
   ];
 

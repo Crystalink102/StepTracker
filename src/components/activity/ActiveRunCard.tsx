@@ -1,7 +1,8 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Card } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
-import { formatDuration, formatDistance, formatPace } from '@/src/utils/formatters';
+import { formatDuration, formatDistance, formatPace, paceUnitLabel, speedUnitLabel } from '@/src/utils/formatters';
+import { usePreferences } from '@/src/context/PreferencesContext';
 
 type ActiveRunCardProps = {
   type: string;
@@ -20,6 +21,10 @@ export default function ActiveRunCard({
   currentSpeed,
   isPaused,
 }: ActiveRunCardProps) {
+  const { preferences } = usePreferences();
+  const unit = preferences.distanceUnit;
+  const speedDisplay = unit === 'mi' ? currentSpeed * 0.621371 : currentSpeed;
+
   return (
     <Card style={styles.card}>
       <View style={styles.header}>
@@ -31,14 +36,14 @@ export default function ActiveRunCard({
 
       <View style={styles.stats}>
         <View style={styles.stat}>
-          <Text style={styles.statValue}>{formatDistance(distanceMeters)}</Text>
+          <Text style={styles.statValue}>{formatDistance(distanceMeters, unit)}</Text>
           <Text style={styles.statLabel}>Distance</Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.stat}>
           <Text style={styles.statValue}>
             {currentPaceSecPerKm > 0
-              ? `${formatPace(currentPaceSecPerKm)} /km`
+              ? `${formatPace(currentPaceSecPerKm, unit)} ${paceUnitLabel(unit)}`
               : '--:--'}
           </Text>
           <Text style={styles.statLabel}>Pace</Text>
@@ -46,9 +51,9 @@ export default function ActiveRunCard({
         <View style={styles.divider} />
         <View style={styles.stat}>
           <Text style={styles.statValue}>
-            {currentSpeed > 0 ? `${currentSpeed.toFixed(1)}` : '0.0'}
+            {currentSpeed > 0 ? `${speedDisplay.toFixed(1)}` : '0.0'}
           </Text>
-          <Text style={styles.statLabel}>km/h</Text>
+          <Text style={styles.statLabel}>{speedUnitLabel(unit)}</Text>
         </View>
       </View>
     </Card>

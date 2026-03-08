@@ -16,7 +16,8 @@ import StatsGrid from '@/src/components/history/StatsGrid';
 import { Badge } from '@/src/components/ui';
 import { Activity, ActivityWaypoint } from '@/src/types/database';
 import { formatRelativeDate, formatTime } from '@/src/utils/date-helpers';
-import { formatDistance, formatDuration, formatPace } from '@/src/utils/formatters';
+import { formatDistance, formatDuration, formatPace, metersToDisplayDistance, distanceUnitLabel } from '@/src/utils/formatters';
+import { usePreferences } from '@/src/context/PreferencesContext';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -27,6 +28,8 @@ export default function RunDetailScreen() {
   const [activity, setActivity] = useState<Activity | null>(null);
   const [waypoints, setWaypoints] = useState<ActivityWaypoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { preferences } = usePreferences();
+  const unit = preferences.distanceUnit;
 
   useEffect(() => {
     if (!id) return;
@@ -58,10 +61,10 @@ export default function RunDetailScreen() {
   const handleShare = async () => {
     if (!activity) return;
     const emoji = activity.type === 'run' ? '\u{1F3C3}' : '\u{1F6B6}';
-    const dist = formatDistance(activity.distance_meters);
+    const dist = formatDistance(activity.distance_meters, unit);
     const dur = formatDuration(activity.duration_seconds);
     const pace = activity.avg_pace_seconds_per_km
-      ? `${formatPace(activity.avg_pace_seconds_per_km)} /km`
+      ? `${formatPace(activity.avg_pace_seconds_per_km, unit)} ${unit === 'mi' ? '/mi' : '/km'}`
       : null;
     const cal = activity.calories_estimate
       ? `${activity.calories_estimate} cal`
@@ -145,9 +148,9 @@ export default function RunDetailScreen() {
           {/* Big distance display */}
           <View style={styles.distanceSection}>
             <Text style={styles.distanceValue}>
-              {(activity.distance_meters / 1000).toFixed(2)}
+              {metersToDisplayDistance(activity.distance_meters, unit).toFixed(2)}
             </Text>
-            <Text style={styles.distanceUnit}>kilometers</Text>
+            <Text style={styles.distanceUnit}>{distanceUnitLabel(unit)}</Text>
           </View>
 
           {/* Stats */}

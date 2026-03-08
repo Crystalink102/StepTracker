@@ -18,7 +18,13 @@ export default function StepGoalRing() {
   const ringColor = isGoalHit ? Colors.gold : Colors.primary;
 
   return (
-    <View style={styles.container}>
+    <View
+      style={styles.container}
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel={`${formatNumber(todaySteps)} of ${formatNumber(goal)} steps${isGoalHit ? ', goal reached' : ''}`}
+      accessibilityValue={{ min: 0, max: goal, now: todaySteps }}
+    >
       <View style={styles.ringContainer}>
         {/* Background ring */}
         <View style={styles.svgContainer}>

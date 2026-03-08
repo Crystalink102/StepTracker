@@ -5,13 +5,20 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
 import { useProfile } from '@/src/hooks/useProfile';
 import { Button, Input } from '@/src/components/ui';
+import { usePreferences } from '@/src/context/PreferencesContext';
 import * as ProfileService from '@/src/services/profile.service';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+
+const CM_PER_INCH = 2.54;
+const KG_PER_LB = 0.453592;
 
 export default function BodyMetricsScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { refresh: refreshProfile } = useProfile();
+  const { preferences } = usePreferences();
+  const hUnit = preferences.heightUnit;
+  const wUnit = preferences.weightUnit;
   const [height, setHeight] = useState('');
   const [weight, setWeight] = useState('');
   const [heightError, setHeightError] = useState('');
@@ -27,17 +34,31 @@ export default function BodyMetricsScreen() {
     setWeightError('');
 
     if (height.trim()) {
-      const h = parseInt(height, 10);
-      if (isNaN(h) || h < 50 || h > 300) {
-        setHeightError('Enter a height between 50–300 cm');
-        hasError = true;
+      const h = parseFloat(height);
+      if (hUnit === 'ft') {
+        if (isNaN(h) || h < 20 || h > 120) {
+          setHeightError('Enter a height between 20–120 inches');
+          hasError = true;
+        }
+      } else {
+        if (isNaN(h) || h < 50 || h > 300) {
+          setHeightError('Enter a height between 50–300 cm');
+          hasError = true;
+        }
       }
     }
     if (weight.trim()) {
-      const w = parseInt(weight, 10);
-      if (isNaN(w) || w < 20 || w > 500) {
-        setWeightError('Enter a weight between 20–500 kg');
-        hasError = true;
+      const w = parseFloat(weight);
+      if (wUnit === 'lb') {
+        if (isNaN(w) || w < 44 || w > 1100) {
+          setWeightError('Enter a weight between 44–1100 lb');
+          hasError = true;
+        }
+      } else {
+        if (isNaN(w) || w < 20 || w > 500) {
+          setWeightError('Enter a weight between 20–500 kg');
+          hasError = true;
+        }
       }
     }
     if (hasError) return;
@@ -45,8 +66,14 @@ export default function BodyMetricsScreen() {
     setIsSaving(true);
     try {
       const updates: Record<string, number> = {};
-      if (height.trim()) updates.height_cm = parseInt(height, 10);
-      if (weight.trim()) updates.weight_kg = parseInt(weight, 10);
+      if (height.trim()) {
+        const val = parseFloat(height);
+        updates.height_cm = hUnit === 'ft' ? Math.round(val * CM_PER_INCH) : val;
+      }
+      if (weight.trim()) {
+        const val = parseFloat(weight);
+        updates.weight_kg = wUnit === 'lb' ? Math.round(val * KG_PER_LB * 10) / 10 : val;
+      }
 
       if (Object.keys(updates).length > 0) {
         await ProfileService.updateProfile(user.id, updates);
@@ -76,16 +103,16 @@ export default function BodyMetricsScreen() {
 
           <View style={styles.form}>
             <Input
-              label="HEIGHT (CM)"
-              placeholder="170"
+              label={hUnit === 'ft' ? 'HEIGHT (INCHES)' : 'HEIGHT (CM)'}
+              placeholder={hUnit === 'ft' ? '69' : '170'}
               keyboardType="numeric"
               value={height}
               onChangeText={(t) => { setHeight(t); setHeightError(''); }}
               error={heightError}
             />
             <Input
-              label="WEIGHT (KG)"
-              placeholder="70"
+              label={wUnit === 'lb' ? 'WEIGHT (LB)' : 'WEIGHT (KG)'}
+              placeholder={wUnit === 'lb' ? '155' : '70'}
               keyboardType="numeric"
               value={weight}
               onChangeText={(t) => { setWeight(t); setWeightError(''); }}

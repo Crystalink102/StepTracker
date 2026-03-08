@@ -6,9 +6,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Card } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
-import { formatNumber } from '@/src/utils/formatters';
+import { formatNumber, distanceUnitShort } from '@/src/utils/formatters';
 import { useSteps } from '@/src/context/StepContext';
 import { useProfile } from '@/src/hooks/useProfile';
+import { usePreferences } from '@/src/context/PreferencesContext';
 import {
   distanceFromSteps,
   caloriesFromSteps,
@@ -18,6 +19,8 @@ import {
 export default function StepCounter() {
   const { todaySteps, isTracking } = useSteps();
   const { profile } = useProfile();
+  const { preferences } = usePreferences();
+  const unit = preferences.distanceUnit;
   const animatedSteps = useSharedValue(0);
 
   useAnimatedReaction(
@@ -31,12 +34,13 @@ export default function StepCounter() {
     [todaySteps]
   );
 
-  const km = distanceFromSteps(todaySteps, profile?.height_cm ?? null) / 1000;
+  const distM = distanceFromSteps(todaySteps, profile?.height_cm ?? null);
+  const displayDist = unit === 'mi' ? distM * 0.000621371 : distM / 1000;
   const cal = caloriesFromSteps(todaySteps, profile?.weight_kg ?? null);
   const min = activeMinutesFromSteps(todaySteps);
 
   return (
-    <Card style={styles.card}>
+    <Card style={styles.card} accessible accessibilityLabel={`Today's steps: ${formatNumber(todaySteps)}. Distance: ${displayDist.toFixed(2)} ${distanceUnitShort(unit)}. Calories: ${cal}. Active minutes: ${min}.`}>
       <View style={styles.header}>
         <Text style={styles.label}>TODAY'S STEPS</Text>
         <View
@@ -48,8 +52,8 @@ export default function StepCounter() {
 
       <View style={styles.stats}>
         <View style={styles.stat}>
-          <Text style={styles.statValue}>{km.toFixed(2)}</Text>
-          <Text style={styles.statLabel}>km</Text>
+          <Text style={styles.statValue}>{displayDist.toFixed(2)}</Text>
+          <Text style={styles.statLabel}>{distanceUnitShort(unit)}</Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.stat}>

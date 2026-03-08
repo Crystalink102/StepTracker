@@ -1,8 +1,9 @@
 import { TouchableOpacity, View, Text, StyleSheet, Platform } from 'react-native';
 import { Badge } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
-import { formatDistance, formatDuration, formatPace } from '@/src/utils/formatters';
+import { formatDistance, formatDuration, formatPace, paceUnitLabel } from '@/src/utils/formatters';
 import { formatRelativeDate, formatTime } from '@/src/utils/date-helpers';
+import { usePreferences } from '@/src/context/PreferencesContext';
 import { Activity } from '@/src/types/database';
 
 // Lazy load map components once
@@ -83,6 +84,9 @@ const miniStyles = StyleSheet.create({
 });
 
 export default function RunListItem({ activity, route, onPress }: RunListItemProps) {
+  const { preferences } = usePreferences();
+  const unit = preferences.distanceUnit;
+
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
       {route && route.length > 1 && <MiniRoute coords={route} />}
@@ -102,7 +106,7 @@ export default function RunListItem({ activity, route, onPress }: RunListItemPro
 
       <View style={styles.stats}>
         <View style={styles.stat}>
-          <Text style={styles.statValue}>{formatDistance(activity.distance_meters)}</Text>
+          <Text style={styles.statValue}>{formatDistance(activity.distance_meters, unit)}</Text>
           <Text style={styles.statLabel}>Distance</Text>
         </View>
         <View style={styles.stat}>
@@ -112,7 +116,7 @@ export default function RunListItem({ activity, route, onPress }: RunListItemPro
         <View style={styles.stat}>
           <Text style={styles.statValue}>
             {activity.avg_pace_seconds_per_km
-              ? `${formatPace(activity.avg_pace_seconds_per_km)} /km`
+              ? `${formatPace(activity.avg_pace_seconds_per_km, unit)} ${paceUnitLabel(unit)}`
               : '--'}
           </Text>
           <Text style={styles.statLabel}>Pace</Text>
