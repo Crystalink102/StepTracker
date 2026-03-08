@@ -1,0 +1,132 @@
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+  type ReactNode,
+} from 'react';
+import { Pedometer } from 'expo-sensors';
+import { AppState, Platform } from 'react-native';
+import { useAuth } from '@/src/context/AuthContext';
+import * as StepService from '@/src/services/step.service';
+import { xpFromSteps } from '@/src/utils/xp-calculator';
+import { STEP_SYNC_INTERVAL_MS } from '@/src/constants/config';
+
+type StepContextValue = {
+  todaySteps: number;
+  isAvailable: boolean;
+  isTracking: boolean;
+};
+
+const StepContext = createContext<StepContextValue>({
+  todaySteps: 0,
+  isAvailable: false,
+  isTracking: false,
+});
+
+export function StepProvider({ children }: { children: ReactNode }) {
+  const { user, isAuthenticated } = useAuth();
+  const [todaySteps, setTodaySteps] = useState(0);
+  const [isAvailable, setIsAvailable] = useState(false);
+  const [isTracking, setIsTracking] = useState(false);
+  const lastSyncedSteps = useRef(0);
+  const syncIntervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+
+  // Check pedometer availability
+  useEffect(() => {
+    Pedometer.isAvailableAsync().then(setIsAvailable);
+  }, []);
+
+  // Sync steps to Supabase
+  const syncSteps = useCallback(
+    async (steps: number) => {
+      if (!user || steps === lastSyncedSteps.current) return;
+      try {
+        const xp = xpFromSteps(steps);
+        await StepService.updateStepCount(user.id, steps, xp);
+        lastSyncedSteps.current = steps;
+      } catch {
+        // Silently fail sync - will retry next interval
+      }
+    },
+    [user]
+  );
+
+  // Load today's saved steps on mount
+  useEffect(() => {
+    if (!user || !isAuthenticated) return;
+
+    const loadSavedSteps = async () => {
+      try {
+        const record = await StepService.getTodaySteps(user.id);
+        if (record.step_count > 0) {
+          setTodaySteps(record.step_count);
+          lastSyncedSteps.current = record.step_count;
+        }
+      } catch {
+        // Supabase might not be configured yet
+      }
+    };
+
+    loadSavedSteps();
+  }, [user, isAuthenticated]);
+
+  // Subscribe to pedometer
+  useEffect(() => {
+    if (!isAvailable) return;
+
+    // Get steps since midnight
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    Pedometer.getStepCountAsync(start, new Date()).then((result) => {
+      setTodaySteps((prev) => Math.max(prev, result.steps));
+    });
+
+    // Watch for new steps
+    const subscription = Pedometer.watchStepCount((result) => {
+      setTodaySteps((prev) => prev + result.steps);
+      setIsTracking(true);
+    });
+
+    return () => subscription.remove();
+  }, [isAvailable]);
+
+  // Periodic sync to Supabase
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    syncIntervalRef.current = setInterval(() => {
+      syncSteps(todaySteps);
+    }, STEP_SYNC_INTERVAL_MS);
+
+    return () => {
+      if (syncIntervalRef.current) {
+        clearInterval(syncIntervalRef.current);
+      }
+    };
+  }, [isAuthenticated, todaySteps, syncSteps]);
+
+  // Sync on app background
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'background') {
+        syncSteps(todaySteps);
+      }
+    });
+
+    return () => subscription.remove();
+  }, [todaySteps, syncSteps]);
+
+  return (
+    <StepContext.Provider value={{ todaySteps, isAvailable, isTracking }}>
+      {children}
+    </StepContext.Provider>
+  );
+}
+
+export function useSteps() {
+  return useContext(StepContext);
+}

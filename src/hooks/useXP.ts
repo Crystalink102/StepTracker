@@ -1,0 +1,69 @@
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/src/context/AuthContext';
+import * as XPService from '@/src/services/xp.service';
+import {
+  levelProgress,
+  xpToNextLevel,
+  xpForLevel,
+} from '@/src/utils/xp-calculator';
+
+export function useXP() {
+  const { user } = useAuth();
+  const [totalXP, setTotalXP] = useState(0);
+  const [level, setLevel] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const progress = levelProgress(totalXP);
+  const xpRemaining = xpToNextLevel(totalXP);
+  const xpNeeded = xpForLevel(level);
+
+  const refresh = useCallback(async () => {
+    if (!user) return;
+    try {
+      const data = await XPService.getUserXP(user.id);
+      setTotalXP(data.total_xp);
+      setLevel(data.current_level);
+    } catch {
+      // Silently fail - might not have set up Supabase yet
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const addXP = useCallback(
+    async (
+      amount: number,
+      source: 'steps' | 'activity' | 'bonus',
+      sourceId?: string,
+      description?: string
+    ) => {
+      if (!user) return null;
+      const result = await XPService.addXP(
+        user.id,
+        amount,
+        source,
+        sourceId,
+        description
+      );
+      setTotalXP(result.totalXP);
+      setLevel(result.level);
+      return result;
+    },
+    [user]
+  );
+
+  return {
+    totalXP,
+    level,
+    progress,
+    xpRemaining,
+    xpNeeded,
+    isLoading,
+    addXP,
+    refresh,
+  };
+}

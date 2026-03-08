@@ -4,33 +4,64 @@
     "slug": "StepTracker",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
     "scheme": "steptracker",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "splash": {
-      "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#09090B"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSMotionUsageDescription": "StepTracker uses motion data to count your steps.",
+        "NSLocationWhenInUseUsageDescription": "StepTracker uses your location to track runs and walks.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "StepTracker uses background location to track runs even when the app is closed.",
+        "NSCameraUsageDescription": "StepTracker uses the camera to take profile photos.",
+        "NSPhotoLibraryUsageDescription": "StepTracker accesses your photos for your profile picture."
+      },
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
-      },
-      "predictiveBackGestureEnabled": false
+      "permissions": [
+        "ACTIVITY_RECOGNITION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "FOREGROUND_SERVICE",
+        "FOREGROUND_SERVICE_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE"
+      ]
     },
     "web": {
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "bundler": "metro"
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "StepTracker uses background location to track your runs.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isAndroidForegroundServiceEnabled": true
+        }
+      ],
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "StepTracker uses motion to count your steps."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "StepTracker accesses your photos for your profile picture.",
+          "cameraPermission": "StepTracker uses the camera to take profile photos."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

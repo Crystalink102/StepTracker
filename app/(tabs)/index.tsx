@@ -1,31 +1,40 @@
-import { StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import XPCard from '@/src/components/home/XPCard';
+import StepCounter from '@/src/components/home/StepCounter';
+import StreakCard from '@/src/components/home/StreakCard';
+import StreakPopup from '@/src/components/home/StreakPopup';
+import { useStreak } from '@/src/hooks/useStreak';
+import { Colors, Spacing } from '@/src/constants/theme';
 
-import EditScreenInfo from '@/components/EditScreenInfo';
-import { Text, View } from '@/components/Themed';
+export default function HomeScreen() {
+  const { streak, showPopup, dismissPopup } = useStreak();
 
-export default function TabOneScreen() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Tab One</Text>
-      <View style={styles.separator} lightColor="#eee" darkColor="rgba(255,255,255,0.1)" />
-      <EditScreenInfo path="app/(tabs)/index.tsx" />
-    </View>
+    <SafeAreaView style={styles.safe} edges={['top']}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        <XPCard />
+        <StepCounter />
+        <StreakCard streak={streak} />
+      </ScrollView>
+      <StreakPopup visible={showPopup} streak={streak} onDismiss={dismissPopup} />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  safe: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
-  title: {
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  separator: {
-    marginVertical: 30,
-    height: 1,
-    width: '80%',
+  content: {
+    paddingBottom: Spacing.xxxl,
   },
 });
