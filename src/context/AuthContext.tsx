@@ -68,7 +68,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const init = async () => {
       try {
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        // Timeout getSession — it can hang in Expo Go when refreshing stale tokens
+        const sessionPromise = supabase.auth.getSession();
+        const timeoutPromise = new Promise<null>((resolve) =>
+          setTimeout(() => resolve(null), 5000)
+        );
+        const result = await Promise.race([sessionPromise, timeoutPromise]);
+
+        const currentSession = result && 'data' in result
+          ? result.data.session
+          : null;
+
+        if (!currentSession && result === null) {
+          console.warn('[Auth] getSession timed out — starting fresh');
+        }
+
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
         if (currentSession) await checkMFAStatus();

@@ -24,10 +24,23 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
     try {
-      const data = await ProfileService.getProfile(user.id);
-      setProfile(data);
+      // Timeout profile fetch — can hang if Supabase connection stalls
+      const profilePromise = ProfileService.getProfile(user.id);
+      const timeoutPromise = new Promise<null>((resolve) =>
+        setTimeout(() => resolve(null), 8000)
+      );
+      const data = await Promise.race([profilePromise, timeoutPromise]);
+
+      if (data) {
+        setProfile(data);
+      } else {
+        console.warn('[ProfileContext] Profile fetch timed out');
+      }
     } catch (err) {
       console.warn('[ProfileContext] Failed to load profile:', err);
     } finally {
