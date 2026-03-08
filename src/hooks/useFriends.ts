@@ -23,8 +23,8 @@ export function useFriends() {
       setFriends(friendsList);
       setPendingRequests(pending);
       setPendingCount(count);
-    } catch {
-      // Silently fail
+    } catch (err) {
+      console.warn('[useFriends] Failed to load friends:', err);
     } finally {
       setIsLoading(false);
     }

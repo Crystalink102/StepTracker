@@ -3,12 +3,11 @@ import {
   View,
   ScrollView,
   StyleSheet,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
-import { Button, Input } from '@/src/components/ui';
+import { Button, Input, ConfirmModal } from '@/src/components/ui';
 import * as ProfileService from '@/src/services/profile.service';
 import { Profile } from '@/src/types/database';
 import { Colors, Spacing } from '@/src/constants/theme';
@@ -24,6 +23,7 @@ export default function PersonalInfoScreen() {
   const [dob, setDob] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '' });
 
   useEffect(() => {
     if (!user) {
@@ -54,7 +54,7 @@ export default function PersonalInfoScreen() {
       });
       router.back();
     } catch (err: any) {
-      Alert.alert('Save Failed', err.message);
+      setAlertModal({ visible: true, title: 'Save Failed', message: err.message });
     } finally {
       setIsSaving(false);
     }
@@ -105,6 +105,13 @@ export default function PersonalInfoScreen() {
         onPress={handleSave}
         isLoading={isSaving}
         style={styles.saveButton}
+      />
+
+      <ConfirmModal
+        visible={alertModal.visible}
+        title={alertModal.title}
+        message={alertModal.message}
+        onConfirm={() => setAlertModal({ visible: false, title: '', message: '' })}
       />
     </ScrollView>
   );

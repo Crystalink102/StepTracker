@@ -15,7 +15,7 @@ export default function StepGoalRing() {
   const progress = Math.min(todaySteps / goal, 1);
   const isGoalHit = todaySteps >= goal;
 
-  const ringColor = isGoalHit ? '#FFD700' : Colors.primary;
+  const ringColor = isGoalHit ? Colors.gold : Colors.primary;
 
   return (
     <View style={styles.container}>
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   goalHitText: {
-    color: '#FFD700',
+    color: Colors.gold,
   },
   goalText: {
     color: Colors.textMuted,
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   goalHitLabel: {
-    color: '#FFD700',
+    color: Colors.gold,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
     marginTop: Spacing.sm,

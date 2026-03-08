@@ -9,10 +9,10 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
+import { ConfirmModal } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 export default function SignUpScreen() {
@@ -25,22 +25,26 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '' });
+
+  const showAlert = (title: string, message: string) =>
+    setAlertModal({ visible: true, title, message });
 
   const handleSignUp = async () => {
     if (method === 'email' && !email.trim()) {
-      Alert.alert('Missing Email', 'Please enter your email address.');
+      showAlert('Missing Email', 'Please enter your email address.');
       return;
     }
     if (method === 'phone' && !phone.trim()) {
-      Alert.alert('Missing Phone', 'Please enter your phone number.');
+      showAlert('Missing Phone', 'Please enter your phone number.');
       return;
     }
     if (password.length < 8) {
-      Alert.alert('Weak Password', 'Password must be at least 8 characters.');
+      showAlert('Weak Password', 'Password must be at least 8 characters.');
       return;
     }
     if (password !== confirmPassword) {
-      Alert.alert('Password Mismatch', "Passwords don't match.");
+      showAlert('Password Mismatch', "Passwords don't match.");
       return;
     }
 
@@ -61,7 +65,7 @@ export default function SignUpScreen() {
         });
       }
     } catch (err: any) {
-      Alert.alert('Sign Up Failed', err.message || 'Something went wrong.');
+      showAlert('Sign Up Failed', err.message || 'Something went wrong.');
     } finally {
       setIsLoading(false);
     }
@@ -187,6 +191,13 @@ export default function SignUpScreen() {
           </Link>
         </View>
       </ScrollView>
+
+      <ConfirmModal
+        visible={alertModal.visible}
+        title={alertModal.title}
+        message={alertModal.message}
+        onConfirm={() => setAlertModal({ visible: false, title: '', message: '' })}
+      />
     </KeyboardAvoidingView>
   );
 }

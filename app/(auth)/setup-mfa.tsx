@@ -8,11 +8,11 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
-  Alert,
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
+import { ConfirmModal } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 export default function SetupMFAScreen() {
@@ -25,6 +25,10 @@ export default function SetupMFAScreen() {
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isEnrolling, setIsEnrolling] = useState(true);
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '' });
+
+  const showAlert = (title: string, message: string) =>
+    setAlertModal({ visible: true, title, message });
 
   useEffect(() => {
     const setup = async () => {
@@ -34,7 +38,7 @@ export default function SetupMFAScreen() {
         setSecret(data.secret);
         setFactorId(data.factorId);
       } catch (err: any) {
-        Alert.alert('MFA Setup Error', err.message || 'Could not set up 2FA.');
+        showAlert('MFA Setup Error', err.message || 'Could not set up 2FA.');
       } finally {
         setIsEnrolling(false);
       }
@@ -44,7 +48,7 @@ export default function SetupMFAScreen() {
 
   const handleVerify = async () => {
     if (code.length < 6) {
-      Alert.alert('Invalid Code', 'Enter the 6-digit code from your authenticator app.');
+      showAlert('Invalid Code', 'Enter the 6-digit code from your authenticator app.');
       return;
     }
 
@@ -53,7 +57,7 @@ export default function SetupMFAScreen() {
       await verifyMFA(factorId, code);
       // MFA verified - auth state change will route to main app
     } catch (err: any) {
-      Alert.alert('Verification Failed', err.message || 'Invalid code. Try again.');
+      showAlert('Verification Failed', err.message || 'Invalid code. Try again.');
     } finally {
       setIsLoading(false);
     }
@@ -125,6 +129,13 @@ export default function SetupMFAScreen() {
           )}
         </TouchableOpacity>
       </View>
+
+      <ConfirmModal
+        visible={alertModal.visible}
+        title={alertModal.title}
+        message={alertModal.message}
+        onConfirm={() => setAlertModal({ visible: false, title: '', message: '' })}
+      />
     </ScrollView>
   );
 }

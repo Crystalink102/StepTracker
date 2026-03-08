@@ -8,10 +8,10 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
+import { ConfirmModal } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 export default function VerifyOTPScreen() {
@@ -21,10 +21,14 @@ export default function VerifyOTPScreen() {
 
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '' });
+
+  const showAlert = (title: string, message: string) =>
+    setAlertModal({ visible: true, title, message });
 
   const handleVerify = async () => {
     if (code.length < 6) {
-      Alert.alert('Invalid Code', 'Please enter the 6-digit code.');
+      showAlert('Invalid Code', 'Please enter the 6-digit code.');
       return;
     }
 
@@ -34,7 +38,7 @@ export default function VerifyOTPScreen() {
       // After OTP verification, send to MFA setup (required for all accounts)
       router.replace('/(auth)/setup-mfa');
     } catch (err: any) {
-      Alert.alert('Verification Failed', err.message || 'Invalid code. Try again.');
+      showAlert('Verification Failed', err.message || 'Invalid code. Try again.');
     } finally {
       setIsLoading(false);
     }
@@ -80,6 +84,13 @@ export default function VerifyOTPScreen() {
           </TouchableOpacity>
         </View>
       </View>
+
+      <ConfirmModal
+        visible={alertModal.visible}
+        title={alertModal.title}
+        message={alertModal.message}
+        onConfirm={() => setAlertModal({ visible: false, title: '', message: '' })}
+      />
     </KeyboardAvoidingView>
   );
 }

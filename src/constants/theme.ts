@@ -10,6 +10,7 @@ export const Colors = {
   danger: '#EF4444',
   dangerLight: '#FCA5A5',
   warning: '#F59E0B',
+  gold: '#FFD700',          // Goal hit, celebrations
 
   // Neutrals - true dark theme
   background: '#09090B',    // Zinc 950 - deep black

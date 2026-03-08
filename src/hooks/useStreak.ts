@@ -23,8 +23,8 @@ export function useStreak() {
           }).catch(() => {});
         }
       })
-      .catch(() => {
-        // Silently fail - columns might not exist yet
+      .catch((err) => {
+        console.warn('[useStreak] Failed to check streak:', err);
       });
   }, [user]);
 

@@ -1,6 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
 import Animated, {
-  useAnimatedStyle,
   withSpring,
   useSharedValue,
   useAnimatedReaction,
@@ -9,9 +8,16 @@ import { Card } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 import { formatNumber } from '@/src/utils/formatters';
 import { useSteps } from '@/src/context/StepContext';
+import { useProfile } from '@/src/hooks/useProfile';
+import {
+  distanceFromSteps,
+  caloriesFromSteps,
+  activeMinutesFromSteps,
+} from '@/src/utils/fitness';
 
 export default function StepCounter() {
   const { todaySteps, isTracking } = useSteps();
+  const { profile } = useProfile();
   const animatedSteps = useSharedValue(0);
 
   useAnimatedReaction(
@@ -24,6 +30,10 @@ export default function StepCounter() {
     },
     [todaySteps]
   );
+
+  const km = distanceFromSteps(todaySteps, profile?.height_cm ?? null) / 1000;
+  const cal = caloriesFromSteps(todaySteps, profile?.weight_kg ?? null);
+  const min = activeMinutesFromSteps(todaySteps);
 
   return (
     <Card style={styles.card}>
@@ -38,23 +48,17 @@ export default function StepCounter() {
 
       <View style={styles.stats}>
         <View style={styles.stat}>
-          <Text style={styles.statValue}>
-            {(todaySteps * 0.000762).toFixed(2)}
-          </Text>
+          <Text style={styles.statValue}>{km.toFixed(2)}</Text>
           <Text style={styles.statLabel}>km</Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.stat}>
-          <Text style={styles.statValue}>
-            {Math.round(todaySteps * 0.04)}
-          </Text>
+          <Text style={styles.statValue}>{cal}</Text>
           <Text style={styles.statLabel}>cal</Text>
         </View>
         <View style={styles.divider} />
         <View style={styles.stat}>
-          <Text style={styles.statValue}>
-            {Math.round(todaySteps / 1312)}
-          </Text>
+          <Text style={styles.statValue}>{min}</Text>
           <Text style={styles.statLabel}>min</Text>
         </View>
       </View>

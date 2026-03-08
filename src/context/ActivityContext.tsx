@@ -19,11 +19,9 @@ import {
   setLocationCallback,
 } from '@/src/tasks/background-location';
 import { haversineDistance, paceSecondsPerKm } from '@/src/utils/geo';
-import {
-  xpFromActivity,
-  estimateHRFromPace,
-  isAutoHRUnlocked,
-} from '@/src/utils/xp-calculator';
+import { xpFromActivity } from '@/src/utils/xp-calculator';
+import { isPlausibleGPSMove, smoothedPace, caloriesFromActivity } from '@/src/utils/fitness';
+import * as ProfileService from '@/src/services/profile.service';
 import { Activity } from '@/src/types/database';
 
 type Waypoint = {
@@ -58,7 +56,7 @@ const ActivityContext = createContext<ActivityContextValue | null>(null);
 
 export function ActivityProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const { addXP, level } = useXP();
+  const { addXP } = useXP();
 
   const [currentActivity, setCurrentActivity] = useState<Activity | null>(null);
   const [isPaused, setIsPaused] = useState(false);
@@ -69,8 +67,15 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   const [currentSpeed, setCurrentSpeed] = useState(0);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
-  const waypointIndexRef = useRef(0);
   const isActive = !!currentActivity && currentActivity.status !== 'completed';
+
+  // Refs to avoid stale closures in the location callback.
+  // handleLocation is registered as a global callback and can fire at any time -
+  // without refs, it would capture stale isPaused/isActive values.
+  const isPausedRef = useRef(isPaused);
+  const isActiveRef = useRef(isActive);
+  isPausedRef.current = isPaused;
+  isActiveRef.current = isActive;
 
   // Timer for elapsed time
   useEffect(() => {
@@ -90,10 +95,14 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
     };
   }, [isActive, isPaused]);
 
-  // Location callback handler
+  // Location callback handler - uses refs for isPaused/isActive to avoid
+  // recreating the callback (which would reset the GPS subscription).
   const handleLocation = useCallback(
     (location: Location.LocationObject) => {
-      if (isPaused || !isActive) return;
+      if (isPausedRef.current || !isActiveRef.current) return;
+
+      // Skip low-accuracy GPS readings (> 20m uncertainty)
+      if (location.coords.accuracy != null && location.coords.accuracy > 20) return;
 
       const wp: Waypoint = {
         latitude: location.coords.latitude,
@@ -106,7 +115,6 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       setWaypoints((prev) => {
         const updated = [...prev, wp];
 
-        // Calculate distance from previous point
         if (prev.length > 0) {
           const last = prev[prev.length - 1];
           const dist = haversineDistance(
@@ -115,8 +123,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
             wp.latitude,
             wp.longitude
           );
-          // Filter out GPS noise (ignore if less than 2m or more than 100m in one update)
-          if (dist >= 2 && dist <= 100) {
+          if (isPlausibleGPSMove(dist)) {
             setDistanceMeters((d) => d + dist);
           }
         }
@@ -124,26 +131,24 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         return updated;
       });
 
-      // Update current speed
-      if (location.coords.speed && location.coords.speed > 0) {
+      // Update current speed with smoothed pace
+      if (location.coords.speed != null && location.coords.speed > 0) {
         const speedKmh = location.coords.speed * 3.6;
         setCurrentSpeed(speedKmh);
-        // Update pace
-        if (speedKmh > 0.5) {
-          setCurrentPaceSecPerKm(3600 / speedKmh);
-        }
+        setCurrentPaceSecPerKm((prev) => smoothedPace(speedKmh, prev));
       }
     },
-    [isPaused, isActive]
+    [] // Stable callback - reads isPaused/isActive from refs
   );
 
-  // Register location callback when activity starts
+  // Register/unregister location callback based on activity state
   useEffect(() => {
     if (isActive) {
       setLocationCallback(handleLocation);
     } else {
       setLocationCallback(null);
     }
+    return () => setLocationCallback(null);
   }, [isActive, handleLocation]);
 
   const startActivity = useCallback(
@@ -158,7 +163,6 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       setWaypoints([]);
       setCurrentSpeed(0);
       setIsPaused(false);
-      waypointIndexRef.current = 0;
 
       await startBackgroundLocation();
     },
@@ -194,11 +198,22 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
           ? paceSecondsPerKm(distanceMeters, elapsedSeconds)
           : null;
 
-      // Calculate XP
       const xp = xpFromActivity(distanceMeters, elapsedSeconds, avgHeartRate);
 
-      // Rough calorie estimate
-      const calories = Math.round(distanceMeters * 0.06);
+      // Fetch user weight for MET-based calorie calculation
+      let userWeight: number | null = null;
+      try {
+        const profile = await ProfileService.getProfile(user.id);
+        userWeight = profile.weight_kg;
+      } catch (err) {
+        console.warn('[Activity] Could not fetch profile for calorie calc, using default weight:', err);
+      }
+      const calories = caloriesFromActivity(
+        distanceMeters,
+        elapsedSeconds,
+        userWeight,
+        currentActivity.type as 'run' | 'walk'
+      );
 
       const completed = await ActivityService.updateActivity(currentActivity.id, {
         status: 'completed',
@@ -233,23 +248,21 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         );
       }
 
-      // Check for personal bests
-      try {
-        await PBService.checkPersonalBests(user.id, completed);
-      } catch {
-        // PB check failure shouldn't block completion
-      }
+      // Non-blocking post-completion checks
+      PBService.checkPersonalBests(user.id, completed).catch((err) => {
+        console.warn('[Activity] PB check failed:', err);
+      });
 
-      // Check activity achievements
-      try {
-        const history = await ActivityService.getActivityHistory(user.id);
-        const completedCount = history.filter((a) => a.status === 'completed').length;
-        AchievementService.checkAchievements(user.id, {
-          activityCount: completedCount,
-        }).catch(() => {});
-      } catch {
-        // Achievement check failure shouldn't block completion
-      }
+      ActivityService.getActivityHistory(user.id)
+        .then((history) => {
+          const completedCount = history.filter((a) => a.status === 'completed').length;
+          return AchievementService.checkAchievements(user.id, {
+            activityCount: completedCount,
+          });
+        })
+        .catch((err) => {
+          console.warn('[Activity] Achievement check failed:', err);
+        });
 
       // Reset state
       setCurrentActivity(null);

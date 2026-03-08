@@ -10,14 +10,14 @@ type ConfirmModalProps = {
   cancelLabel?: string;
   destructive?: boolean;
   onConfirm: () => void;
-  onCancel: () => void;
+  onCancel?: () => void;
 };
 
 export default function ConfirmModal({
   visible,
   title,
   message,
-  confirmLabel = 'Confirm',
+  confirmLabel = 'OK',
   cancelLabel = 'Cancel',
   destructive = false,
   onConfirm,
@@ -30,12 +30,14 @@ export default function ConfirmModal({
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
           <View style={styles.actions}>
-            <Button
-              title={cancelLabel}
-              onPress={onCancel}
-              variant="ghost"
-              style={styles.button}
-            />
+            {onCancel && (
+              <Button
+                title={cancelLabel}
+                onPress={onCancel}
+                variant="ghost"
+                style={styles.button}
+              />
+            )}
             <Button
               title={confirmLabel}
               onPress={onConfirm}

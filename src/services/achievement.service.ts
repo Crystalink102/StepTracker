@@ -92,8 +92,9 @@ export async function checkAchievements(
       try {
         await unlockAchievement(userId, def.id);
         newlyUnlocked.push(def);
-      } catch {
-        // Might already be unlocked (race condition), skip
+      } catch (err) {
+        // Expected: unique constraint violation = already unlocked (race condition)
+        console.warn('[Achievements] Could not unlock', def.id, ':', err);
       }
     }
   }

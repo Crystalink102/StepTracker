@@ -10,7 +10,6 @@ type ActiveRunCardProps = {
   currentPaceSecPerKm: number;
   currentSpeed: number;
   isPaused: boolean;
-  isActive?: boolean;
 };
 
 export default function ActiveRunCard({

@@ -20,8 +20,8 @@ export function useAchievements() {
       ]);
       setDefinitions(defs);
       setUserAchievements(uas);
-    } catch {
-      // Silently fail
+    } catch (err) {
+      console.warn('[useAchievements] Failed to load achievements:', err);
     } finally {
       setIsLoading(false);
     }
@@ -51,8 +51,8 @@ export function useAchievements() {
             // Refresh the list
             await refresh();
           }
-        } catch {
-          // Silently fail
+        } catch (err) {
+          console.warn('[useAchievements] Achievement check failed:', err);
         }
       }, 1000);
     },

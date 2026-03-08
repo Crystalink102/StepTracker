@@ -55,8 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
-      } catch {
-        // No session
+      } catch (err) {
+        console.warn('[Auth] Failed to get session:', err);
       } finally {
         setIsLoading(false);
       }
@@ -113,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  const logoutFn = useCallback(async () => {
+  const logout = useCallback(async () => {
     await AuthService.logout();
     setSession(null);
     setUser(null);
@@ -135,7 +135,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         verifyOTP,
         enrollMFA,
         verifyMFA,
-        logout: logoutFn,
+        logout,
         refreshMFAStatus,
       }}
     >

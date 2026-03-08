@@ -37,12 +37,6 @@ function AuthGate() {
       // Logged in, get out of auth screens
       router.replace('/(tabs)');
     }
-    // TODO: Re-enable MFA requirement later:
-    // } else if (isAuthenticated && !hasMFA && !inAuthGroup) {
-    //   router.replace('/(auth)/setup-mfa');
-    // } else if (isAuthenticated && hasMFA && !mfaVerified && !inAuthGroup) {
-    //   router.replace('/(auth)/login');
-    // }
   }, [isAuthenticated, isLoading, hasMFA, mfaVerified, segments, router]);
 
   if (isLoading) {

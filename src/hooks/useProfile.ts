@@ -13,8 +13,8 @@ export function useProfile() {
     try {
       const data = await ProfileService.getProfile(user.id);
       setProfile(data);
-    } catch {
-      // Silently fail
+    } catch (err) {
+      console.warn('[useProfile] Failed to load profile:', err);
     } finally {
       setIsLoading(false);
     }

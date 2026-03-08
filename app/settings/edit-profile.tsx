@@ -5,17 +5,16 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
-import { Avatar, Button, Input } from '@/src/components/ui';
+import { Avatar, Button, Input, ConfirmModal } from '@/src/components/ui';
 import * as ProfileService from '@/src/services/profile.service';
 import * as StorageService from '@/src/services/storage.service';
 import { Profile } from '@/src/types/database';
-import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 
 export default function EditProfileScreen() {
   const { user } = useAuth();
@@ -27,6 +26,10 @@ export default function EditProfileScreen() {
   const [stepGoal, setStepGoal] = useState('10000');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '' });
+
+  const showAlert = (title: string, message: string) =>
+    setAlertModal({ visible: true, title, message });
 
   useEffect(() => {
     if (!user) {
@@ -62,7 +65,7 @@ export default function EditProfileScreen() {
       await ProfileService.updateProfile(user.id, { avatar_url: avatarUrl });
       setProfile((prev) => (prev ? { ...prev, avatar_url: avatarUrl } : null));
     } catch (err: any) {
-      Alert.alert('Upload Failed', err.message);
+      showAlert('Upload Failed', err.message);
     }
   };
 
@@ -79,7 +82,7 @@ export default function EditProfileScreen() {
       setProfile(updated);
       router.back();
     } catch (err: any) {
-      Alert.alert('Save Failed', err.message);
+      showAlert('Save Failed', err.message);
     } finally {
       setIsSaving(false);
     }
@@ -132,6 +135,13 @@ export default function EditProfileScreen() {
         onPress={handleSave}
         isLoading={isSaving}
         style={styles.saveButton}
+      />
+
+      <ConfirmModal
+        visible={alertModal.visible}
+        title={alertModal.title}
+        message={alertModal.message}
+        onConfirm={() => setAlertModal({ visible: false, title: '', message: '' })}
       />
     </ScrollView>
   );

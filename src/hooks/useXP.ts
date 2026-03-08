@@ -23,8 +23,8 @@ export function useXP() {
       const data = await XPService.getUserXP(user.id);
       setTotalXP(data.total_xp);
       setLevel(data.current_level);
-    } catch {
-      // Silently fail - might not have set up Supabase yet
+    } catch (err) {
+      console.warn('[useXP] Failed to load XP data:', err);
     } finally {
       setIsLoading(false);
     }

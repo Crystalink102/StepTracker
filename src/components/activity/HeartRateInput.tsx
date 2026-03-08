@@ -27,7 +27,8 @@ export default function HeartRateInput({
   const handleManualChange = (text: string) => {
     setManualHR(text);
     const hr = parseInt(text, 10);
-    onHeartRateChange(isNaN(hr) ? undefined : hr, 'manual');
+    const isValid = !isNaN(hr) && hr >= 30 && hr <= 220;
+    onHeartRateChange(isValid ? hr : undefined, 'manual');
   };
 
   const toggleMode = () => {

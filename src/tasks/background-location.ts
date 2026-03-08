@@ -50,13 +50,13 @@ export async function startBackgroundLocation() {
 
   await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
     accuracy: Location.Accuracy.BestForNavigation,
-    timeInterval: 3000,
-    distanceInterval: 5,
+    timeInterval: 2000,     // Poll every 2s for smoother distance tracking
+    distanceInterval: 3,    // Or every 3m moved (captures turns better)
     showsBackgroundLocationIndicator: true,
     foregroundService: {
       notificationTitle: 'StepTracker',
       notificationBody: 'Tracking your activity...',
-      notificationColor: '#4F46E5',
+      notificationColor: '#A855F7',
     },
   });
 }

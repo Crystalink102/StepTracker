@@ -40,8 +40,8 @@ export default function HistoryScreen() {
       ]);
       setActivities(acts);
       setPersonalBests(pbs);
-    } catch {
-      // Silently fail
+    } catch (err) {
+      console.warn('[History] Failed to load data:', err);
     }
   }, [user]);
 
@@ -92,12 +92,7 @@ export default function HistoryScreen() {
         renderItem={({ item }) => (
           <RunListItem
             activity={item}
-            onPress={() =>
-              router.push({
-                pathname: '/run/[id]' as any,
-                params: { id: item.id },
-              })
-            }
+            onPress={() => router.push(`/run/${item.id}` as any)}
           />
         )}
         ListEmptyComponent={

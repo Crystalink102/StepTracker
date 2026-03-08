@@ -59,7 +59,9 @@ export async function getPendingRequests(userId: string): Promise<
     .eq('status', 'pending');
 
   if (error) throw error;
-  return data as any ?? [];
+  // Supabase join types don't infer correctly for foreign key relationships -
+  // the runtime data shape is correct but TS can't verify it from the schema.
+  return (data ?? []) as unknown as (Friendship & { requester: { username: string; display_name: string | null; avatar_url: string | null } })[];
 }
 
 export async function getPendingCount(userId: string): Promise<number> {

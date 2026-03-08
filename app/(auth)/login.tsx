@@ -9,10 +9,10 @@ import {
   Platform,
   ScrollView,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
+import { ConfirmModal } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 export default function LoginScreen() {
@@ -22,12 +22,16 @@ export default function LoginScreen() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '' });
 
   const isPhone = /^\+?\d{7,}$/.test(identifier.replace(/[\s-()]/g, ''));
 
+  const showAlert = (title: string, message: string) =>
+    setAlertModal({ visible: true, title, message });
+
   const handleLogin = async () => {
     if (!identifier.trim() || !password) {
-      Alert.alert('Missing Fields', 'Please enter your email/phone and password.');
+      showAlert('Missing Fields', 'Please enter your email/phone and password.');
       return;
     }
 
@@ -41,7 +45,7 @@ export default function LoginScreen() {
       }
       // Auth state change listener will handle navigation
     } catch (err: any) {
-      Alert.alert('Login Failed', err.message || 'Something went wrong.');
+      showAlert('Login Failed', err.message || 'Something went wrong.');
     } finally {
       setIsLoading(false);
     }
@@ -111,6 +115,13 @@ export default function LoginScreen() {
           </Link>
         </View>
       </ScrollView>
+
+      <ConfirmModal
+        visible={alertModal.visible}
+        title={alertModal.title}
+        message={alertModal.message}
+        onConfirm={() => setAlertModal({ visible: false, title: '', message: '' })}
+      />
     </KeyboardAvoidingView>
   );
 }

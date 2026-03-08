@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import { Pedometer } from 'expo-sensors';
-import { AppState, Platform } from 'react-native';
+import { AppState } from 'react-native';
 import { useAuth } from '@/src/context/AuthContext';
 import * as StepService from '@/src/services/step.service';
 import * as AchievementService from '@/src/services/achievement.service';
@@ -57,8 +57,8 @@ export function StepProvider({ children }: { children: ReactNode }) {
             todaySteps: steps,
           }).catch(() => {});
         }
-      } catch {
-        // Silently fail sync - will retry next interval
+      } catch (err) {
+        console.warn('[StepContext] Sync failed, will retry:', err);
       }
     },
     [user]
@@ -75,8 +75,8 @@ export function StepProvider({ children }: { children: ReactNode }) {
           setTodaySteps(record.step_count);
           lastSyncedSteps.current = record.step_count;
         }
-      } catch {
-        // Supabase might not be configured yet
+      } catch (err) {
+        console.warn('[StepContext] Failed to load saved steps:', err);
       }
     };
 
