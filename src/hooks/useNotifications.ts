@@ -46,7 +46,7 @@ export function useNotifications() {
         .catch(() => {});
     }
 
-    if (!profile.notify_daily_reminder && !profile.notify_streak_warning) {
+    if (!profile.notify_daily_reminder && !profile.notify_streak_warning && !profile.notify_weekly_summary) {
       NotificationService.cancelAllNotifications().catch(() => {});
     }
   }, [profile, user]);

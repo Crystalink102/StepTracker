@@ -3,28 +3,45 @@ import { ScrollView, TouchableOpacity, Text, StyleSheet, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
+import { useProfile } from '@/src/hooks/useProfile';
 import { useXP } from '@/src/hooks/useXP';
 import { useAchievements } from '@/src/hooks/useAchievements';
 import { useFriends } from '@/src/hooks/useFriends';
 import ProfileHeader from '@/src/components/profile/ProfileHeader';
 import StatsOverview from '@/src/components/profile/StatsOverview';
 import { Badge } from '@/src/components/ui';
-import * as ProfileService from '@/src/services/profile.service';
-import { Profile } from '@/src/types/database';
+import * as StepService from '@/src/services/step.service';
+import * as ActivityService from '@/src/services/activity.service';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 export default function ProfileScreen() {
   const { user } = useAuth();
+  const { profile } = useProfile();
   const { level, totalXP } = useXP();
   const { earnedCount, totalCount } = useAchievements();
   const { pendingCount } = useFriends();
   const router = useRouter();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [totalSteps, setTotalSteps] = useState(0);
+  const [totalActivities, setTotalActivities] = useState(0);
+  const [totalDistanceKm, setTotalDistanceKm] = useState(0);
 
   useEffect(() => {
     if (!user) return;
-    ProfileService.getProfile(user.id)
-      .then(setProfile)
+
+    // Fetch all-time step total
+    StepService.getStepHistory(user.id, '2000-01-01', '2099-12-31')
+      .then((history) => {
+        setTotalSteps(history.reduce((sum, d) => sum + d.step_count, 0));
+      })
+      .catch(() => {});
+
+    // Fetch activity stats
+    ActivityService.getActivityHistory(user.id, 1000)
+      .then((activities) => {
+        setTotalActivities(activities.length);
+        const distM = activities.reduce((sum, a) => sum + (a.distance_meters || 0), 0);
+        setTotalDistanceKm(distM / 1000);
+      })
       .catch(() => {});
   }, [user]);
 
@@ -51,9 +68,9 @@ export default function ProfileScreen() {
 
         <StatsOverview
           totalXP={totalXP}
-          totalSteps={0}
-          totalActivities={0}
-          totalDistanceKm={0}
+          totalSteps={totalSteps}
+          totalActivities={totalActivities}
+          totalDistanceKm={totalDistanceKm}
         />
 
         <View style={styles.settingsSection}>

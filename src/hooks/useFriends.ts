@@ -38,8 +38,9 @@ export function useFriends() {
     async (addresseeId: string) => {
       if (!user) return;
       await SocialService.sendFriendRequest(user.id, addresseeId);
+      await refresh();
     },
-    [user]
+    [user, refresh]
   );
 
   const acceptRequest = useCallback(
