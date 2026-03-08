@@ -32,6 +32,10 @@ export function useXP() {
 
   useEffect(() => {
     refresh();
+
+    // Refresh XP periodically so the card stays in sync with step awards
+    const interval = setInterval(refresh, 30_000);
+    return () => clearInterval(interval);
   }, [refresh]);
 
   const addXP = useCallback(

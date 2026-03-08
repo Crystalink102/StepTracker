@@ -116,6 +116,28 @@ export function StepProvider({ children }: { children: ReactNode }) {
           setTodaySteps(record.step_count);
           lastSyncedSteps.current = record.step_count;
         }
+
+        // Catch-up: reconcile steps with XP balance.
+        // If user has steps but XP wasn't awarded (e.g. first time after fix),
+        // compute expected XP from total steps across all days and award the gap.
+        try {
+          const xpData = await XPService.getUserXP(user.id);
+          const history = await StepService.getStepHistory(user.id, '2000-01-01', '2099-12-31');
+          const totalSteps = history.reduce((sum, d) => sum + d.step_count, 0);
+          const expectedXP = xpFromSteps(totalSteps);
+          const gap = expectedXP - xpData.total_xp;
+          if (gap > 0) {
+            await XPService.addXP(
+              user.id,
+              gap,
+              'steps',
+              undefined,
+              `Step XP catch-up (${totalSteps.toLocaleString()} total steps)`
+            );
+          }
+        } catch (xpErr) {
+          console.warn('[StepContext] XP catch-up failed:', xpErr);
+        }
       } catch (err) {
         console.warn('[StepContext] Failed to load saved steps:', err);
       }
