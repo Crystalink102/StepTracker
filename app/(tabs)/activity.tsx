@@ -1,10 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useActivity } from '@/src/context/ActivityContext';
 import { useXP } from '@/src/hooks/useXP';
 import { useAuth } from '@/src/context/AuthContext';
 import ActiveRunCard from '@/src/components/activity/ActiveRunCard';
+import LiveRouteMap from '@/src/components/activity/LiveRouteMap';
 import RunControls from '@/src/components/activity/RunControls';
 import HeartRateInput from '@/src/components/activity/HeartRateInput';
 import { ConfirmModal } from '@/src/components/ui';
@@ -13,6 +15,7 @@ import { Colors, Spacing } from '@/src/constants/theme';
 
 export default function ActivityScreen() {
   const { user } = useAuth();
+  const router = useRouter();
   const { level } = useXP();
   const {
     currentActivity,
@@ -22,6 +25,7 @@ export default function ActivityScreen() {
     distanceMeters,
     currentPaceSecPerKm,
     currentSpeed,
+    waypoints,
     startActivity,
     pauseActivity,
     resumeActivity,
@@ -32,8 +36,6 @@ export default function ActivityScreen() {
   const [hrSource, setHrSource] = useState<'manual' | 'auto'>('manual');
   const [restingHR, setRestingHR] = useState(70);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
-  const [showResultModal, setShowResultModal] = useState(false);
-  const [resultMessage, setResultMessage] = useState('');
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -66,16 +68,14 @@ export default function ActivityScreen() {
     try {
       const result = await stopActivity(heartRate, hrSource);
       if (result) {
-        setResultMessage(
-          `${(distanceMeters / 1000).toFixed(2)} km in ${Math.floor(elapsedSeconds / 60)}min • +${result.xp_earned} XP`
-        );
-        setShowResultModal(true);
+        // Navigate to run detail to show the route map
+        router.push(`/run/${result.id}` as any);
       }
     } catch (err: any) {
       setErrorMessage(err.message);
       setShowErrorModal(true);
     }
-  }, [stopActivity, heartRate, hrSource, distanceMeters, elapsedSeconds]);
+  }, [stopActivity, heartRate, hrSource, router]);
 
   const handleHeartRateChange = useCallback(
     (hr: number | undefined, source: 'manual' | 'auto') => {
@@ -84,6 +84,12 @@ export default function ActivityScreen() {
     },
     []
   );
+
+  // Map coordinates for the live view
+  const mapCoords = waypoints.map((wp) => ({
+    latitude: wp.latitude,
+    longitude: wp.longitude,
+  }));
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -100,6 +106,11 @@ export default function ActivityScreen() {
           currentSpeed={currentSpeed}
           isPaused={isPaused}
         />
+
+        {/* Live route map during active run */}
+        {isActive && mapCoords.length > 0 && (
+          <LiveRouteMap waypoints={mapCoords} isActive={isActive} />
+        )}
 
         {isActive && currentActivity && (
           <HeartRateInput
@@ -131,15 +142,6 @@ export default function ActivityScreen() {
       />
 
       <ConfirmModal
-        visible={showResultModal}
-        title="Activity Complete!"
-        message={resultMessage}
-        confirmLabel="Nice!"
-        onConfirm={() => setShowResultModal(false)}
-        onCancel={() => setShowResultModal(false)}
-      />
-
-      <ConfirmModal
         visible={showErrorModal}
         title="Error"
         message={errorMessage}
@@ -161,8 +163,5 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: Spacing.xxxl,
-  },
-  placeholder: {
-    flex: 1,
   },
 });

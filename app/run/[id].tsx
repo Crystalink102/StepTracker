@@ -6,21 +6,12 @@ import {
   StyleSheet,
   ActivityIndicator,
   Dimensions,
-  Platform,
   Share,
   TouchableOpacity,
 } from 'react-native';
 import { useLocalSearchParams, Stack } from 'expo-router';
-
-// react-native-maps doesn't support web
-let MapView: any = null;
-let Polyline: any = null;
-if (Platform.OS !== 'web') {
-  const Maps = require('react-native-maps');
-  MapView = Maps.default;
-  Polyline = Maps.Polyline;
-}
 import * as ActivityService from '@/src/services/activity.service';
+import RouteMap from '@/src/components/activity/RouteMap';
 import StatsGrid from '@/src/components/history/StatsGrid';
 import { Badge } from '@/src/components/ui';
 import { Activity, ActivityWaypoint } from '@/src/types/database';
@@ -28,7 +19,8 @@ import { formatRelativeDate, formatTime } from '@/src/utils/date-helpers';
 import { formatDistance, formatDuration, formatPace } from '@/src/utils/formatters';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
+const MAP_HEIGHT = Math.round(SCREEN_HEIGHT * 0.45);
 
 export default function RunDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -65,7 +57,7 @@ export default function RunDetailScreen() {
 
   const handleShare = async () => {
     if (!activity) return;
-    const emoji = activity.type === 'run' ? '🏃' : '🚶';
+    const emoji = activity.type === 'run' ? '\u{1F3C3}' : '\u{1F6B6}';
     const dist = formatDistance(activity.distance_meters);
     const dur = formatDuration(activity.duration_seconds);
     const pace = activity.avg_pace_seconds_per_km
@@ -77,10 +69,10 @@ export default function RunDetailScreen() {
 
     const lines = [
       `${emoji} ${activity.type === 'run' ? 'Run' : 'Walk'} Complete!`,
-      `📏 ${dist}`,
-      `⏱️ ${dur}`,
-      pace ? `⚡ ${pace}` : null,
-      cal ? `🔥 ${cal}` : null,
+      `\u{1F4CF} ${dist}`,
+      `\u{23F1}\u{FE0F} ${dur}`,
+      pace ? `\u{26A1} ${pace}` : null,
+      cal ? `\u{1F525} ${cal}` : null,
       '',
       'Tracked with StepTracker',
     ].filter(Boolean);
@@ -93,82 +85,75 @@ export default function RunDetailScreen() {
     longitude: wp.longitude,
   }));
 
-  // Calculate map region from waypoints
-  const getMapRegion = () => {
-    if (routeCoords.length === 0) return undefined;
-
-    let minLat = routeCoords[0].latitude;
-    let maxLat = routeCoords[0].latitude;
-    let minLng = routeCoords[0].longitude;
-    let maxLng = routeCoords[0].longitude;
-
-    routeCoords.forEach((c) => {
-      minLat = Math.min(minLat, c.latitude);
-      maxLat = Math.max(maxLat, c.latitude);
-      minLng = Math.min(minLng, c.longitude);
-      maxLng = Math.max(maxLng, c.longitude);
-    });
-
-    return {
-      latitude: (minLat + maxLat) / 2,
-      longitude: (minLng + maxLng) / 2,
-      latitudeDelta: (maxLat - minLat) * 1.3 + 0.005,
-      longitudeDelta: (maxLng - minLng) * 1.3 + 0.005,
-    };
-  };
+  const hasRoute = routeCoords.length > 1;
 
   return (
     <>
       <Stack.Screen
         options={{
           headerShown: true,
-          title: `${activity.type === 'run' ? 'Run' : 'Walk'} Details`,
-          headerStyle: { backgroundColor: Colors.surface },
+          title: '',
+          headerTransparent: hasRoute,
+          headerStyle: hasRoute ? undefined : { backgroundColor: Colors.surface },
           headerTintColor: Colors.textPrimary,
         }}
       />
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Map - native only */}
-        {routeCoords.length > 1 && MapView && (
-          <View style={styles.mapContainer}>
-            <MapView
-              style={styles.map}
-              initialRegion={getMapRegion()}
-              scrollEnabled={false}
-              zoomEnabled={false}
-              userInterfaceStyle="dark"
-            >
-              <Polyline
-                coordinates={routeCoords}
-                strokeColor={Colors.primary}
-                strokeWidth={4}
-              />
-            </MapView>
+        {/* Route Map */}
+        {hasRoute ? (
+          <RouteMap
+            coordinates={routeCoords}
+            height={MAP_HEIGHT}
+            interactive={true}
+            showMarkers={true}
+            showKmSplits={true}
+            strokeWidth={4}
+            borderRadius={0}
+          />
+        ) : (
+          <View style={styles.noMapPlaceholder}>
+            <Text style={styles.noMapText}>No route data</Text>
           </View>
         )}
 
-        {/* Header */}
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <Badge
-              label={activity.type}
-              variant={activity.type === 'run' ? 'primary' : 'secondary'}
-            />
-            <Text style={styles.date}>
-              {formatRelativeDate(activity.started_at)} at{' '}
-              {formatTime(activity.started_at)}
-            </Text>
+        {/* Content card overlapping map bottom */}
+        <View style={[styles.contentCard, !hasRoute && styles.contentCardFlat]}>
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.headerLeft}>
+              <Badge
+                label={activity.type}
+                variant={activity.type === 'run' ? 'primary' : 'secondary'}
+              />
+              <View>
+                <Text style={styles.activityTitle}>
+                  {activity.type === 'run' ? 'Run' : 'Walk'}
+                </Text>
+                <Text style={styles.date}>
+                  {formatRelativeDate(activity.started_at)} at{' '}
+                  {formatTime(activity.started_at)}
+                </Text>
+              </View>
+            </View>
+            {activity.status === 'completed' && (
+              <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
+                <Text style={styles.shareIcon}>{'\u2197'}</Text>
+              </TouchableOpacity>
+            )}
           </View>
-          {activity.status === 'completed' && (
-            <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
-              <Text style={styles.shareIcon}>↗</Text>
-            </TouchableOpacity>
-          )}
-        </View>
 
-        {/* Stats */}
-        <View style={styles.statsContainer}>
-          <StatsGrid activity={activity} />
+          {/* Big distance display */}
+          <View style={styles.distanceSection}>
+            <Text style={styles.distanceValue}>
+              {(activity.distance_meters / 1000).toFixed(2)}
+            </Text>
+            <Text style={styles.distanceUnit}>kilometers</Text>
+          </View>
+
+          {/* Stats */}
+          <View style={styles.statsContainer}>
+            <StatsGrid activity={activity} />
+          </View>
         </View>
       </ScrollView>
     </>
@@ -188,28 +173,46 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     fontSize: FontSize.lg,
   },
-  mapContainer: {
-    height: 250,
-    borderRadius: BorderRadius.lg,
-    overflow: 'hidden',
-    margin: Spacing.lg,
+  noMapPlaceholder: {
+    height: 120,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  map: {
-    width: '100%',
-    height: '100%',
+  noMapText: {
+    color: Colors.textMuted,
+    fontSize: FontSize.md,
+  },
+  contentCard: {
+    backgroundColor: Colors.background,
+    marginTop: -20,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    paddingTop: Spacing.xxl,
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.xxxl,
+  },
+  contentCardFlat: {
+    marginTop: 0,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: Spacing.lg,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.xl,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
     flex: 1,
+  },
+  activityTitle: {
+    color: Colors.textPrimary,
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
   },
   shareButton: {
     width: 40,
@@ -226,10 +229,28 @@ const styles = StyleSheet.create({
   },
   date: {
     color: Colors.textSecondary,
-    fontSize: FontSize.md,
+    fontSize: FontSize.sm,
+    marginTop: 2,
+  },
+  distanceSection: {
+    alignItems: 'center',
+    marginBottom: Spacing.xxl,
+    paddingVertical: Spacing.lg,
+  },
+  distanceValue: {
+    color: Colors.textPrimary,
+    fontSize: 56,
+    fontWeight: FontWeight.bold,
+    lineHeight: 60,
+  },
+  distanceUnit: {
+    color: Colors.textMuted,
+    fontSize: FontSize.lg,
+    marginTop: Spacing.xs,
+    textTransform: 'uppercase',
+    letterSpacing: 2,
   },
   statsContainer: {
-    paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xxxl,
+    marginBottom: Spacing.lg,
   },
 });

@@ -1,18 +1,107 @@
-import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
+import { useState, useEffect } from 'react';
+import { TouchableOpacity, View, Text, StyleSheet, Platform } from 'react-native';
 import { Badge } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 import { formatDistance, formatDuration, formatPace } from '@/src/utils/formatters';
 import { formatRelativeDate, formatTime } from '@/src/utils/date-helpers';
-import { Activity } from '@/src/types/database';
+import { Activity, ActivityWaypoint } from '@/src/types/database';
+import { supabase } from '@/src/services/supabase';
+
+// Lazy load map components
+let MapView: any = null;
+let Polyline: any = null;
+if (Platform.OS !== 'web') {
+  const Maps = require('react-native-maps');
+  MapView = Maps.default;
+  Polyline = Maps.Polyline;
+}
 
 type RunListItemProps = {
   activity: Activity;
   onPress: () => void;
 };
 
+function MiniRoute({ activityId }: { activityId: string }) {
+  const [coords, setCoords] = useState<{ latitude: number; longitude: number }[] | null>(null);
+
+  useEffect(() => {
+    supabase
+      .from('activity_waypoints')
+      .select('latitude, longitude')
+      .eq('activity_id', activityId)
+      .order('order_index', { ascending: true })
+      .then(({ data }) => {
+        if (data && data.length > 1) {
+          setCoords(data);
+        }
+      });
+  }, [activityId]);
+
+  if (!MapView || !coords || coords.length < 2) return null;
+
+  // Calculate region
+  let minLat = coords[0].latitude, maxLat = coords[0].latitude;
+  let minLng = coords[0].longitude, maxLng = coords[0].longitude;
+  coords.forEach((c) => {
+    minLat = Math.min(minLat, c.latitude);
+    maxLat = Math.max(maxLat, c.latitude);
+    minLng = Math.min(minLng, c.longitude);
+    maxLng = Math.max(maxLng, c.longitude);
+  });
+
+  const region = {
+    latitude: (minLat + maxLat) / 2,
+    longitude: (minLng + maxLng) / 2,
+    latitudeDelta: Math.max((maxLat - minLat) * 1.5, 0.004),
+    longitudeDelta: Math.max((maxLng - minLng) * 1.5, 0.004),
+  };
+
+  return (
+    <View style={miniStyles.container}>
+      <MapView
+        style={miniStyles.map}
+        initialRegion={region}
+        scrollEnabled={false}
+        zoomEnabled={false}
+        rotateEnabled={false}
+        pitchEnabled={false}
+        userInterfaceStyle="dark"
+        showsUserLocation={false}
+        showsMyLocationButton={false}
+        showsCompass={false}
+        showsScale={false}
+        showsPointsOfInterest={false}
+        toolbarEnabled={false}
+        liteMode={Platform.OS === 'android'}
+      >
+        <Polyline
+          coordinates={coords}
+          strokeColor={Colors.primary}
+          strokeWidth={3}
+        />
+      </MapView>
+    </View>
+  );
+}
+
+const miniStyles = StyleSheet.create({
+  container: {
+    height: 100,
+    borderRadius: BorderRadius.md,
+    overflow: 'hidden',
+    marginBottom: Spacing.md,
+  },
+  map: {
+    width: '100%',
+    height: '100%',
+  },
+});
+
 export default function RunListItem({ activity, onPress }: RunListItemProps) {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
+      <MiniRoute activityId={activity.id} />
+
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Badge
@@ -20,7 +109,7 @@ export default function RunListItem({ activity, onPress }: RunListItemProps) {
             variant={activity.type === 'run' ? 'primary' : 'secondary'}
           />
           <Text style={styles.date}>
-            {formatRelativeDate(activity.started_at)} • {formatTime(activity.started_at)}
+            {formatRelativeDate(activity.started_at)} {'\u2022'} {formatTime(activity.started_at)}
           </Text>
         </View>
         <Text style={styles.xp}>+{activity.xp_earned} XP</Text>
