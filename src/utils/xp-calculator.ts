@@ -17,28 +17,37 @@ export function xpForLevel(level: number): number {
 
 /**
  * Total cumulative XP needed from level 1 to reach target level.
+ * Memoized to avoid recomputing in binary search.
  */
+const xpCache = new Map<number, number>();
 export function totalXPForLevel(level: number): number {
-  let total = 0;
-  for (let i = 1; i <= level; i++) {
-    total += xpForLevel(i);
-  }
-  return total;
+  if (level <= 0) return 0;
+  const cached = xpCache.get(level);
+  if (cached !== undefined) return cached;
+  const result = totalXPForLevel(level - 1) + xpForLevel(level);
+  xpCache.set(level, result);
+  return result;
 }
 
 /**
  * Given total XP, calculate current level.
+ * Uses binary search for O(log n) performance instead of O(n) linear scan.
  */
 export function levelFromTotalXP(totalXP: number): number {
-  let level = 1;
-  let accumulated = 0;
-  while (true) {
-    const needed = xpForLevel(level);
-    if (accumulated + needed > totalXP) break;
-    accumulated += needed;
-    level++;
+  if (totalXP <= 0) return 1;
+
+  // Binary search: find highest level where totalXPForLevel(level-1) <= totalXP
+  let lo = 1;
+  let hi = 200; // ~level 200 would require astronomical XP
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    if (totalXPForLevel(mid - 1) <= totalXP) {
+      lo = mid;
+    } else {
+      hi = mid - 1;
+    }
   }
-  return level;
+  return lo;
 }
 
 /**

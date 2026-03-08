@@ -35,8 +35,9 @@ function segmentTimeFromWaypoints(
   totalDistance: number,
   totalDuration: number
 ): number {
-  if (waypoints.length < 2) {
+  if (waypoints.length < 2 || totalDistance <= 0) {
     // Fallback: proportional estimate
+    if (totalDistance <= 0) return totalDuration;
     return Math.round((targetDistance / totalDistance) * totalDuration);
   }
 

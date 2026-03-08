@@ -101,16 +101,26 @@ export function StepProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isAvailable) return;
 
-    // Get steps since midnight
+    // Get steps since midnight as our baseline
     const start = new Date();
     start.setHours(0, 0, 0, 0);
 
-    Pedometer.getStepCountAsync(start, new Date()).then((result) => {
-      setTodaySteps((prev) => Math.max(prev, result.steps));
-    });
+    // Establish the baseline BEFORE subscribing to watch, so incremental
+    // deltas from watchStepCount are added on top of the correct total.
+    let baselineSteps = 0;
+    let baselineSet = false;
 
-    // Watch for new steps
+    Pedometer.getStepCountAsync(start, new Date())
+      .then((result) => {
+        baselineSteps = result.steps;
+        baselineSet = true;
+        setTodaySteps((prev) => Math.max(prev, baselineSteps));
+      })
+      .catch(() => {});
+
+    // Watch for new steps — only adds steps that arrive AFTER getStepCountAsync
     const subscription = Pedometer.watchStepCount((result) => {
+      if (!baselineSet) return; // Don't add deltas until baseline is established
       setTodaySteps((prev) => prev + result.steps);
       setIsTracking(true);
     });
