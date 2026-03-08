@@ -83,8 +83,7 @@ export function hrXPBonus(heartRate: number): number {
 
 /**
  * Calculate XP earned from steps.
- * Base: 1 XP per STEPS_PER_XP steps (default 10).
- * Heart rate bonus is per-step.
+ * 1 XP per step (STEPS_PER_XP = 1). Every step counts!
  */
 export function xpFromSteps(steps: number, avgHeartRate?: number): number {
   const baseXP = Math.floor(steps / STEPS_PER_XP);

@@ -4,7 +4,7 @@ export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 
 // XP System
 export const XP_POWER = 1.68;
-export const XP_BASE = 100;
+export const XP_BASE = 50; // Level 1 = 50 XP (50 steps → level 2)
 
 // Heart Rate XP Multiplier
 export const HR_BASELINE = 85; // BPM - no bonus at this rate
@@ -15,7 +15,7 @@ export const AUTO_HR_UNLOCK_LEVEL = 3;
 
 // Step tracking
 export const STEP_SYNC_INTERVAL_MS = 60_000; // Sync steps to Supabase every 60s
-export const STEPS_PER_XP = 10; // Base: 1 XP per 10 steps
+export const STEPS_PER_XP = 1; // 1 XP per step — feels rewarding, levels scale up
 
 // Background location
 export const LOCATION_UPDATE_INTERVAL_MS = 3_000;

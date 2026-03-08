@@ -11,6 +11,7 @@ import { Pedometer } from 'expo-sensors';
 import { AppState } from 'react-native';
 import { useAuth } from '@/src/context/AuthContext';
 import * as StepService from '@/src/services/step.service';
+import * as XPService from '@/src/services/xp.service';
 import * as AchievementService from '@/src/services/achievement.service';
 import { xpFromSteps } from '@/src/utils/xp-calculator';
 import { enqueue } from '@/src/services/offline-queue';
@@ -44,13 +45,33 @@ export function StepProvider({ children }: { children: ReactNode }) {
     Pedometer.isAvailableAsync().then(setIsAvailable);
   }, []);
 
-  // Sync steps to Supabase
+  // Sync steps to Supabase and award XP for new steps
   const syncSteps = useCallback(
     async (steps: number) => {
       if (!user || steps === lastSyncedSteps.current) return;
       try {
-        const xp = xpFromSteps(steps);
-        await StepService.updateStepCount(user.id, steps, xp);
+        const totalXP = xpFromSteps(steps);
+        await StepService.updateStepCount(user.id, steps, totalXP);
+
+        // Award XP for the delta (new steps since last sync)
+        const delta = steps - lastSyncedSteps.current;
+        if (delta > 0) {
+          const xpDelta = xpFromSteps(delta);
+          if (xpDelta > 0) {
+            try {
+              await XPService.addXP(
+                user.id,
+                xpDelta,
+                'steps',
+                undefined,
+                `${delta.toLocaleString()} steps`
+              );
+            } catch (xpErr) {
+              console.warn('[StepContext] XP award failed:', xpErr);
+            }
+          }
+        }
+
         lastSyncedSteps.current = steps;
 
         // Check achievements every 5000 steps
