@@ -3,6 +3,38 @@ import { supabase } from './supabase';
 
 const REDIRECT_URL = Linking.createURL('auth/callback');
 
+/**
+ * Convert Supabase auth errors into user-friendly messages.
+ */
+function friendlyAuthError(error: { message: string; status?: number }): Error {
+  const msg = error.message?.toLowerCase() ?? '';
+
+  if (msg.includes('rate limit') || msg.includes('too many requests') || error.status === 429) {
+    return new Error(
+      'Too many attempts. Please wait a few minutes before trying again.'
+    );
+  }
+  if (msg.includes('email not confirmed')) {
+    return new Error(
+      'Please check your email and click the confirmation link before logging in.'
+    );
+  }
+  if (msg.includes('invalid login credentials')) {
+    return new Error('Incorrect email/phone or password. Please try again.');
+  }
+  if (msg.includes('user already registered')) {
+    return new Error('An account with this email already exists. Try logging in instead.');
+  }
+  if (msg.includes('password') && msg.includes('least')) {
+    return new Error('Password must be at least 8 characters.');
+  }
+  if (msg.includes('provide') && msg.includes('email')) {
+    return new Error('Please enter a valid email address.');
+  }
+
+  return new Error(error.message);
+}
+
 // ============================================================
 // Sign Up
 // ============================================================
@@ -14,7 +46,7 @@ export async function signUpWithEmail(email: string, password: string) {
       emailRedirectTo: REDIRECT_URL,
     },
   });
-  if (error) throw error;
+  if (error) throw friendlyAuthError(error);
   return data;
 }
 
@@ -23,7 +55,7 @@ export async function signUpWithPhone(phone: string, password: string) {
     phone,
     password,
   });
-  if (error) throw error;
+  if (error) throw friendlyAuthError(error);
   return data;
 }
 
@@ -35,7 +67,7 @@ export async function loginWithEmail(email: string, password: string) {
     email,
     password,
   });
-  if (error) throw error;
+  if (error) throw friendlyAuthError(error);
   return data;
 }
 
@@ -44,7 +76,7 @@ export async function loginWithPhone(phone: string, password: string) {
     phone,
     password,
   });
-  if (error) throw error;
+  if (error) throw friendlyAuthError(error);
   return data;
 }
 
@@ -59,7 +91,7 @@ export async function resendConfirmationEmail(email: string) {
       emailRedirectTo: REDIRECT_URL,
     },
   });
-  if (error) throw error;
+  if (error) throw friendlyAuthError(error);
 }
 
 export async function resendConfirmationSMS(phone: string) {
@@ -67,7 +99,7 @@ export async function resendConfirmationSMS(phone: string) {
     type: 'sms',
     phone,
   } as any);
-  if (error) throw error;
+  if (error) throw friendlyAuthError(error);
 }
 
 // ============================================================
@@ -84,7 +116,7 @@ export async function verifyOTP(
       : { email: identifier, token, type: 'email' as const };
 
   const { data, error } = await supabase.auth.verifyOtp(params);
-  if (error) throw error;
+  if (error) throw friendlyAuthError(error);
   return data;
 }
 
