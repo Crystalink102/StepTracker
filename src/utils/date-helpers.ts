@@ -1,8 +1,14 @@
 /**
- * Get today's date as YYYY-MM-DD string
+ * Get today's date as YYYY-MM-DD string in local timezone.
+ * Using local time (not UTC) ensures step records, streaks, and goals
+ * align with the user's actual day boundaries.
  */
 export function getTodayString(): string {
-  return new Date().toISOString().split('T')[0];
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 /**

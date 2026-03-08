@@ -9,6 +9,7 @@ import {
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/src/services/supabase';
 import * as AuthService from '@/src/services/auth.service';
+import { clearQueue } from '@/src/services/offline-queue';
 
 type AuthState = {
   session: Session | null;
@@ -88,6 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         else {
           setHasMFA(false);
           setMfaVerified(false);
+          // Clear offline queue on logout to prevent cross-user data leaks
+          clearQueue().catch(() => {});
         }
       }
     );
@@ -151,9 +154,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await AuthService.logout();
-    setSession(null);
-    setUser(null);
+    // Don't manually set state here — onAuthStateChange listener handles it.
+    // Setting state manually races with the listener and can cause double renders.
+    try {
+      await AuthService.logout();
+    } catch (err) {
+      // If signOut fails (e.g. network error), force-clear local state
+      // so the user isn't stuck in a "logged in but broken" state.
+      console.warn('[Auth] Logout error, clearing local state:', err);
+      setSession(null);
+      setUser(null);
+      setHasMFA(false);
+      setMfaVerified(false);
+    }
   }, []);
 
   return (

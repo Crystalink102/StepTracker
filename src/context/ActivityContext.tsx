@@ -178,6 +178,28 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
     return () => setLocationCallback(null);
   }, [isActive, handleLocation]);
 
+  // Reset all state on logout / user change
+  useEffect(() => {
+    if (!user) {
+      if (isActive) {
+        stopBackgroundLocation().catch(() => {});
+      }
+      setCurrentActivity(null);
+      setElapsedSeconds(0);
+      setDistanceMeters(0);
+      setCurrentPaceSecPerKm(0);
+      setWaypoints([]);
+      setCurrentSpeed(0);
+      setIsPaused(false);
+      lastWaypointRef.current = null;
+      isStoppingRef.current = false;
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = undefined;
+      }
+    }
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const startActivity = useCallback(
     async (type: 'run' | 'walk') => {
       if (!user) return;
@@ -302,12 +324,27 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
 
       // Award XP
       if (xp > 0) {
-        await addXP(
-          xp,
-          'activity',
-          currentActivity.id,
-          `${currentActivity.type} - ${(distanceMeters / 1000).toFixed(1)}km`
-        );
+        try {
+          await addXP(
+            xp,
+            'activity',
+            currentActivity.id,
+            `${currentActivity.type} - ${(distanceMeters / 1000).toFixed(1)}km`
+          );
+        } catch (err) {
+          console.warn('[Activity] XP award failed, queuing offline:', err);
+          await enqueue({
+            table: 'xp_transactions',
+            operation: 'insert',
+            data: {
+              user_id: user.id,
+              amount: xp,
+              source: 'activity',
+              source_id: currentActivity.id,
+              description: `${currentActivity.type} - ${(distanceMeters / 1000).toFixed(1)}km`,
+            },
+          }).catch(() => {});
+        }
       }
 
       // Non-blocking post-completion checks (pass waypoints for accurate segment times)

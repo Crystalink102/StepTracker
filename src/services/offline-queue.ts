@@ -110,5 +110,10 @@ export function getQueueSize(): number {
   return queue.length;
 }
 
+export async function clearQueue(): Promise<void> {
+  queue = [];
+  await saveQueue();
+}
+
 // Load queue on module init
 loadQueue().catch(() => {});

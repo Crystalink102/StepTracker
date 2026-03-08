@@ -35,8 +35,9 @@ export function useNotifications() {
       const startOfWeek = new Date(now);
       startOfWeek.setDate(now.getDate() - dayOfWeek);
       startOfWeek.setHours(0, 0, 0, 0);
-      const startDate = startOfWeek.toISOString().split('T')[0];
-      const endDate = now.toISOString().split('T')[0];
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const startDate = `${startOfWeek.getFullYear()}-${pad(startOfWeek.getMonth() + 1)}-${pad(startOfWeek.getDate())}`;
+      const endDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 
       StepService.getStepHistory(user.id, startDate, endDate)
         .then((history) => {

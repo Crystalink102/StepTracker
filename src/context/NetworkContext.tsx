@@ -35,7 +35,19 @@ export function NetworkProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     checkConnection();
 
-    // Poll connectivity every 10s
+    // On web, listen for online/offline events (instant, no polling needed)
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const handleOnline = () => setIsOnline(true);
+      const handleOffline = () => setIsOnline(false);
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
+
+    // Native: poll connectivity every 10s
     const interval = setInterval(checkConnection, 10_000);
     return () => clearInterval(interval);
   }, [checkConnection]);

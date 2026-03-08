@@ -50,6 +50,13 @@ export default function EditProfileScreen() {
   }, [user]);
 
   const handlePickImage = async () => {
+    // Request media library permission first
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      showAlert('Permission Required', 'Please allow photo access to change your avatar.');
+      return;
+    }
+
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: 'images',
       allowsEditing: true,

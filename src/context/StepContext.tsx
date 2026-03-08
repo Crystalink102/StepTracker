@@ -78,9 +78,15 @@ export function StepProvider({ children }: { children: ReactNode }) {
     [user]
   );
 
-  // Load today's saved steps on mount
+  // Reset state on logout / user change
   useEffect(() => {
-    if (!user || !isAuthenticated) return;
+    if (!user || !isAuthenticated) {
+      setTodaySteps(0);
+      setIsTracking(false);
+      lastSyncedSteps.current = 0;
+      lastAchievementCheck.current = 0;
+      return;
+    }
 
     const loadSavedSteps = async () => {
       try {

@@ -37,6 +37,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (user) {
+      setIsLoading(true);
       refresh();
     } else {
       setProfile(null);

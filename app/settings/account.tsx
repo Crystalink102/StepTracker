@@ -18,7 +18,12 @@ export default function AccountScreen() {
 
   const confirmLogout = async () => {
     setShowLogout(false);
-    await logout();
+    try {
+      await logout();
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Failed to log out. Please try again.');
+      setShowError(true);
+    }
   };
 
   const handleDelete = () => setShowDelete(true);

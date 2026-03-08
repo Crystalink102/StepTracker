@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, ScrollView, StyleSheet } from 'react-native';
+import { View, ScrollView, StyleSheet, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { activateKeepAwakeAsync, deactivateKeepAwake } from 'expo-keep-awake';
 import { useRouter } from 'expo-router';
 import { useActivity } from '@/src/context/ActivityContext';
 import { usePreferences } from '@/src/context/PreferencesContext';
@@ -35,12 +34,17 @@ export default function ActivityScreen() {
     stopActivity,
   } = useActivity();
 
-  // Keep screen on during active runs
+  // Keep screen on during active runs (native only — expo-keep-awake crashes on web)
   useEffect(() => {
-    if (isActive && preferences.keepScreenOn) {
-      activateKeepAwakeAsync('activity').catch(() => {});
-      return () => { deactivateKeepAwake('activity'); };
-    }
+    if (!isActive || !preferences.keepScreenOn || Platform.OS === 'web') return;
+    let cleanup = () => {};
+    import('expo-keep-awake')
+      .then(({ activateKeepAwakeAsync, deactivateKeepAwake }) => {
+        activateKeepAwakeAsync('activity').catch(() => {});
+        cleanup = () => deactivateKeepAwake('activity');
+      })
+      .catch(() => {});
+    return () => cleanup();
   }, [isActive, preferences.keepScreenOn]);
 
   const [heartRate, setHeartRate] = useState<number | undefined>(undefined);
