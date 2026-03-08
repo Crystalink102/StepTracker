@@ -14,17 +14,39 @@ export default function BodyMetricsScreen() {
   const { refresh: refreshProfile } = useProfile();
   const [height, setHeight] = useState('');
   const [weight, setWeight] = useState('');
+  const [heightError, setHeightError] = useState('');
+  const [weightError, setWeightError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   const handleContinue = async () => {
     if (!user) return;
+
+    // Validate inputs if provided
+    let hasError = false;
+    setHeightError('');
+    setWeightError('');
+
+    if (height.trim()) {
+      const h = parseInt(height, 10);
+      if (isNaN(h) || h < 50 || h > 300) {
+        setHeightError('Enter a height between 50–300 cm');
+        hasError = true;
+      }
+    }
+    if (weight.trim()) {
+      const w = parseInt(weight, 10);
+      if (isNaN(w) || w < 20 || w > 500) {
+        setWeightError('Enter a weight between 20–500 kg');
+        hasError = true;
+      }
+    }
+    if (hasError) return;
+
     setIsSaving(true);
     try {
       const updates: Record<string, number> = {};
-      const h = parseInt(height, 10);
-      const w = parseInt(weight, 10);
-      if (h > 0) updates.height_cm = h;
-      if (w > 0) updates.weight_kg = w;
+      if (height.trim()) updates.height_cm = parseInt(height, 10);
+      if (weight.trim()) updates.weight_kg = parseInt(weight, 10);
 
       if (Object.keys(updates).length > 0) {
         await ProfileService.updateProfile(user.id, updates);
@@ -58,14 +80,16 @@ export default function BodyMetricsScreen() {
               placeholder="170"
               keyboardType="numeric"
               value={height}
-              onChangeText={setHeight}
+              onChangeText={(t) => { setHeight(t); setHeightError(''); }}
+              error={heightError}
             />
             <Input
               label="WEIGHT (KG)"
               placeholder="70"
               keyboardType="numeric"
               value={weight}
-              onChangeText={setWeight}
+              onChangeText={(t) => { setWeight(t); setWeightError(''); }}
+              error={weightError}
             />
           </View>
         </View>

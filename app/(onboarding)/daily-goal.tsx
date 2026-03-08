@@ -22,21 +22,31 @@ export default function DailyGoalScreen() {
   const [selected, setSelected] = useState(10000);
   const [custom, setCustom] = useState('');
   const [showCustom, setShowCustom] = useState(false);
+  const [customError, setCustomError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   const handleFinish = async () => {
     if (!user) return;
+    setCustomError('');
+
+    let goal = selected;
+    if (showCustom) {
+      const parsed = parseInt(custom, 10);
+      if (!custom.trim() || isNaN(parsed) || parsed < 100 || parsed > 100000) {
+        setCustomError('Enter a goal between 100–100,000 steps');
+        return;
+      }
+      goal = parsed;
+    }
+
     setIsSaving(true);
     try {
-      const goal = showCustom && custom ? parseInt(custom, 10) : selected;
-      if (goal > 0) {
-        const profile = await ProfileService.getProfile(user.id);
-        const updates: Record<string, number> = { daily_step_goal: goal };
-        if (profile.height_cm === null) {
-          updates.height_cm = 170;
-        }
-        await ProfileService.updateProfile(user.id, updates);
+      const profile = await ProfileService.getProfile(user.id);
+      const updates: Record<string, number> = { daily_step_goal: goal };
+      if (profile.height_cm === null) {
+        updates.height_cm = 170;
       }
+      await ProfileService.updateProfile(user.id, updates);
       await refreshProfile();
       router.replace('/(tabs)');
     } catch (err) {
@@ -96,7 +106,8 @@ export default function DailyGoalScreen() {
               placeholder="Enter step goal"
               keyboardType="numeric"
               value={custom}
-              onChangeText={setCustom}
+              onChangeText={(t) => { setCustom(t); setCustomError(''); }}
+              error={customError}
             />
           )}
         </View>
