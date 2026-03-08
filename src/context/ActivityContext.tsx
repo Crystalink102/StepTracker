@@ -107,8 +107,10 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         if (isPausedRef.current || !isActiveRef.current) return;
         if (!location?.coords) return;
 
-        // Skip low-accuracy GPS readings (relaxed on web where browser GPS is less precise)
-        const maxAccuracy = Platform.OS === 'web' ? 50 : 20;
+        // Skip low-accuracy GPS readings
+        // Relaxed thresholds: GPS accuracy varies widely by device, environment, and runtime
+        // (Expo Go is less precise than standalone builds, indoors worse than outdoors)
+        const maxAccuracy = Platform.OS === 'web' ? 100 : 50;
         if (location.coords.accuracy != null && location.coords.accuracy > maxAccuracy) return;
 
         const wp: Waypoint = {

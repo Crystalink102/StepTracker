@@ -53,8 +53,24 @@ function hasBackgroundSupport(): boolean {
  * Falls back to foreground-only watching when background APIs aren't available.
  */
 export async function startBackgroundLocation() {
-  const { status: fg } = await Location.requestForegroundPermissionsAsync();
-  if (fg !== 'granted') throw new Error('Foreground location permission denied');
+  let fg: string;
+  try {
+    const result = await Location.requestForegroundPermissionsAsync();
+    fg = result.status;
+  } catch (err: any) {
+    throw new Error(
+      Platform.OS === 'web'
+        ? 'Location access failed. Make sure you\'re on HTTPS and allow location when prompted. On Safari, check Settings > Privacy > Location Services.'
+        : `Location permission request failed: ${err.message}`
+    );
+  }
+  if (fg !== 'granted') {
+    throw new Error(
+      Platform.OS === 'web'
+        ? 'Location permission denied. Please allow location access in your browser settings and reload the page.'
+        : 'Location permission denied. Please enable it in Settings > Privacy > Location Services.'
+    );
+  }
 
   if (!hasBackgroundSupport()) {
     // Clean up any existing subscription first to avoid Web Locks API conflicts
@@ -75,7 +91,7 @@ export async function startBackgroundLocation() {
         {
           accuracy: Location.Accuracy.BestForNavigation,
           timeInterval: 2000,
-          distanceInterval: 3,
+          distanceInterval: 1,
         },
         (loc) => {
           if (globalLocationCallback) globalLocationCallback(loc);
