@@ -44,6 +44,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isAuthenticated = !!session && !!user;
 
+  // Check MFA status for the current session
+  const checkMFAStatus = useCallback(async () => {
+    try {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const verifiedFactors = factors?.totp?.filter((f) => f.status === 'verified') ?? [];
+      setHasMFA(verifiedFactors.length > 0);
+
+      if (verifiedFactors.length > 0) {
+        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+        setMfaVerified(aal?.currentLevel === 'aal2');
+      } else {
+        setMfaVerified(false);
+      }
+    } catch {
+      // MFA check is best-effort
+    }
+  }, []);
+
   // Initialize auth state
   useEffect(() => {
     const init = async () => {
@@ -51,6 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data: { session: currentSession } } = await supabase.auth.getSession();
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
+        if (currentSession) await checkMFAStatus();
       } catch (err) {
         console.warn('[Auth] Failed to get session:', err);
       } finally {
@@ -61,14 +80,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, newSession) => {
+      async (_event, newSession) => {
         setSession(newSession);
         setUser(newSession?.user ?? null);
+        if (newSession) await checkMFAStatus();
+        else {
+          setHasMFA(false);
+          setMfaVerified(false);
+        }
       }
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [checkMFAStatus]);
 
   const signUpEmail = useCallback(async (email: string, password: string) => {
     await AuthService.signUpWithEmail(email, password);

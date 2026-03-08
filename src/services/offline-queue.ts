@@ -53,10 +53,19 @@ export async function processQueue(): Promise<void> {
   if (queue.length === 0) await loadQueue();
   if (queue.length === 0) return;
 
+  const now = Date.now();
   const toProcess = [...queue];
   const failed: QueuedOperation[] = [];
 
   for (const op of toProcess) {
+    // Exponential backoff: wait 2^retryCount seconds before retrying
+    const backoffMs = Math.pow(2, op.retryCount) * 1000;
+    if (now - op.timestamp < backoffMs) {
+      // Not ready to retry yet, keep in queue
+      failed.push(op);
+      continue;
+    }
+
     try {
       // Use `as any` because queue operations are dynamically typed
       const table = supabase.from(op.table as 'profiles');
@@ -78,7 +87,11 @@ export async function processQueue(): Promise<void> {
     } catch (err) {
       console.warn('[OfflineQueue] Failed to process op:', err);
       if (op.retryCount < MAX_RETRIES) {
-        failed.push({ ...op, retryCount: op.retryCount + 1 });
+        failed.push({
+          ...op,
+          retryCount: op.retryCount + 1,
+          timestamp: now, // Reset timestamp for next backoff window
+        });
       }
     }
   }

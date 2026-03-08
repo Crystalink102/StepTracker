@@ -243,15 +243,26 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         completed = { ...currentActivity, ...activityUpdate } as Activity;
       }
 
-      // Save waypoints
+      // Save waypoints (queue offline if it fails)
       if (waypoints.length > 0) {
-        await ActivityService.saveWaypoints(
-          currentActivity.id,
-          waypoints.map((wp, idx) => ({
+        const waypointRows = waypoints.map((wp, idx) => ({
+          activity_id: currentActivity.id,
+          ...wp,
+          order_index: idx,
+        }));
+        try {
+          await ActivityService.saveWaypoints(currentActivity.id, waypoints.map((wp, idx) => ({
             ...wp,
             order_index: idx,
-          }))
-        );
+          })));
+        } catch (wpErr) {
+          console.warn('[Activity] Waypoint save failed, queuing offline:', wpErr);
+          await enqueue({
+            table: 'activity_waypoints',
+            operation: 'insert',
+            data: waypointRows as any,
+          });
+        }
       }
 
       // Award XP
@@ -264,8 +275,8 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         );
       }
 
-      // Non-blocking post-completion checks
-      PBService.checkPersonalBests(user.id, completed).catch((err) => {
+      // Non-blocking post-completion checks (pass waypoints for accurate segment times)
+      PBService.checkPersonalBests(user.id, completed, waypoints).catch((err) => {
         console.warn('[Activity] PB check failed:', err);
       });
 
