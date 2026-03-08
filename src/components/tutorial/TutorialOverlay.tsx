@@ -13,107 +13,108 @@ import { Ionicons } from '@expo/vector-icons';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 const TUTORIAL_KEY = 'tutorial_completed';
-const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+const { width: SCREEN_W } = Dimensions.get('window');
 
-type TutorialStep = {
+export type TutorialStep = {
   icon: keyof typeof Ionicons.glyphMap;
   title: string;
   description: string;
-  tab: string;
-  spotlight: 'top' | 'bottom';
+  tabLabel: string;
+  route: string;
 };
 
-const STEPS: TutorialStep[] = [
+export const TUTORIAL_STEPS: TutorialStep[] = [
   {
     icon: 'home',
     title: 'Your Dashboard',
     description:
       'This is your home base. Track your daily steps, see your XP level, and keep your streak alive. Everything updates in real-time as you walk.',
-    tab: 'Home',
-    spotlight: 'top',
+    tabLabel: 'Home',
+    route: '/(tabs)',
   },
   {
     icon: 'fitness',
     title: 'Start an Activity',
     description:
-      'Tap here to start tracking a run or walk with GPS. You\'ll see a live map of your route, distance, pace, and elapsed time. Just hit Start and go!',
-    tab: 'Activity',
-    spotlight: 'bottom',
+      'Tap here to start tracking a run or walk with GPS. You\'ll see a live map of your route, distance, pace, and elapsed time.',
+    tabLabel: 'Activity',
+    route: '/(tabs)/activity',
   },
   {
     icon: 'stats-chart',
     title: 'Your History',
     description:
-      'View your step charts, personal bests, and every run you\'ve completed. Pull down to refresh. Tap any activity to see the full route map.',
-    tab: 'History',
-    spotlight: 'bottom',
+      'View your step charts, personal bests, and every run you\'ve completed. Tap any activity to see the full route map.',
+    tabLabel: 'History',
+    route: '/(tabs)/history',
   },
   {
     icon: 'trophy',
     title: 'Compete & Rank Up',
     description:
       'See how you stack up against friends and the community. Filter by steps, distance, or XP across different time periods.',
-    tab: 'Ranks',
-    spotlight: 'bottom',
+    tabLabel: 'Ranks',
+    route: '/(tabs)/leaderboard',
   },
   {
     icon: 'person-circle',
     title: 'Your Profile',
     description:
-      'View your stats, achievements, and manage your settings. Customize your units, notifications, and connect with friends.',
-    tab: 'Profile',
-    spotlight: 'bottom',
+      'View your stats, unlock achievements, and manage your settings. Customize units, notifications, and connect with friends.',
+    tabLabel: 'Profile',
+    route: '/(tabs)/profile',
   },
 ];
 
 type Props = {
-  onComplete: () => void;
+  step: number;
+  onNext: () => void;
+  onSkip: () => void;
 };
 
-export default function TutorialOverlay({ onComplete }: Props) {
-  const [step, setStep] = useState(0);
+export default function TutorialOverlay({ step, onNext, onSkip }: Props) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
+  const slideAnim = useRef(new Animated.Value(40)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
 
-  const current = STEPS[step];
-  const isLast = step === STEPS.length - 1;
+  const current = TUTORIAL_STEPS[step];
+  const isLast = step === TUTORIAL_STEPS.length - 1;
 
   // Entrance animation
   const animateIn = useCallback(() => {
     fadeAnim.setValue(0);
-    slideAnim.setValue(30);
+    slideAnim.setValue(40);
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 350,
+        duration: 300,
         useNativeDriver: true,
       }),
       Animated.spring(slideAnim, {
         toValue: 0,
-        tension: 60,
+        tension: 65,
         friction: 9,
         useNativeDriver: true,
       }),
     ]).start();
   }, [fadeAnim, slideAnim]);
 
-  // Progress bar animation
+  // Progress bar
   useEffect(() => {
     Animated.timing(progressAnim, {
-      toValue: (step + 1) / STEPS.length,
+      toValue: (step + 1) / TUTORIAL_STEPS.length,
       duration: 400,
       useNativeDriver: false,
     }).start();
   }, [step, progressAnim]);
 
-  // Pulse animation for the icon
+  // Icon pulse
   useEffect(() => {
     const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
-          toValue: 1.15,
+          toValue: 1.12,
           duration: 1200,
           useNativeDriver: true,
         }),
@@ -132,48 +133,16 @@ export default function TutorialOverlay({ onComplete }: Props) {
     animateIn();
   }, [step, animateIn]);
 
-  const handleNext = () => {
-    if (isLast) {
-      AsyncStorage.setItem(TUTORIAL_KEY, 'true').catch(() => {});
-      onComplete();
-    } else {
-      setStep((s) => s + 1);
-    }
-  };
-
-  const handleSkip = () => {
-    AsyncStorage.setItem(TUTORIAL_KEY, 'true').catch(() => {});
-    onComplete();
-  };
-
   return (
-    <View style={styles.overlay}>
-      {/* Progress bar */}
-      <View style={styles.progressContainer}>
-        <Animated.View
-          style={[
-            styles.progressBar,
-            {
-              width: progressAnim.interpolate({
-                inputRange: [0, 1],
-                outputRange: ['0%', '100%'],
-              }),
-            },
-          ]}
-        />
-      </View>
+    <View style={styles.overlay} pointerEvents="box-none">
+      {/* Darkened backdrop — tappable area that doesn't block tab bar */}
+      <TouchableOpacity
+        style={styles.backdrop}
+        activeOpacity={1}
+        onPress={onNext}
+      />
 
-      {/* Step indicator */}
-      <View style={styles.stepDots}>
-        {STEPS.map((_, i) => (
-          <View
-            key={i}
-            style={[styles.dot, i === step && styles.dotActive, i < step && styles.dotDone]}
-          />
-        ))}
-      </View>
-
-      {/* Content card */}
+      {/* Card positioned in the center area above the tab bar */}
       <Animated.View
         style={[
           styles.card,
@@ -183,30 +152,61 @@ export default function TutorialOverlay({ onComplete }: Props) {
           },
         ]}
       >
-        {/* Icon circle with pulse */}
+        {/* Progress bar */}
+        <View style={styles.progressContainer}>
+          <Animated.View
+            style={[
+              styles.progressBar,
+              {
+                width: progressAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ['0%', '100%'],
+                }),
+              },
+            ]}
+          />
+        </View>
+
+        {/* Step dots */}
+        <View style={styles.stepDots}>
+          {TUTORIAL_STEPS.map((_, i) => (
+            <View
+              key={i}
+              style={[
+                styles.dot,
+                i === step && styles.dotActive,
+                i < step && styles.dotDone,
+              ]}
+            />
+          ))}
+        </View>
+
+        {/* Icon */}
         <Animated.View
           style={[styles.iconCircle, { transform: [{ scale: pulseAnim }] }]}
         >
-          <Ionicons name={current.icon} size={40} color={Colors.white} />
+          <Ionicons name={current.icon} size={36} color={Colors.white} />
         </Animated.View>
 
         {/* Tab label chip */}
         <View style={styles.tabChip}>
-          <Text style={styles.tabChipText}>{current.tab}</Text>
+          <Text style={styles.tabChipText}>{current.tabLabel}</Text>
         </View>
 
         <Text style={styles.title}>{current.title}</Text>
         <Text style={styles.description}>{current.description}</Text>
 
-        {/* Action buttons */}
+        {/* Actions */}
         <View style={styles.actions}>
           {!isLast && (
-            <TouchableOpacity onPress={handleSkip} style={styles.skipBtn}>
+            <TouchableOpacity onPress={onSkip} style={styles.skipBtn}>
               <Text style={styles.skipText}>Skip</Text>
             </TouchableOpacity>
           )}
-          <TouchableOpacity onPress={handleNext} style={styles.nextBtn}>
-            <Text style={styles.nextText}>{isLast ? "Let's Go!" : 'Next'}</Text>
+          <TouchableOpacity onPress={onNext} style={styles.nextBtn}>
+            <Text style={styles.nextText}>
+              {isLast ? "Got it!" : 'Next'}
+            </Text>
             {!isLast && (
               <Ionicons
                 name="arrow-forward"
@@ -218,31 +218,6 @@ export default function TutorialOverlay({ onComplete }: Props) {
           </TouchableOpacity>
         </View>
       </Animated.View>
-
-      {/* Bottom tab preview */}
-      <View style={styles.tabPreview}>
-        {STEPS.map((s, i) => {
-          const isCurrentTab = i === step;
-          return (
-            <View key={i} style={styles.tabItem}>
-              <Ionicons
-                name={s.icon}
-                size={22}
-                color={isCurrentTab ? Colors.primary : Colors.textMuted}
-              />
-              <Text
-                style={[
-                  styles.tabLabel,
-                  isCurrentTab && styles.tabLabelActive,
-                ]}
-              >
-                {s.tab}
-              </Text>
-              {isCurrentTab && <View style={styles.tabIndicator} />}
-            </View>
-          );
-        })}
-      </View>
     </View>
   );
 }
@@ -257,7 +232,12 @@ export async function hasTutorialCompleted(): Promise<boolean> {
   }
 }
 
-/** Reset tutorial (for testing or settings) */
+/** Mark tutorial as completed */
+export async function completeTutorial(): Promise<void> {
+  await AsyncStorage.setItem(TUTORIAL_KEY, 'true');
+}
+
+/** Reset tutorial (for replay from settings) */
 export async function resetTutorial(): Promise<void> {
   await AsyncStorage.removeItem(TUTORIAL_KEY);
 }
@@ -265,20 +245,37 @@ export async function resetTutorial(): Promise<void> {
 const styles = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0, 0, 0, 0.92)',
+    zIndex: 1000,
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 1000,
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+  },
+  card: {
+    width: SCREEN_W - 48,
+    maxWidth: 400,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.xl,
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xxl,
+    paddingTop: Spacing.xxl,
+    paddingBottom: Spacing.xl,
+    // Lift above the backdrop
+    elevation: 20,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
   },
   progressContainer: {
-    position: 'absolute',
-    top: Platform.OS === 'web' ? 20 : 60,
-    left: Spacing.xxxl,
-    right: Spacing.xxxl,
+    width: '100%',
     height: 3,
     backgroundColor: Colors.surfaceLight,
     borderRadius: 2,
     overflow: 'hidden',
+    marginBottom: Spacing.lg,
   },
   progressBar: {
     height: '100%',
@@ -286,10 +283,9 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   stepDots: {
-    position: 'absolute',
-    top: Platform.OS === 'web' ? 36 : 76,
     flexDirection: 'row',
     gap: 8,
+    marginBottom: Spacing.xl,
   },
   dot: {
     width: 8,
@@ -304,21 +300,14 @@ const styles = StyleSheet.create({
   dotDone: {
     backgroundColor: Colors.primaryLight,
   },
-  card: {
-    width: SCREEN_W - 48,
-    maxWidth: 400,
-    alignItems: 'center',
-    paddingHorizontal: Spacing.xxl,
-    paddingVertical: Spacing.xxxl,
-  },
   iconCircle: {
-    width: 88,
-    height: 88,
-    borderRadius: 44,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.xl,
+    marginBottom: Spacing.lg,
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
@@ -330,7 +319,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.full,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md,
   },
   tabChipText: {
     color: Colors.primaryLight,
@@ -344,14 +333,14 @@ const styles = StyleSheet.create({
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
     textAlign: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm,
   },
   description: {
     color: Colors.textSecondary,
     fontSize: FontSize.md,
     lineHeight: 22,
     textAlign: 'center',
-    marginBottom: Spacing.xxxl,
+    marginBottom: Spacing.xxl,
   },
   actions: {
     flexDirection: 'row',
@@ -379,38 +368,5 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
-  },
-  tabPreview: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    backgroundColor: Colors.surface,
-    borderTopWidth: 0.5,
-    borderTopColor: Colors.border,
-    paddingTop: 10,
-    paddingBottom: Platform.OS === 'web' ? 16 : 30,
-    justifyContent: 'space-around',
-  },
-  tabItem: {
-    alignItems: 'center',
-    gap: 3,
-  },
-  tabLabel: {
-    color: Colors.textMuted,
-    fontSize: 11,
-    fontWeight: FontWeight.semibold,
-  },
-  tabLabelActive: {
-    color: Colors.primary,
-  },
-  tabIndicator: {
-    position: 'absolute',
-    top: -10,
-    width: 20,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: Colors.primary,
   },
 });
