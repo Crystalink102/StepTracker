@@ -81,7 +81,7 @@ export default function SignUpScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.appName}>StepTracker</Text>
+          <Text style={styles.appName}>5tepTracker</Text>
           <Text style={styles.title}>Create Account</Text>
           <Text style={styles.subtitle}>Start earning XP for every step</Text>
         </View>

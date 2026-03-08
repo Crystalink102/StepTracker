@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "StepTracker",
+    "name": "5tepTracker",
     "slug": "StepTracker",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -15,11 +15,11 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSMotionUsageDescription": "StepTracker uses motion data to count your steps.",
-        "NSLocationWhenInUseUsageDescription": "StepTracker uses your location to track runs and walks.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "StepTracker uses background location to track runs even when the app is closed.",
-        "NSCameraUsageDescription": "StepTracker uses the camera to take profile photos.",
-        "NSPhotoLibraryUsageDescription": "StepTracker accesses your photos for your profile picture."
+        "NSMotionUsageDescription": "5tepTracker uses motion data to count your steps.",
+        "NSLocationWhenInUseUsageDescription": "5tepTracker uses your location to track runs and walks.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "5tepTracker uses background location to track runs even when the app is closed.",
+        "NSCameraUsageDescription": "5tepTracker uses the camera to take profile photos.",
+        "NSPhotoLibraryUsageDescription": "5tepTracker accesses your photos for your profile picture."
       },
       "config": {
         "usesNonExemptEncryption": false
@@ -35,14 +35,20 @@
         "backgroundColor": "#09090B"
       },
       "permissions": [
-        "ACTIVITY_RECOGNITION",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_BACKGROUND_LOCATION",
-        "FOREGROUND_SERVICE",
-        "FOREGROUND_SERVICE_LOCATION",
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE"
+        "android.permission.ACTIVITY_RECOGNITION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_BACKGROUND_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_LOCATION",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -54,7 +60,7 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "StepTracker uses background location to track your runs.",
+          "locationAlwaysAndWhenInUsePermission": "5tepTracker uses background location to track your runs.",
           "isAndroidBackgroundLocationEnabled": true,
           "isAndroidForegroundServiceEnabled": true
         }
@@ -62,14 +68,14 @@
       [
         "expo-sensors",
         {
-          "motionPermission": "StepTracker uses motion to count your steps."
+          "motionPermission": "5tepTracker uses motion to count your steps."
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "StepTracker accesses your photos for your profile picture.",
-          "cameraPermission": "StepTracker uses the camera to take profile photos."
+          "photosPermission": "5tepTracker accesses your photos for your profile picture.",
+          "cameraPermission": "5tepTracker uses the camera to take profile photos."
         }
       ],
       [
@@ -81,6 +87,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e5aa7eb2-9903-475b-9836-df371134c63b"
+      }
     }
   }
 }

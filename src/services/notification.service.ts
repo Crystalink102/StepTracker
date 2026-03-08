@@ -69,7 +69,7 @@ export async function scheduleDailyReminder(): Promise<void> {
   await notif.scheduleNotificationAsync({
     content: {
       title: "Don't forget to walk!",
-      body: 'Open StepTracker to log your steps and keep your streak alive.',
+      body: 'Open 5tepTracker to log your steps and keep your streak alive.',
     },
     trigger: {
       type: notif.SchedulableTriggerInputTypes.DAILY,

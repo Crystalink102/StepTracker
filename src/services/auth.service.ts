@@ -126,7 +126,7 @@ export async function verifyOTP(
 export async function enrollMFA() {
   const { data, error } = await supabase.auth.mfa.enroll({
     factorType: 'totp',
-    friendlyName: 'StepTracker Authenticator',
+    friendlyName: '5tepTracker Authenticator',
   });
   if (error) throw error;
   return data;

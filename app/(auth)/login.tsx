@@ -61,7 +61,7 @@ export default function LoginScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={styles.header}>
-          <Text style={styles.appName}>StepTracker</Text>
+          <Text style={styles.appName}>5tepTracker</Text>
           <Text style={styles.title}>Welcome back</Text>
           <Text style={styles.subtitle}>Log in to continue your grind</Text>
         </View>

@@ -118,7 +118,7 @@ export async function startBackgroundLocation() {
     distanceInterval: 3,
     showsBackgroundLocationIndicator: true,
     foregroundService: {
-      notificationTitle: 'StepTracker',
+      notificationTitle: '5tepTracker',
       notificationBody: 'Tracking your activity...',
       notificationColor: '#A855F7',
     },

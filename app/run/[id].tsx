@@ -77,7 +77,7 @@ export default function RunDetailScreen() {
       pace ? `\u{26A1} ${pace}` : null,
       cal ? `\u{1F525} ${cal}` : null,
       '',
-      'Tracked with StepTracker',
+      'Tracked with 5tepTracker',
     ].filter(Boolean);
 
     await Share.share({ message: lines.join('\n') });

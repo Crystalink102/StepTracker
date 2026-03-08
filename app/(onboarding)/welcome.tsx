@@ -17,7 +17,7 @@ export default function WelcomeScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
         <View style={styles.hero}>
-          <Text style={styles.appName}>StepTracker</Text>
+          <Text style={styles.appName}>5tepTracker</Text>
           <Text style={styles.tagline}>Your fitness journey, gamified</Text>
         </View>
 
