@@ -1,5 +1,7 @@
 import { View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 import { usePreferences, type DistanceUnit, type HeightUnit, type WeightUnit } from '@/src/context/PreferencesContext';
+import { resetTutorial } from '@/src/components/tutorial/TutorialOverlay';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 // --- Reusable setting row components ---
@@ -80,6 +82,12 @@ function SectionHeader({ title }: { title: string }) {
 
 export default function PreferencesScreen() {
   const { preferences, updatePreference } = usePreferences();
+  const router = useRouter();
+
+  const handleReplayTutorial = async () => {
+    await resetTutorial();
+    router.replace('/(tabs)');
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -147,6 +155,16 @@ export default function PreferencesScreen() {
         value={preferences.weekStartsMonday}
         onToggle={(v) => updatePreference('weekStartsMonday', v)}
       />
+
+      <SectionHeader title="HELP" />
+
+      <TouchableOpacity style={styles.row} onPress={handleReplayTutorial}>
+        <View style={styles.rowText}>
+          <Text style={styles.rowLabel}>Replay Tutorial</Text>
+          <Text style={styles.rowDescription}>See the app walkthrough again</Text>
+        </View>
+        <Text style={styles.replayArrow}>›</Text>
+      </TouchableOpacity>
     </ScrollView>
   );
 }
@@ -212,5 +230,9 @@ const styles = StyleSheet.create({
   },
   segmentTextActive: {
     color: Colors.white,
+  },
+  replayArrow: {
+    color: Colors.textMuted,
+    fontSize: FontSize.xxl,
   },
 });
