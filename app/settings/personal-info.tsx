@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
+import { useProfile } from '@/src/hooks/useProfile';
 import { Button, Input, ConfirmModal } from '@/src/components/ui';
 import * as ProfileService from '@/src/services/profile.service';
 import { Profile } from '@/src/types/database';
@@ -15,6 +16,7 @@ import { Colors, Spacing } from '@/src/constants/theme';
 export default function PersonalInfoScreen() {
   const { user } = useAuth();
   const router = useRouter();
+  const { refresh: refreshProfile } = useProfile();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [restingHR, setRestingHR] = useState('');
@@ -52,6 +54,7 @@ export default function PersonalInfoScreen() {
         weight_kg: weightKg ? parseFloat(weightKg) : null,
         date_of_birth: dob || null,
       });
+      await refreshProfile();
       router.back();
     } catch (err: any) {
       setAlertModal({ visible: true, title: 'Save Failed', message: err.message });

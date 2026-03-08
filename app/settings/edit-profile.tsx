@@ -10,6 +10,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
+import { useProfile } from '@/src/hooks/useProfile';
 import { Avatar, Button, Input, ConfirmModal } from '@/src/components/ui';
 import * as ProfileService from '@/src/services/profile.service';
 import * as StorageService from '@/src/services/storage.service';
@@ -19,6 +20,7 @@ import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 export default function EditProfileScreen() {
   const { user } = useAuth();
   const router = useRouter();
+  const { refresh: refreshProfile } = useProfile();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [displayName, setDisplayName] = useState('');
@@ -64,6 +66,7 @@ export default function EditProfileScreen() {
       );
       await ProfileService.updateProfile(user.id, { avatar_url: avatarUrl });
       setProfile((prev) => (prev ? { ...prev, avatar_url: avatarUrl } : null));
+      await refreshProfile();
     } catch (err: any) {
       showAlert('Upload Failed', err.message);
     }
@@ -80,6 +83,7 @@ export default function EditProfileScreen() {
         daily_step_goal: isNaN(goalNum) || goalNum < 100 ? 10000 : goalNum,
       });
       setProfile(updated);
+      await refreshProfile();
       router.back();
     } catch (err: any) {
       showAlert('Save Failed', err.message);

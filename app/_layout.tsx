@@ -3,7 +3,10 @@ import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Linking from 'expo-linking';
 import { AuthProvider, useAuth } from '@/src/context/AuthContext';
+import { ProfileProvider } from '@/src/context/ProfileContext';
+import { supabase } from '@/src/services/supabase';
 import { StepProvider } from '@/src/context/StepContext';
 import { ActivityProvider } from '@/src/context/ActivityContext';
 import { NetworkProvider } from '@/src/context/NetworkContext';
@@ -119,20 +122,49 @@ function AuthGate() {
   );
 }
 
+function useDeepLinkAuth() {
+  useEffect(() => {
+    // Handle deep link that opened the app
+    const handleUrl = (url: string) => {
+      const parsed = Linking.parse(url);
+      // Supabase appends tokens as hash fragment params
+      // expo-linking puts fragment params in queryParams when parsing
+      const accessToken = parsed.queryParams?.access_token as string | undefined;
+      const refreshToken = parsed.queryParams?.refresh_token as string | undefined;
+      if (accessToken && refreshToken) {
+        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+      }
+    };
+
+    // Check the URL that launched the app
+    Linking.getInitialURL().then((url) => {
+      if (url) handleUrl(url);
+    });
+
+    // Listen for URLs while the app is open
+    const sub = Linking.addEventListener('url', (event) => handleUrl(event.url));
+    return () => sub.remove();
+  }, []);
+}
+
 export default function RootLayout() {
+  useDeepLinkAuth();
+
   useEffect(() => {
     SplashScreen.hideAsync();
   }, []);
 
   return (
     <AuthProvider>
-      <NetworkProvider>
-        <StepProvider>
-          <ActivityProvider>
-            <AuthGate />
-          </ActivityProvider>
-        </StepProvider>
-      </NetworkProvider>
+      <ProfileProvider>
+        <NetworkProvider>
+          <StepProvider>
+            <ActivityProvider>
+              <AuthGate />
+            </ActivityProvider>
+          </StepProvider>
+        </NetworkProvider>
+      </ProfileProvider>
     </AuthProvider>
   );
 }

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
+import { useProfile } from '@/src/hooks/useProfile';
 import { Button, Input } from '@/src/components/ui';
 import * as ProfileService from '@/src/services/profile.service';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
@@ -10,6 +11,7 @@ import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 export default function BodyMetricsScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { refresh: refreshProfile } = useProfile();
   const [height, setHeight] = useState('');
   const [weight, setWeight] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -26,6 +28,7 @@ export default function BodyMetricsScreen() {
 
       if (Object.keys(updates).length > 0) {
         await ProfileService.updateProfile(user.id, updates);
+        await refreshProfile();
       }
       router.push('/(onboarding)/daily-goal');
     } catch (err) {

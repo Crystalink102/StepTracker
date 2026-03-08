@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
+import { useProfile } from '@/src/hooks/useProfile';
 import { Button, Input } from '@/src/components/ui';
 import * as ProfileService from '@/src/services/profile.service';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
@@ -17,6 +18,7 @@ const PRESETS = [
 export default function DailyGoalScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  const { refresh: refreshProfile } = useProfile();
   const [selected, setSelected] = useState(10000);
   const [custom, setCustom] = useState('');
   const [showCustom, setShowCustom] = useState(false);
@@ -28,15 +30,14 @@ export default function DailyGoalScreen() {
     try {
       const goal = showCustom && custom ? parseInt(custom, 10) : selected;
       if (goal > 0) {
-        // Also set a default height if not already set, so the onboarding
-        // detection (height_cm !== null) knows we're done
         const profile = await ProfileService.getProfile(user.id);
         const updates: Record<string, number> = { daily_step_goal: goal };
         if (profile.height_cm === null) {
-          updates.height_cm = 170; // Default height to mark onboarding complete
+          updates.height_cm = 170;
         }
         await ProfileService.updateProfile(user.id, updates);
       }
+      await refreshProfile();
       router.replace('/(tabs)');
     } catch (err) {
       console.warn('[Onboarding] Failed to save goal:', err);

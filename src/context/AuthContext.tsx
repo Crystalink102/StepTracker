@@ -25,6 +25,7 @@ type AuthActions = {
   loginEmail: (email: string, password: string) => Promise<void>;
   loginPhone: (phone: string, password: string) => Promise<void>;
   verifyOTP: (token: string, type: 'sms' | 'email', identifier: string) => Promise<void>;
+  resendConfirmation: (type: 'email' | 'sms', identifier: string) => Promise<void>;
   enrollMFA: () => Promise<{ qr: string; secret: string; factorId: string }>;
   verifyMFA: (factorId: string, code: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -92,6 +93,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const resendConfirmation = useCallback(
+    async (type: 'email' | 'sms', identifier: string) => {
+      if (type === 'email') {
+        await AuthService.resendConfirmationEmail(identifier);
+      } else {
+        await AuthService.resendConfirmationSMS(identifier);
+      }
+    },
+    []
+  );
+
   const enrollMFA = useCallback(async () => {
     const data = await AuthService.enrollMFA();
     return {
@@ -128,6 +140,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginEmail,
         loginPhone,
         verifyOTP,
+        resendConfirmation,
         enrollMFA,
         verifyMFA,
         logout,

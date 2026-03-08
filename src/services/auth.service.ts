@@ -1,4 +1,7 @@
+import * as Linking from 'expo-linking';
 import { supabase } from './supabase';
+
+const REDIRECT_URL = Linking.createURL('auth/callback');
 
 // ============================================================
 // Sign Up
@@ -7,6 +10,9 @@ export async function signUpWithEmail(email: string, password: string) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
+    options: {
+      emailRedirectTo: REDIRECT_URL,
+    },
   });
   if (error) throw error;
   return data;
@@ -40,6 +46,28 @@ export async function loginWithPhone(phone: string, password: string) {
   });
   if (error) throw error;
   return data;
+}
+
+// ============================================================
+// Resend Confirmation
+// ============================================================
+export async function resendConfirmationEmail(email: string) {
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: {
+      emailRedirectTo: REDIRECT_URL,
+    },
+  });
+  if (error) throw error;
+}
+
+export async function resendConfirmationSMS(phone: string) {
+  const { error } = await supabase.auth.resend({
+    type: 'sms',
+    phone,
+  } as any);
+  if (error) throw error;
 }
 
 // ============================================================

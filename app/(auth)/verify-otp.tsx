@@ -16,11 +16,12 @@ import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/const
 
 export default function VerifyOTPScreen() {
   const router = useRouter();
-  const { verifyOTP } = useAuth();
+  const { verifyOTP, resendConfirmation } = useAuth();
   const params = useLocalSearchParams<{ type: 'sms' | 'email'; identifier: string }>();
 
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
   const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '' });
 
   const showAlert = (title: string, message: string) =>
@@ -80,6 +81,28 @@ export default function VerifyOTPScreen() {
               <ActivityIndicator color={Colors.white} />
             ) : (
               <Text style={styles.buttonText}>Verify</Text>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.resendButton}
+            onPress={async () => {
+              setIsResending(true);
+              try {
+                await resendConfirmation(params.type, params.identifier);
+                showAlert('Code Sent', `A new code has been sent to ${params.identifier}.`);
+              } catch (err: any) {
+                showAlert('Resend Failed', err.message || 'Could not resend code. Try again later.');
+              } finally {
+                setIsResending(false);
+              }
+            }}
+            disabled={isResending}
+          >
+            {isResending ? (
+              <ActivityIndicator color={Colors.primary} size="small" />
+            ) : (
+              <Text style={styles.resendText}>Didn't get a code? Resend</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -150,5 +173,14 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
+  },
+  resendButton: {
+    alignItems: 'center',
+    paddingVertical: Spacing.md,
+  },
+  resendText: {
+    color: Colors.primary,
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
   },
 });
