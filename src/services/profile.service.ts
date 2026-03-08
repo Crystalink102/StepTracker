@@ -34,7 +34,19 @@ export async function updateProfile(
   userId: string,
   updates: Partial<Pick<
     Profile,
-    'username' | 'display_name' | 'avatar_url' | 'resting_hr' | 'date_of_birth' | 'height_cm' | 'weight_kg'
+    | 'username'
+    | 'display_name'
+    | 'avatar_url'
+    | 'resting_hr'
+    | 'date_of_birth'
+    | 'height_cm'
+    | 'weight_kg'
+    | 'daily_step_goal'
+    | 'push_token'
+    | 'notify_daily_reminder'
+    | 'notify_streak_warning'
+    | 'notify_achievements'
+    | 'notify_friend_requests'
   >>
 ) {
   const { data, error } = await supabase

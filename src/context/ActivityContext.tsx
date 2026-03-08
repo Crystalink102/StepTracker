@@ -12,6 +12,7 @@ import { useAuth } from '@/src/context/AuthContext';
 import { useXP } from '@/src/hooks/useXP';
 import * as ActivityService from '@/src/services/activity.service';
 import * as PBService from '@/src/services/personal-best.service';
+import * as AchievementService from '@/src/services/achievement.service';
 import {
   startBackgroundLocation,
   stopBackgroundLocation,
@@ -237,6 +238,17 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         await PBService.checkPersonalBests(user.id, completed);
       } catch {
         // PB check failure shouldn't block completion
+      }
+
+      // Check activity achievements
+      try {
+        const history = await ActivityService.getActivityHistory(user.id);
+        const completedCount = history.filter((a) => a.status === 'completed').length;
+        AchievementService.checkAchievements(user.id, {
+          activityCount: completedCount,
+        }).catch(() => {});
+      } catch {
+        // Achievement check failure shouldn't block completion
       }
 
       // Reset state

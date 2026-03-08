@@ -4,8 +4,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
 import { useXP } from '@/src/hooks/useXP';
+import { useAchievements } from '@/src/hooks/useAchievements';
+import { useFriends } from '@/src/hooks/useFriends';
 import ProfileHeader from '@/src/components/profile/ProfileHeader';
 import StatsOverview from '@/src/components/profile/StatsOverview';
+import { Badge } from '@/src/components/ui';
 import * as ProfileService from '@/src/services/profile.service';
 import { Profile } from '@/src/types/database';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
@@ -13,6 +16,8 @@ import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/const
 export default function ProfileScreen() {
   const { user } = useAuth();
   const { level, totalXP } = useXP();
+  const { earnedCount, totalCount } = useAchievements();
+  const { pendingCount } = useFriends();
   const router = useRouter();
   const [profile, setProfile] = useState<Profile | null>(null);
 
@@ -22,6 +27,12 @@ export default function ProfileScreen() {
       .then(setProfile)
       .catch(() => {});
   }, [user]);
+
+  const menuItems = [
+    { label: 'Achievements', route: '/achievements' as const, badge: `${earnedCount}/${totalCount}` },
+    { label: 'Friends', route: '/friends' as const, badge: pendingCount > 0 ? `${pendingCount}` : undefined },
+    { label: 'Notifications', route: '/settings/notifications' as const },
+  ];
 
   const settingsItems = [
     { label: 'Edit Profile', route: '/settings/edit-profile' as const },
@@ -44,6 +55,24 @@ export default function ProfileScreen() {
           totalActivities={0}
           totalDistanceKm={0}
         />
+
+        <View style={styles.settingsSection}>
+          {menuItems.map((item) => (
+            <TouchableOpacity
+              key={item.route}
+              style={styles.settingsItem}
+              onPress={() => router.push(item.route as any)}
+            >
+              <View style={styles.menuItemRow}>
+                <Text style={styles.settingsLabel}>{item.label}</Text>
+                {item.badge && (
+                  <Badge label={item.badge} variant="primary" />
+                )}
+              </View>
+              <Text style={styles.arrow}>›</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         <View style={styles.settingsSection}>
           <Text style={styles.sectionTitle}>SETTINGS</Text>
@@ -98,6 +127,11 @@ const styles = StyleSheet.create({
   settingsLabel: {
     color: Colors.textPrimary,
     fontSize: FontSize.lg,
+  },
+  menuItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
   },
   arrow: {
     color: Colors.textMuted,

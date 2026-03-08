@@ -1,0 +1,80 @@
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useAuth } from '@/src/context/AuthContext';
+import * as AchievementService from '@/src/services/achievement.service';
+import { AchievementDefinition, UserAchievement } from '@/src/types/database';
+
+export function useAchievements() {
+  const { user } = useAuth();
+  const [definitions, setDefinitions] = useState<AchievementDefinition[]>([]);
+  const [userAchievements, setUserAchievements] = useState<UserAchievement[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [pendingPopup, setPendingPopup] = useState<AchievementDefinition | null>(null);
+  const checkTimeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const refresh = useCallback(async () => {
+    if (!user) return;
+    try {
+      const [defs, uas] = await Promise.all([
+        AchievementService.getDefinitions(),
+        AchievementService.getUserAchievements(user.id),
+      ]);
+      setDefinitions(defs);
+      setUserAchievements(uas);
+    } catch {
+      // Silently fail
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const checkAndUnlock = useCallback(
+    async (context: Parameters<typeof AchievementService.checkAchievements>[1]) => {
+      if (!user) return;
+
+      // Debounce checks to avoid hammering the DB
+      if (checkTimeoutRef.current) clearTimeout(checkTimeoutRef.current);
+
+      checkTimeoutRef.current = setTimeout(async () => {
+        try {
+          const { newlyUnlocked } = await AchievementService.checkAchievements(
+            user.id,
+            context
+          );
+
+          if (newlyUnlocked.length > 0) {
+            // Show popup for first unlocked achievement
+            setPendingPopup(newlyUnlocked[0]);
+            // Refresh the list
+            await refresh();
+          }
+        } catch {
+          // Silently fail
+        }
+      }, 1000);
+    },
+    [user, refresh]
+  );
+
+  const dismissPopup = useCallback(() => {
+    setPendingPopup(null);
+  }, []);
+
+  const earnedCount = userAchievements.length;
+  const totalCount = definitions.length;
+
+  return {
+    definitions,
+    userAchievements,
+    earnedCount,
+    totalCount,
+    isLoading,
+    pendingPopup,
+    checkAndUnlock,
+    dismissPopup,
+    refresh,
+  };
+}

@@ -1,0 +1,102 @@
+import { supabase } from './supabase';
+import { AchievementDefinition, UserAchievement } from '@/src/types/database';
+
+export async function getDefinitions(): Promise<AchievementDefinition[]> {
+  const { data, error } = await supabase
+    .from('achievement_definitions')
+    .select('*')
+    .order('sort_order');
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getUserAchievements(userId: string): Promise<UserAchievement[]> {
+  const { data, error } = await supabase
+    .from('user_achievements')
+    .select('*')
+    .eq('user_id', userId);
+
+  if (error) throw error;
+  return data;
+}
+
+export async function unlockAchievement(
+  userId: string,
+  achievementId: string
+): Promise<UserAchievement> {
+  const { data, error } = await supabase
+    .from('user_achievements')
+    .insert({ user_id: userId, achievement_id: achievementId })
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function markNotified(id: string): Promise<void> {
+  const { error } = await supabase
+    .from('user_achievements')
+    .update({ notified: true })
+    .eq('id', id);
+
+  if (error) throw error;
+}
+
+type AchievementContext = {
+  todaySteps?: number;
+  totalSteps?: number;
+  currentStreak?: number;
+  activityCount?: number;
+  currentLevel?: number;
+};
+
+export async function checkAchievements(
+  userId: string,
+  context: AchievementContext
+): Promise<{ newlyUnlocked: AchievementDefinition[] }> {
+  const [definitions, userAchievements] = await Promise.all([
+    getDefinitions(),
+    getUserAchievements(userId),
+  ]);
+
+  const unlockedIds = new Set(userAchievements.map((ua) => ua.achievement_id));
+  const newlyUnlocked: AchievementDefinition[] = [];
+
+  for (const def of definitions) {
+    if (unlockedIds.has(def.id)) continue;
+
+    let value = 0;
+    switch (def.category) {
+      case 'steps':
+        // Check both daily and total steps thresholds
+        if (def.id.includes('total')) {
+          value = context.totalSteps ?? 0;
+        } else {
+          value = context.todaySteps ?? 0;
+        }
+        break;
+      case 'streak':
+        value = context.currentStreak ?? 0;
+        break;
+      case 'activity':
+        value = context.activityCount ?? 0;
+        break;
+      case 'xp':
+        value = context.currentLevel ?? 0;
+        break;
+    }
+
+    if (value >= def.threshold) {
+      try {
+        await unlockAchievement(userId, def.id);
+        newlyUnlocked.push(def);
+      } catch {
+        // Might already be unlocked (race condition), skip
+      }
+    }
+  }
+
+  return { newlyUnlocked };
+}

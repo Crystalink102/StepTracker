@@ -1,57 +1,42 @@
-import { View, Text, StyleSheet, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { useAuth } from '@/src/context/AuthContext';
-import { Button } from '@/src/components/ui';
+import { Button, ConfirmModal } from '@/src/components/ui';
 import { deleteAccount } from '@/src/services/auth.service';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 
 export default function AccountScreen() {
   const { user, logout } = useAuth();
-  const router = useRouter();
 
-  const handleLogout = () => {
-    Alert.alert('Log Out', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Log Out',
-        style: 'destructive',
-        onPress: async () => {
-          await logout();
-        },
-      },
-    ]);
+  const [showLogout, setShowLogout] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [showDeleteFinal, setShowDeleteFinal] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleLogout = () => setShowLogout(true);
+
+  const confirmLogout = async () => {
+    setShowLogout(false);
+    await logout();
   };
 
-  const handleDelete = () => {
-    Alert.alert(
-      'Delete Account',
-      'This will permanently delete your account and all data. This cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            // Double confirmation
-            Alert.alert('Are you absolutely sure?', 'All your XP, runs, and data will be gone forever.', [
-              { text: 'Cancel', style: 'cancel' },
-              {
-                text: 'Yes, Delete Everything',
-                style: 'destructive',
-                onPress: async () => {
-                  try {
-                    await deleteAccount();
-                    await logout();
-                  } catch (err: any) {
-                    Alert.alert('Error', err.message);
-                  }
-                },
-              },
-            ]);
-          },
-        },
-      ]
-    );
+  const handleDelete = () => setShowDelete(true);
+
+  const confirmDeleteFirst = () => {
+    setShowDelete(false);
+    setShowDeleteFinal(true);
+  };
+
+  const confirmDeleteFinal = async () => {
+    setShowDeleteFinal(false);
+    try {
+      await deleteAccount();
+      await logout();
+    } catch (err: any) {
+      setErrorMessage(err.message);
+      setShowError(true);
+    }
   };
 
   return (
@@ -77,6 +62,45 @@ export default function AccountScreen() {
         <Button title="Log Out" variant="ghost" onPress={handleLogout} />
         <Button title="Delete Account" variant="danger" onPress={handleDelete} />
       </View>
+
+      <ConfirmModal
+        visible={showLogout}
+        title="Log Out"
+        message="Are you sure you want to log out?"
+        confirmLabel="Log Out"
+        destructive
+        onConfirm={confirmLogout}
+        onCancel={() => setShowLogout(false)}
+      />
+
+      <ConfirmModal
+        visible={showDelete}
+        title="Delete Account"
+        message="This will permanently delete your account and all data. This cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={confirmDeleteFirst}
+        onCancel={() => setShowDelete(false)}
+      />
+
+      <ConfirmModal
+        visible={showDeleteFinal}
+        title="Are you absolutely sure?"
+        message="All your XP, runs, and data will be gone forever."
+        confirmLabel="Yes, Delete Everything"
+        destructive
+        onConfirm={confirmDeleteFinal}
+        onCancel={() => setShowDeleteFinal(false)}
+      />
+
+      <ConfirmModal
+        visible={showError}
+        title="Error"
+        message={errorMessage}
+        confirmLabel="OK"
+        onConfirm={() => setShowError(false)}
+        onCancel={() => setShowError(false)}
+      />
     </View>
   );
 }

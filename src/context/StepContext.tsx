@@ -11,6 +11,7 @@ import { Pedometer } from 'expo-sensors';
 import { AppState, Platform } from 'react-native';
 import { useAuth } from '@/src/context/AuthContext';
 import * as StepService from '@/src/services/step.service';
+import * as AchievementService from '@/src/services/achievement.service';
 import { xpFromSteps } from '@/src/utils/xp-calculator';
 import { STEP_SYNC_INTERVAL_MS } from '@/src/constants/config';
 
@@ -33,6 +34,7 @@ export function StepProvider({ children }: { children: ReactNode }) {
   const [isTracking, setIsTracking] = useState(false);
   const lastSyncedSteps = useRef(0);
   const syncIntervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
+  const lastAchievementCheck = useRef(0);
 
   // Check pedometer availability
   useEffect(() => {
@@ -47,6 +49,14 @@ export function StepProvider({ children }: { children: ReactNode }) {
         const xp = xpFromSteps(steps);
         await StepService.updateStepCount(user.id, steps, xp);
         lastSyncedSteps.current = steps;
+
+        // Check achievements every 5000 steps
+        if (steps - lastAchievementCheck.current >= 5000) {
+          lastAchievementCheck.current = steps;
+          AchievementService.checkAchievements(user.id, {
+            todaySteps: steps,
+          }).catch(() => {});
+        }
       } catch {
         // Silently fail sync - will retry next interval
       }

@@ -10,8 +10,13 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
+import { useProfile } from '@/src/hooks/useProfile';
+import { useStepStats } from '@/src/hooks/useStepStats';
 import RunListItem from '@/src/components/history/RunListItem';
 import PersonalBestBadge from '@/src/components/history/PersonalBestBadge';
+import PeriodSelector from '@/src/components/stats/PeriodSelector';
+import BarChart from '@/src/components/stats/BarChart';
+import StatsSummary from '@/src/components/stats/StatsSummary';
 import * as ActivityService from '@/src/services/activity.service';
 import * as PBService from '@/src/services/personal-best.service';
 import { Activity, PersonalBest } from '@/src/types/database';
@@ -20,6 +25,8 @@ import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 export default function HistoryScreen() {
   const { user } = useAuth();
   const router = useRouter();
+  const { profile } = useProfile();
+  const { period, setPeriod, data: stepData, average, bestDay, total } = useStepStats();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [personalBests, setPersonalBests] = useState<PersonalBest[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -56,6 +63,13 @@ export default function HistoryScreen() {
         ListHeaderComponent={
           <>
             <Text style={styles.screenTitle}>History</Text>
+
+            <View style={styles.statsSection}>
+              <Text style={styles.sectionTitle}>STEP STATS</Text>
+              <PeriodSelector period={period} onSelect={setPeriod} />
+              <BarChart data={stepData} goal={profile?.daily_step_goal ?? 10000} />
+              <StatsSummary average={average} bestDay={bestDay} total={total} />
+            </View>
 
             {personalBests.length > 0 && (
               <View style={styles.pbSection}>
@@ -123,6 +137,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.lg,
     paddingBottom: Spacing.md,
+  },
+  statsSection: {
+    marginBottom: Spacing.xxl,
   },
   pbSection: {
     marginBottom: Spacing.xl,

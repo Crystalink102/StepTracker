@@ -21,6 +21,12 @@ export interface Database {
           weight_kg: number | null;
           current_streak: number;
           last_streak_date: string | null;
+          daily_step_goal: number;
+          push_token: string | null;
+          notify_daily_reminder: boolean;
+          notify_streak_warning: boolean;
+          notify_achievements: boolean;
+          notify_friend_requests: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -35,6 +41,12 @@ export interface Database {
           weight_kg?: number | null;
           current_streak?: number;
           last_streak_date?: string | null;
+          daily_step_goal?: number;
+          push_token?: string | null;
+          notify_daily_reminder?: boolean;
+          notify_streak_warning?: boolean;
+          notify_achievements?: boolean;
+          notify_friend_requests?: boolean;
         };
         Update: {
           username?: string | null;
@@ -46,6 +58,12 @@ export interface Database {
           weight_kg?: number | null;
           current_streak?: number;
           last_streak_date?: string | null;
+          daily_step_goal?: number;
+          push_token?: string | null;
+          notify_daily_reminder?: boolean;
+          notify_streak_warning?: boolean;
+          notify_achievements?: boolean;
+          notify_friend_requests?: boolean;
         };
         Relationships: [];
       };
@@ -216,6 +234,77 @@ export interface Database {
         };
         Relationships: [];
       };
+      achievement_definitions: {
+        Row: {
+          id: string;
+          category: string;
+          title: string;
+          description: string;
+          icon_name: string;
+          threshold: number;
+          xp_reward: number;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id: string;
+          category: string;
+          title: string;
+          description: string;
+          icon_name?: string;
+          threshold: number;
+          xp_reward?: number;
+          sort_order?: number;
+        };
+        Update: {
+          category?: string;
+          title?: string;
+          description?: string;
+          icon_name?: string;
+          threshold?: number;
+          xp_reward?: number;
+          sort_order?: number;
+        };
+        Relationships: [];
+      };
+      user_achievements: {
+        Row: {
+          id: string;
+          user_id: string;
+          achievement_id: string;
+          unlocked_at: string;
+          notified: boolean;
+        };
+        Insert: {
+          user_id: string;
+          achievement_id: string;
+          unlocked_at?: string;
+          notified?: boolean;
+        };
+        Update: {
+          notified?: boolean;
+        };
+        Relationships: [];
+      };
+      friendships: {
+        Row: {
+          id: string;
+          requester_id: string;
+          addressee_id: string;
+          status: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          requester_id: string;
+          addressee_id: string;
+          status?: string;
+        };
+        Update: {
+          status?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -224,6 +313,31 @@ export interface Database {
       delete_own_account: {
         Args: Record<string, never>;
         Returns: undefined;
+      };
+      search_users: {
+        Args: { search_query: string };
+        Returns: {
+          id: string;
+          username: string;
+          display_name: string | null;
+          avatar_url: string | null;
+        }[];
+      };
+      get_leaderboard: {
+        Args: {
+          time_period?: string;
+          metric?: string;
+          result_limit?: number;
+        };
+        Returns: {
+          user_id: string;
+          username: string;
+          display_name: string | null;
+          avatar_url: string | null;
+          current_level: number;
+          value: number;
+          rank: number;
+        }[];
       };
     };
     Enums: {
@@ -243,3 +357,23 @@ export type ActivityWaypoint = Database['public']['Tables']['activity_waypoints'
 export type PersonalBest = Database['public']['Tables']['personal_bests']['Row'];
 export type XPLedgerEntry = Database['public']['Tables']['xp_ledger']['Row'];
 export type UserXP = Database['public']['Tables']['user_xp']['Row'];
+export type AchievementDefinition = Database['public']['Tables']['achievement_definitions']['Row'];
+export type UserAchievement = Database['public']['Tables']['user_achievements']['Row'];
+export type Friendship = Database['public']['Tables']['friendships']['Row'];
+
+export type LeaderboardEntry = {
+  user_id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  current_level: number;
+  value: number;
+  rank: number;
+};
+
+export type UserSearchResult = {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+};

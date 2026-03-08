@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/src/context/AuthContext';
 import { checkAndUpdateStreak } from '@/src/services/streak.service';
+import * as AchievementService from '@/src/services/achievement.service';
 
 export function useStreak() {
   const { user } = useAuth();
@@ -14,6 +15,13 @@ export function useStreak() {
       .then((result) => {
         setStreak(result.streak);
         setShowPopup(result.showPopup);
+
+        // Check streak achievements
+        if (result.streak > 0) {
+          AchievementService.checkAchievements(user.id, {
+            currentStreak: result.streak,
+          }).catch(() => {});
+        }
       })
       .catch(() => {
         // Silently fail - columns might not exist yet

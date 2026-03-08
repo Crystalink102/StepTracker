@@ -61,6 +61,12 @@
           "photosPermission": "StepTracker accesses your photos for your profile picture.",
           "cameraPermission": "StepTracker uses the camera to take profile photos."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#A855F7"
+        }
       ]
     ],
     "experiments": {

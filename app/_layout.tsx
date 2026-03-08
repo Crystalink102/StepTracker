@@ -6,6 +6,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider, useAuth } from '@/src/context/AuthContext';
 import { StepProvider } from '@/src/context/StepContext';
 import { ActivityProvider } from '@/src/context/ActivityContext';
+import { useNotifications } from '@/src/hooks/useNotifications';
 import { Colors } from '@/src/constants/theme';
 
 export { ErrorBoundary } from 'expo-router';
@@ -20,6 +21,9 @@ function AuthGate() {
   const { isAuthenticated, isLoading, hasMFA, mfaVerified } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+
+  // Register notifications when authenticated
+  useNotifications();
 
   useEffect(() => {
     if (isLoading) return;
@@ -70,6 +74,22 @@ function AuthGate() {
         <Stack.Screen name="(auth)" />
         <Stack.Screen
           name="settings"
+          options={{
+            headerShown: false,
+            presentation: 'card',
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="achievements"
+          options={{
+            headerShown: false,
+            presentation: 'card',
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="friends"
           options={{
             headerShown: false,
             presentation: 'card',

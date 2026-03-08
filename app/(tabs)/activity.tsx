@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useActivity } from '@/src/context/ActivityContext';
 import { useXP } from '@/src/hooks/useXP';
@@ -7,6 +7,7 @@ import { useAuth } from '@/src/context/AuthContext';
 import ActiveRunCard from '@/src/components/activity/ActiveRunCard';
 import RunControls from '@/src/components/activity/RunControls';
 import HeartRateInput from '@/src/components/activity/HeartRateInput';
+import { ConfirmModal } from '@/src/components/ui';
 import * as ProfileService from '@/src/services/profile.service';
 import { Colors, Spacing } from '@/src/constants/theme';
 
@@ -30,6 +31,11 @@ export default function ActivityScreen() {
   const [heartRate, setHeartRate] = useState<number | undefined>(undefined);
   const [hrSource, setHrSource] = useState<'manual' | 'auto'>('manual');
   const [restingHR, setRestingHR] = useState(70);
+  const [showStopConfirm, setShowStopConfirm] = useState(false);
+  const [showResultModal, setShowResultModal] = useState(false);
+  const [resultMessage, setResultMessage] = useState('');
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Load resting HR from profile
   useEffect(() => {
@@ -44,33 +50,31 @@ export default function ActivityScreen() {
       try {
         await startActivity(type);
       } catch (err: any) {
-        Alert.alert('Error', err.message || 'Could not start activity.');
+        setErrorMessage(err.message || 'Could not start activity.');
+        setShowErrorModal(true);
       }
     },
     [startActivity]
   );
 
-  const handleStop = useCallback(async () => {
-    Alert.alert('End Activity', 'Are you sure you want to stop?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Stop',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            const result = await stopActivity(heartRate, hrSource);
-            if (result) {
-              Alert.alert(
-                'Activity Complete!',
-                `${(distanceMeters / 1000).toFixed(2)} km in ${Math.floor(elapsedSeconds / 60)}min • +${result.xp_earned} XP`
-              );
-            }
-          } catch (err: any) {
-            Alert.alert('Error', err.message);
-          }
-        },
-      },
-    ]);
+  const handleStop = useCallback(() => {
+    setShowStopConfirm(true);
+  }, []);
+
+  const confirmStop = useCallback(async () => {
+    setShowStopConfirm(false);
+    try {
+      const result = await stopActivity(heartRate, hrSource);
+      if (result) {
+        setResultMessage(
+          `${(distanceMeters / 1000).toFixed(2)} km in ${Math.floor(elapsedSeconds / 60)}min • +${result.xp_earned} XP`
+        );
+        setShowResultModal(true);
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message);
+      setShowErrorModal(true);
+    }
   }, [stopActivity, heartRate, hrSource, distanceMeters, elapsedSeconds]);
 
   const handleHeartRateChange = useCallback(
@@ -114,6 +118,34 @@ export default function ActivityScreen() {
         onPause={pauseActivity}
         onResume={resumeActivity}
         onStop={handleStop}
+      />
+
+      <ConfirmModal
+        visible={showStopConfirm}
+        title="End Activity"
+        message="Are you sure you want to stop?"
+        confirmLabel="Stop"
+        destructive
+        onConfirm={confirmStop}
+        onCancel={() => setShowStopConfirm(false)}
+      />
+
+      <ConfirmModal
+        visible={showResultModal}
+        title="Activity Complete!"
+        message={resultMessage}
+        confirmLabel="Nice!"
+        onConfirm={() => setShowResultModal(false)}
+        onCancel={() => setShowResultModal(false)}
+      />
+
+      <ConfirmModal
+        visible={showErrorModal}
+        title="Error"
+        message={errorMessage}
+        confirmLabel="OK"
+        onConfirm={() => setShowErrorModal(false)}
+        onCancel={() => setShowErrorModal(false)}
       />
     </SafeAreaView>
   );

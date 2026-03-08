@@ -1,6 +1,7 @@
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import XPCard from '@/src/components/home/XPCard';
+import StepGoalRing from '@/src/components/home/StepGoalRing';
 import StepCounter from '@/src/components/home/StepCounter';
 import StreakCard from '@/src/components/home/StreakCard';
 import StreakPopup from '@/src/components/home/StreakPopup';
@@ -18,6 +19,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
       >
         <XPCard />
+        <StepGoalRing />
         <StepCounter />
         <StreakCard streak={streak} />
       </ScrollView>

@@ -24,6 +24,7 @@ export default function EditProfileScreen() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
+  const [stepGoal, setStepGoal] = useState('10000');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -37,6 +38,7 @@ export default function EditProfileScreen() {
         setProfile(p);
         setDisplayName(p.display_name || '');
         setUsername(p.username || '');
+        setStepGoal(String(p.daily_step_goal ?? 10000));
       })
       .catch(() => {})
       .finally(() => setIsLoading(false));
@@ -68,9 +70,11 @@ export default function EditProfileScreen() {
     if (!user) return;
     setIsSaving(true);
     try {
+      const goalNum = parseInt(stepGoal, 10);
       const updated = await ProfileService.updateProfile(user.id, {
         display_name: displayName || null,
         username: username || null,
+        daily_step_goal: isNaN(goalNum) || goalNum < 100 ? 10000 : goalNum,
       });
       setProfile(updated);
       router.back();
@@ -113,6 +117,13 @@ export default function EditProfileScreen() {
           onChangeText={setUsername}
           placeholder="username"
           autoCapitalize="none"
+        />
+        <Input
+          label="Daily Step Goal"
+          value={stepGoal}
+          onChangeText={setStepGoal}
+          placeholder="10000"
+          keyboardType="numeric"
         />
       </View>
 
