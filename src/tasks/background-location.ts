@@ -1,11 +1,15 @@
 import * as TaskManager from 'expo-task-manager';
 import * as Location from 'expo-location';
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 export const BACKGROUND_LOCATION_TASK = 'background-location-task';
 
-// Define the background task (native only — TaskManager crashes on web)
-if (Platform.OS !== 'web') {
+// Detect Expo Go — background location APIs aren't available there
+const isExpoGo = Constants.executionEnvironment === 'storeClient';
+
+// Define the background task (native standalone builds only)
+if (Platform.OS !== 'web' && !isExpoGo) {
   try {
     TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data, error }) => {
       if (error) {
@@ -44,6 +48,7 @@ export function setLocationCallback(
 function hasBackgroundSupport(): boolean {
   return (
     Platform.OS !== 'web' &&
+    !isExpoGo &&
     typeof Location.hasStartedLocationUpdatesAsync === 'function'
   );
 }
