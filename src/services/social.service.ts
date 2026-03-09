@@ -21,64 +21,76 @@ async function getExcludedUserIds(currentUserId: string): Promise<Set<string>> {
   return ids;
 }
 
+/**
+ * Client-side fallback: fetch profiles directly, filter out friends.
+ * Does NOT require username — shows all users with a username OR display_name.
+ */
+async function fetchProfilesFallback(
+  currentUserId: string | undefined,
+  query?: string
+): Promise<UserSearchResult[]> {
+  let qb = supabase
+    .from('profiles')
+    .select('id, username, display_name, avatar_url');
+
+  if (query && query.length > 0) {
+    const sanitized = query.replace(/[,.()"'\\%]/g, '');
+    if (sanitized.length > 0) {
+      // Search username and display_name — either can be set
+      qb = qb.or(`username.ilike.%${sanitized}%,display_name.ilike.%${sanitized}%`);
+    }
+  }
+
+  const { data: profiles, error: profileError } = await qb
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  if (profileError) {
+    console.warn('[Social] Profile query failed:', profileError.message);
+    return [];
+  }
+
+  const excluded = currentUserId ? await getExcludedUserIds(currentUserId) : new Set<string>();
+  return (profiles ?? [])
+    .filter((p) => !excluded.has(p.id))
+    .map((p) => ({
+      id: p.id,
+      username: p.username ?? p.display_name ?? 'user',
+      display_name: p.display_name,
+      avatar_url: p.avatar_url,
+    })) as UserSearchResult[];
+}
+
 export async function searchUsers(query: string, currentUserId?: string): Promise<UserSearchResult[]> {
   // Try the RPC function first
   try {
     const { data, error } = await supabase.rpc('search_users', {
       search_query: query,
     });
-    if (!error && data && data.length >= 0) return data;
+    // Only use RPC result if it succeeded AND returned actual results
+    if (!error && data && data.length > 0) return data;
+    // If RPC returned empty, fall through to client-side (RPC might be too restrictive)
   } catch (err) {
     console.warn('[Social] search_users RPC error:', err);
   }
 
-  // Fallback: client-side search
-  console.warn('[Social] Using client-side search fallback');
-  const sanitized = query.replace(/[,.()"'\\%]/g, '');
-  let qb = supabase
-    .from('profiles')
-    .select('id, username, display_name, avatar_url')
-    .not('username', 'is', null);
-
-  if (sanitized.length > 0) {
-    qb = qb.or(`username.ilike.%${sanitized}%,display_name.ilike.%${sanitized}%`);
-  }
-
-  const { data: profiles, error: profileError } = await qb
-    .order('username', { ascending: true })
-    .limit(50);
-
-  if (profileError) throw profileError;
-
-  // Filter out current user and existing friends/pending
-  const excluded = currentUserId ? await getExcludedUserIds(currentUserId) : new Set<string>();
-  return (profiles ?? []).filter((p) => !excluded.has(p.id)) as UserSearchResult[];
+  // Client-side fallback — always works
+  return fetchProfilesFallback(currentUserId, query);
 }
 
 export async function getAllUsers(currentUserId?: string): Promise<UserSearchResult[]> {
-  // Try RPC with empty query first — returns all non-friend users
+  // Try RPC with empty query first
   try {
     const { data, error } = await supabase.rpc('search_users', {
       search_query: '',
     });
-    if (!error && data && data.length >= 0) return data;
+    if (!error && data && data.length > 0) return data;
   } catch (err) {
     console.warn('[Social] getAllUsers RPC error:', err);
   }
 
-  // Fallback: fetch all profiles, filter out friends client-side
-  console.warn('[Social] Using client-side getAllUsers fallback');
-  const { data: profiles, error: profileError } = await supabase
-    .from('profiles')
-    .select('id, username, display_name, avatar_url')
-    .not('username', 'is', null)
-    .order('username', { ascending: true })
-    .limit(100);
-
-  if (profileError) throw profileError;
-
-  const excluded = currentUserId ? await getExcludedUserIds(currentUserId) : new Set<string>();
-  return (profiles ?? []).filter((p) => !excluded.has(p.id)) as UserSearchResult[];
+  // Client-side fallback — fetch all profiles
+  return fetchProfilesFallback(currentUserId);
 }
 
 export async function sendFriendRequest(requesterId: string, addresseeId: string): Promise<Friendship> {
