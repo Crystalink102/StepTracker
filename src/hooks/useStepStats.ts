@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/src/context/AuthContext';
 import * as StepService from '@/src/services/step.service';
 import { DailySteps } from '@/src/types/database';
@@ -95,12 +95,17 @@ export function useStepStats() {
     loadData();
   }, [loadData]);
 
-  const total = data.reduce((sum, d) => sum + d.steps, 0);
-  const average = data.length > 0 ? Math.round(total / data.length) : 0;
-  const bestDay = data.reduce(
-    (best, d) => (d.steps > best.steps ? d : best),
-    { date: '', label: '', steps: 0 }
-  );
+  const { total, average, bestDay } = useMemo(() => {
+    const t = data.reduce((sum, d) => sum + d.steps, 0);
+    return {
+      total: t,
+      average: data.length > 0 ? Math.round(t / data.length) : 0,
+      bestDay: data.reduce(
+        (best, d) => (d.steps > best.steps ? d : best),
+        { date: '', label: '', steps: 0 }
+      ),
+    };
+  }, [data]);
 
   return { period, setPeriod, data, total, average, bestDay, isLoading, refresh: loadData };
 }

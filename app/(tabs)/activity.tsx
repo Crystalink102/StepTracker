@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, ScrollView, StyleSheet, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -101,10 +101,10 @@ export default function ActivityScreen() {
   );
 
   // Map coordinates for the live view
-  const mapCoords = waypoints.map((wp) => ({
-    latitude: wp.latitude,
-    longitude: wp.longitude,
-  }));
+  const mapCoords = useMemo(
+    () => waypoints.map((wp) => ({ latitude: wp.latitude, longitude: wp.longitude })),
+    [waypoints]
+  );
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>

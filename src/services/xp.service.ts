@@ -89,8 +89,8 @@ export async function addXP(
     };
   });
 
-  // Update lock but don't let rejections break the chain
-  addXPLock = result.catch(() => {});
+  // Update lock — always resolve so the chain never breaks
+  addXPLock = result.then(() => undefined, () => undefined);
   return result;
 }
 

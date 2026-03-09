@@ -17,8 +17,10 @@ type QueuedOperation = {
 };
 
 let queue: QueuedOperation[] = [];
+let queueLoaded = false;
 
 async function loadQueue(): Promise<void> {
+  if (queueLoaded) return;
   try {
     const stored = await AsyncStorage.getItem(QUEUE_KEY);
     if (stored) {
@@ -27,6 +29,7 @@ async function loadQueue(): Promise<void> {
   } catch {
     queue = [];
   }
+  queueLoaded = true;
 }
 
 async function saveQueue(): Promise<void> {
@@ -112,6 +115,7 @@ export function getQueueSize(): number {
 
 export async function clearQueue(): Promise<void> {
   queue = [];
+  queueLoaded = true;
   await saveQueue();
 }
 

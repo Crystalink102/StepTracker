@@ -246,7 +246,11 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       if (isStoppingRef.current) return null;
       isStoppingRef.current = true;
 
-      await stopBackgroundLocation();
+      // Capture user.id now in case user becomes null during async ops
+      const userId = user.id;
+
+      try {
+        await stopBackgroundLocation();
 
       const avgPace =
         distanceMeters > 0
@@ -258,7 +262,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       // Fetch user weight for MET-based calorie calculation
       let userWeight: number | null = null;
       try {
-        const profile = await ProfileService.getProfile(user.id);
+        const profile = await ProfileService.getProfile(userId);
         userWeight = profile.weight_kg;
       } catch (err) {
         console.warn('[Activity] Could not fetch profile for calorie calc, using default weight:', err);
@@ -337,7 +341,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
             table: 'xp_ledger',
             operation: 'insert',
             data: {
-              user_id: user.id,
+              user_id: userId,
               amount: xp,
               source: 'activity',
               source_id: currentActivity.id,
@@ -347,21 +351,22 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Non-blocking post-completion checks (pass waypoints for accurate segment times)
-      PBService.checkPersonalBests(user.id, completed, waypoints).catch((err) => {
-        console.warn('[Activity] PB check failed:', err);
-      });
-
-      ActivityService.getActivityHistory(user.id)
-        .then((history) => {
-          const completedCount = history.filter((a) => a.status === 'completed').length;
-          return AchievementService.checkAchievements(user.id, {
-            activityCount: completedCount,
-          });
-        })
-        .catch((err) => {
-          console.warn('[Activity] Achievement check failed:', err);
-        });
+      // Non-blocking post-completion checks (parallelized)
+      Promise.all([
+        PBService.checkPersonalBests(userId, completed, waypoints).catch((err) => {
+          console.warn('[Activity] PB check failed:', err);
+        }),
+        ActivityService.getActivityHistory(userId)
+          .then((history) => {
+            const completedCount = history.filter((a) => a.status === 'completed').length;
+            return AchievementService.checkAchievements(userId, {
+              activityCount: completedCount,
+            });
+          })
+          .catch((err) => {
+            console.warn('[Activity] Achievement check failed:', err);
+          }),
+      ]).catch(() => {});
 
       // Reset state
       setCurrentActivity(null);
@@ -375,6 +380,11 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       isStoppingRef.current = false;
 
       return completed;
+      } catch (err) {
+        // Reset the stopping flag so user can retry
+        isStoppingRef.current = false;
+        throw err;
+      }
     },
     [currentActivity, user, elapsedSeconds, distanceMeters, waypoints, addXP]
   );

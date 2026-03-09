@@ -41,9 +41,14 @@ export default function DailyGoalScreen() {
 
     setIsSaving(true);
     try {
-      const profile = await ProfileService.getProfile(user.id);
       const updates: Record<string, number> = { daily_step_goal: goal };
-      if (profile.height_cm === null) {
+      try {
+        const profile = await ProfileService.getProfile(user.id);
+        if (profile && profile.height_cm === null) {
+          updates.height_cm = 170;
+        }
+      } catch {
+        // Profile fetch failed — just save the goal
         updates.height_cm = 170;
       }
       await ProfileService.updateProfile(user.id, updates);

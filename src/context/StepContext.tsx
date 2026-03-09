@@ -207,6 +207,33 @@ export function StepProvider({ children }: { children: ReactNode }) {
     return () => subscription.remove();
   }, [isAvailable]);
 
+  // Detect midnight rollover and reset step count for the new day
+  const currentDateRef = useRef(getTodayString());
+  useEffect(() => {
+    const checkDate = () => {
+      const now = getTodayString();
+      if (now !== currentDateRef.current) {
+        currentDateRef.current = now;
+        // New day — reset steps and sync state
+        setTodaySteps(0);
+        lastSyncedSteps.current = 0;
+        catchUpDone.current = false;
+        AsyncStorage.setItem(LAST_SYNCED_DATE_KEY, now).catch(() => {});
+        AsyncStorage.setItem(LAST_SYNCED_KEY, '0').catch(() => {});
+      }
+    };
+    // Check every 30s for date change
+    const interval = setInterval(checkDate, 30_000);
+    // Also check when app comes to foreground
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') checkDate();
+    });
+    return () => {
+      clearInterval(interval);
+      sub.remove();
+    };
+  }, []);
+
   // Keep ref in sync with state for use in intervals/callbacks
   useEffect(() => {
     todayStepsRef.current = todaySteps;

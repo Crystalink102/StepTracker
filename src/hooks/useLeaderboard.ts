@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/src/context/AuthContext';
 import * as LeaderboardService from '@/src/services/leaderboard.service';
 import { LeaderboardEntry } from '@/src/types/database';
@@ -28,9 +28,10 @@ export function useLeaderboard() {
     refresh();
   }, [refresh]);
 
-  const myRank = user
-    ? entries.find((e) => e.user_id === user.id)?.rank ?? null
-    : null;
+  const myRank = useMemo(
+    () => user ? entries.find((e) => e.user_id === user.id)?.rank ?? null : null,
+    [entries, user]
+  );
 
   return {
     metric,

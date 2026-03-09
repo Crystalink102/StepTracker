@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -83,10 +83,10 @@ export default function RunDetailScreen() {
     await Share.share({ message: lines.join('\n') });
   };
 
-  const routeCoords = waypoints.map((wp) => ({
-    latitude: wp.latitude,
-    longitude: wp.longitude,
-  }));
+  const routeCoords = useMemo(
+    () => waypoints.map((wp) => ({ latitude: wp.latitude, longitude: wp.longitude })),
+    [waypoints]
+  );
 
   const hasRoute = routeCoords.length > 1;
 

@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Animated, {
   withSpring,
@@ -34,10 +35,14 @@ export default function StepCounter() {
     [todaySteps]
   );
 
-  const distM = distanceFromSteps(todaySteps, profile?.height_cm ?? null);
-  const displayDist = unit === 'mi' ? distM * 0.000621371 : distM / 1000;
-  const cal = caloriesFromSteps(todaySteps, profile?.weight_kg ?? null);
-  const min = activeMinutesFromSteps(todaySteps);
+  const { displayDist, cal, min } = useMemo(() => {
+    const distM = distanceFromSteps(todaySteps, profile?.height_cm ?? null);
+    return {
+      displayDist: unit === 'mi' ? distM * 0.000621371 : distM / 1000,
+      cal: caloriesFromSteps(todaySteps, profile?.weight_kg ?? null),
+      min: activeMinutesFromSteps(todaySteps),
+    };
+  }, [todaySteps, profile?.height_cm, profile?.weight_kg, unit]);
 
   return (
     <Card style={styles.card} accessible accessibilityLabel={`Today's steps: ${formatNumber(todaySteps)}. Distance: ${displayDist.toFixed(2)} ${distanceUnitShort(unit)}. Calories: ${cal}. Active minutes: ${min}.`}>

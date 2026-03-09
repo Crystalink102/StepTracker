@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/src/context/AuthContext';
 import * as XPService from '@/src/services/xp.service';
 import {
@@ -13,9 +13,9 @@ export function useXP() {
   const [level, setLevel] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
 
-  const progress = levelProgress(totalXP);
-  const xpRemaining = xpToNextLevel(totalXP);
-  const xpNeeded = xpForLevel(level);
+  const progress = useMemo(() => levelProgress(totalXP), [totalXP]);
+  const xpRemaining = useMemo(() => xpToNextLevel(totalXP), [totalXP]);
+  const xpNeeded = useMemo(() => xpForLevel(level), [level]);
 
   const refresh = useCallback(async () => {
     if (!user) {
