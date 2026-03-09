@@ -11,16 +11,16 @@ import {
 
 describe('xpForLevel', () => {
   it('returns XP needed for level 1', () => {
-    // 100 * 1^1.68 = 100
-    expect(xpForLevel(1)).toBe(100);
+    // 50 * 1^1.68 = 50
+    expect(xpForLevel(1)).toBe(50);
   });
 
   it('scales with level power curve', () => {
     const lvl5 = xpForLevel(5);
     const lvl10 = xpForLevel(10);
     expect(lvl10).toBeGreaterThan(lvl5);
-    // Level 5: 100 * 5^1.68 ≈ 1404
-    expect(lvl5).toBeGreaterThan(1000);
+    // Level 5: 50 * 5^1.68 ≈ 702
+    expect(lvl5).toBeGreaterThan(500);
   });
 });
 
@@ -29,12 +29,12 @@ describe('levelFromTotalXP', () => {
     expect(levelFromTotalXP(0)).toBe(1);
   });
 
-  it('returns level 1 for 99 XP (not enough for level 2)', () => {
-    expect(levelFromTotalXP(99)).toBe(1);
+  it('returns level 1 for 49 XP (not enough for level 2)', () => {
+    expect(levelFromTotalXP(49)).toBe(1);
   });
 
   it('returns level 2 after accumulating enough XP', () => {
-    const lvl1XP = xpForLevel(1); // 100
+    const lvl1XP = xpForLevel(1); // 50
     expect(levelFromTotalXP(lvl1XP)).toBe(2);
   });
 
@@ -63,18 +63,18 @@ describe('xpToNextLevel', () => {
     expect(xpToNextLevel(0)).toBe(xpForLevel(1));
   });
 
-  it('decreases as XP is gained', () => {
-    const atZero = xpToNextLevel(0);
-    const at50 = xpToNextLevel(50);
-    expect(at50).toBe(atZero - 50);
+  it('decreases as XP is gained within a level', () => {
+    const atZero = xpToNextLevel(0); // 50 (XP needed for level 1 → 2)
+    const at25 = xpToNextLevel(25);  // 25 remaining to level 2
+    expect(at25).toBe(atZero - 25);
   });
 });
 
 describe('xpFromSteps', () => {
-  it('gives 1 XP per 10 steps baseline', () => {
-    expect(xpFromSteps(100)).toBe(10);
-    expect(xpFromSteps(10)).toBe(1);
-    expect(xpFromSteps(9)).toBe(0);
+  it('gives 1 XP per step', () => {
+    expect(xpFromSteps(100)).toBe(100);
+    expect(xpFromSteps(10)).toBe(10);
+    expect(xpFromSteps(1)).toBe(1);
   });
 
   it('adds HR bonus when heart rate provided', () => {

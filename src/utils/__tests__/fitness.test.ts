@@ -10,12 +10,12 @@ import {
 
 describe('strideLengthMeters', () => {
   it('returns default stride for null height', () => {
-    expect(strideLengthMeters(null)).toBe(0.73);
+    expect(strideLengthMeters(null)).toBe(0.7055);
   });
 
   it('returns default stride for unreasonable height', () => {
-    expect(strideLengthMeters(50)).toBe(0.73);
-    expect(strideLengthMeters(300)).toBe(0.73);
+    expect(strideLengthMeters(50)).toBe(0.7055);
+    expect(strideLengthMeters(300)).toBe(0.7055);
   });
 
   it('calculates stride from height', () => {
@@ -33,7 +33,7 @@ describe('distanceFromSteps', () => {
 
   it('uses default stride when height is null', () => {
     const distance = distanceFromSteps(1000, null);
-    expect(distance).toBe(730);
+    expect(distance).toBe(705.5);
   });
 });
 
@@ -90,7 +90,7 @@ describe('isPlausibleGPSMove', () => {
 
   it('rejects too-small moves', () => {
     expect(isPlausibleGPSMove(0.5)).toBe(false);
-    expect(isPlausibleGPSMove(1)).toBe(false);
+    expect(isPlausibleGPSMove(0.9)).toBe(false);
   });
 
   it('rejects too-large jumps', () => {

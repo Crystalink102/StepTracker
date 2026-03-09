@@ -334,7 +334,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         } catch (err) {
           console.warn('[Activity] XP award failed, queuing offline:', err);
           await enqueue({
-            table: 'xp_transactions',
+            table: 'xp_ledger',
             operation: 'insert',
             data: {
               user_id: user.id,

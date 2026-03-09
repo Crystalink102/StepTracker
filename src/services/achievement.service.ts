@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import * as XPService from './xp.service';
 import { AchievementDefinition, UserAchievement } from '@/src/types/database';
 
 export async function getDefinitions(): Promise<AchievementDefinition[]> {
@@ -92,6 +93,18 @@ export async function checkAchievements(
       try {
         await unlockAchievement(userId, def.id);
         newlyUnlocked.push(def);
+        // Award XP reward for the achievement
+        if (def.xp_reward && def.xp_reward > 0) {
+          await XPService.addXP(
+            userId,
+            def.xp_reward,
+            'bonus',
+            def.id,
+            `Achievement: ${def.title}`
+          ).catch((xpErr) => {
+            console.warn('[Achievements] XP award failed for', def.id, ':', xpErr);
+          });
+        }
       } catch (err) {
         // Expected: unique constraint violation = already unlocked (race condition)
         console.warn('[Achievements] Could not unlock', def.id, ':', err);

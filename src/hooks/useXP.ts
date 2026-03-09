@@ -18,7 +18,10 @@ export function useXP() {
   const xpNeeded = xpForLevel(level);
 
   const refresh = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
     try {
       const data = await XPService.getUserXP(user.id);
       setTotalXP(data.total_xp);
@@ -31,12 +34,19 @@ export function useXP() {
   }, [user]);
 
   useEffect(() => {
+    if (!user) {
+      setTotalXP(0);
+      setLevel(1);
+      setIsLoading(false);
+      return;
+    }
+
     refresh();
 
-    // Refresh XP periodically so the card stays in sync with step awards
-    const interval = setInterval(refresh, 30_000);
+    // Refresh XP every 15s so the card stays in sync with step awards
+    const interval = setInterval(refresh, 15_000);
     return () => clearInterval(interval);
-  }, [refresh]);
+  }, [refresh, user]);
 
   const addXP = useCallback(
     async (

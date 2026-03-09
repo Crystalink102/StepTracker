@@ -5,83 +5,57 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUT = path.join(__dirname, '..', 'assets', 'images');
 
-const BG_COLOR = '#050507'; // slightly darker than app bg #09090B
+const BG_COLOR = '#050507';
 const PURPLE = '#A855F7';
 
-// The icon: a backwards-Z connected to a T — like a step/zigzag pulse
-// Design on a 512x512 canvas, centered in safe zone
+// Icon: "5T" centered, connected via shared vertical stroke in the middle
 function createIconSVG(size, padding) {
   const s = size;
   const p = padding;
-  const area = s - p * 2; // drawing area
+  const sw = Math.round(s * 0.065); // stroke width
+
+  // Center the whole glyph
   const cx = s / 2;
   const cy = s / 2;
+  const totalW = (s - p * 2) * 0.6; // total width of 5T
+  const totalH = (s - p * 2) * 0.55; // total height of 5T
 
-  // The shape: a rectangular zigzag (like a backwards Z) flowing into a T
-  // Think of it as: top-right bar → diagonal down-left → bottom bar with T stem
-  const strokeW = area * 0.09;
-  const halfW = area * 0.32; // half-width of the shape
-  const halfH = area * 0.34; // half-height of the shape
+  const left = cx - totalW / 2;
+  const right = cx + totalW / 2;
+  const top = cy - totalH / 2;
+  const bottom = cy + totalH / 2;
+  const midY = cy;
 
-  // Points for the zigzag-T shape:
-  // Start top-right, go left-diagonal, then T at bottom
-  const x1 = cx + halfW;       // top right
-  const y1 = cy - halfH;
-  const x2 = cx - halfW * 0.3; // middle left (zigzag vertex)
-  const y2 = cy + halfH * 0.1;
-  const x3 = cx + halfW * 0.3; // middle right (zigzag vertex)
-  const y3 = cy - halfH * 0.1;
-  const x4 = cx - halfW;       // bottom left
-  const y4 = cy + halfH;
+  // Shared center vertical line where 5 meets T
+  const center = cx;
 
-  // T crossbar
-  const tLeft = cx - halfW;
-  const tRight = cx + halfW;
-  const tY = cy + halfH;
-
-  // T stem going down
-  const stemBottom = cy + halfH + area * 0.18;
+  // "5" on the left side: top bar, down left, mid bar to center, down right to bottom, bottom bar left
+  // T on the right: top bar from center to right, stem down from midpoint of that bar
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 ${s} ${s}">
-    <!-- Zigzag path: top-right → mid-left → mid-right → bottom-left -->
+    <!-- 5: continuous path -->
     <polyline
-      points="${x1},${y1} ${x2},${y2}"
+      points="${center},${top} ${left},${top} ${left},${midY} ${center},${midY} ${center},${bottom} ${left},${bottom}"
       fill="none"
       stroke="${PURPLE}"
-      stroke-width="${strokeW}"
+      stroke-width="${sw}"
       stroke-linecap="round"
       stroke-linejoin="round"
     />
-    <polyline
-      points="${x2},${y2} ${x3},${y3}"
-      fill="none"
-      stroke="${PURPLE}"
-      stroke-width="${strokeW}"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <polyline
-      points="${x3},${y3} ${x4},${y4}"
-      fill="none"
-      stroke="${PURPLE}"
-      stroke-width="${strokeW}"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
-    <!-- T crossbar at bottom -->
+    <!-- T crossbar: from center to right at top -->
     <line
-      x1="${tLeft}" y1="${tY}"
-      x2="${tRight}" y2="${tY}"
+      x1="${center}" y1="${top}"
+      x2="${right}" y2="${top}"
       stroke="${PURPLE}"
-      stroke-width="${strokeW}"
+      stroke-width="${sw}"
       stroke-linecap="round"
     />
-    <!-- T stem -->
+    <!-- T stem: down from middle of crossbar -->
     <line
-      x1="${cx}" y1="${tY}"
-      x2="${cx}" y2="${stemBottom}"
+      x1="${(center + right) / 2}" y1="${top}"
+      x2="${(center + right) / 2}" y2="${bottom}"
       stroke="${PURPLE}"
-      stroke-width="${strokeW}"
+      stroke-width="${sw}"
       stroke-linecap="round"
     />
   </svg>`;
@@ -94,56 +68,43 @@ function createBgSVG(size) {
 }
 
 function createFullIconSVG(size) {
-  const padding = size * 0.15;
-  const iconSvgInner = createIconSVG(size, padding);
-  // Composite: bg + icon
+  const padding = size * 0.18;
+  const innerSvg = createIconSVG(size, padding);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">
     <rect width="${size}" height="${size}" rx="${size * 0.18}" fill="${BG_COLOR}"/>
-    ${iconSvgInner.replace(/<\/?svg[^>]*>/g, '')}
+    ${innerSvg.replace(/<\/?svg[^>]*>/g, '')}
   </svg>`;
 }
 
 async function generate() {
-  // Android adaptive icon foreground (432x432, icon in center 288x288 safe zone)
+  // Android adaptive foreground (432x432, safe zone 288x288 centered)
   const fgSvg = createIconSVG(432, 72);
-  await sharp(Buffer.from(fgSvg))
-    .png()
-    .toFile(path.join(OUT, 'android-icon-foreground.png'));
+  await sharp(Buffer.from(fgSvg)).png().toFile(path.join(OUT, 'android-icon-foreground.png'));
   console.log('✓ android-icon-foreground.png');
 
-  // Android adaptive icon background (432x432, solid color)
+  // Android adaptive background
   const bgSvg = createBgSVG(432);
-  await sharp(Buffer.from(bgSvg))
-    .png()
-    .toFile(path.join(OUT, 'android-icon-background.png'));
+  await sharp(Buffer.from(bgSvg)).png().toFile(path.join(OUT, 'android-icon-background.png'));
   console.log('✓ android-icon-background.png');
 
-  // Android monochrome (432x432, white on transparent)
+  // Monochrome (white on transparent)
   const monoSvg = createIconSVG(432, 72).replace(new RegExp(PURPLE, 'g'), '#FFFFFF');
-  await sharp(Buffer.from(monoSvg))
-    .png()
-    .toFile(path.join(OUT, 'android-icon-monochrome.png'));
+  await sharp(Buffer.from(monoSvg)).png().toFile(path.join(OUT, 'android-icon-monochrome.png'));
   console.log('✓ android-icon-monochrome.png');
 
-  // Main icon (1024x1024 with rounded rect bg)
+  // Main icon 1024x1024
   const mainSvg = createFullIconSVG(1024);
-  await sharp(Buffer.from(mainSvg))
-    .png()
-    .toFile(path.join(OUT, 'icon.png'));
+  await sharp(Buffer.from(mainSvg)).png().toFile(path.join(OUT, 'icon.png'));
   console.log('✓ icon.png');
 
-  // Favicon (48x48)
+  // Favicon 48x48
   const favSvg = createFullIconSVG(48);
-  await sharp(Buffer.from(favSvg))
-    .png()
-    .toFile(path.join(OUT, 'favicon.png'));
+  await sharp(Buffer.from(favSvg)).png().toFile(path.join(OUT, 'favicon.png'));
   console.log('✓ favicon.png');
 
-  // Splash icon (200x200, just the icon on transparent)
+  // Splash icon 200x200
   const splashSvg = createIconSVG(200, 20);
-  await sharp(Buffer.from(splashSvg))
-    .png()
-    .toFile(path.join(OUT, 'splash-icon.png'));
+  await sharp(Buffer.from(splashSvg)).png().toFile(path.join(OUT, 'splash-icon.png'));
   console.log('✓ splash-icon.png');
 
   console.log('\nAll icons generated!');

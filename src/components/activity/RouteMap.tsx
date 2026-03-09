@@ -115,15 +115,27 @@ function getDistanceSplits(coordinates: Coord[], unit: DistanceUnit = 'km'): { c
 /**
  * Calculate map region that fits all coordinates with padding.
  */
+function isValidCoord(c: Coord): boolean {
+  return (
+    isFinite(c.latitude) &&
+    isFinite(c.longitude) &&
+    c.latitude >= -90 &&
+    c.latitude <= 90 &&
+    c.longitude >= -180 &&
+    c.longitude <= 180
+  );
+}
+
 function getRegion(coordinates: Coord[]) {
-  if (coordinates.length === 0) return undefined;
+  const valid = coordinates.filter(isValidCoord);
+  if (valid.length === 0) return undefined;
 
-  let minLat = coordinates[0].latitude;
-  let maxLat = coordinates[0].latitude;
-  let minLng = coordinates[0].longitude;
-  let maxLng = coordinates[0].longitude;
+  let minLat = valid[0].latitude;
+  let maxLat = valid[0].latitude;
+  let minLng = valid[0].longitude;
+  let maxLng = valid[0].longitude;
 
-  coordinates.forEach((c) => {
+  valid.forEach((c) => {
     minLat = Math.min(minLat, c.latitude);
     maxLat = Math.max(maxLat, c.latitude);
     minLng = Math.min(minLng, c.longitude);
@@ -150,14 +162,17 @@ export default function RouteMap({
   const { preferences } = usePreferences();
   const unit = preferences.distanceUnit;
 
-  if (!MapView || coordinates.length < 2) {
+  // Filter out any invalid/corrupt coordinates
+  const validCoords = coordinates.filter(isValidCoord);
+
+  if (!MapView || validCoords.length < 2) {
     return null;
   }
 
-  const region = getRegion(coordinates);
-  const distSplits = showKmSplits ? getDistanceSplits(coordinates, unit) : [];
-  const start = coordinates[0];
-  const finish = coordinates[coordinates.length - 1];
+  const region = getRegion(validCoords);
+  const distSplits = showKmSplits ? getDistanceSplits(validCoords, unit) : [];
+  const start = validCoords[0];
+  const finish = validCoords[validCoords.length - 1];
 
   return (
     <View style={[styles.container, { height, borderRadius }]}>
@@ -183,14 +198,14 @@ export default function RouteMap({
       >
         {/* Route glow (wider, semi-transparent) */}
         <Polyline
-          coordinates={coordinates}
+          coordinates={validCoords}
           strokeColor="rgba(168, 85, 247, 0.3)"
           strokeWidth={strokeWidth * 3}
         />
 
         {/* Main route line */}
         <Polyline
-          coordinates={coordinates}
+          coordinates={validCoords}
           strokeColor={Colors.primary}
           strokeWidth={strokeWidth}
         />

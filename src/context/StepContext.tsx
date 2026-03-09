@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { Pedometer } from 'expo-sensors';
 import { AppState } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/src/context/AuthContext';
 import * as StepService from '@/src/services/step.service';
 import * as XPService from '@/src/services/xp.service';
@@ -17,6 +18,9 @@ import { xpFromSteps } from '@/src/utils/xp-calculator';
 import { enqueue } from '@/src/services/offline-queue';
 import { getTodayString } from '@/src/utils/date-helpers';
 import { STEP_SYNC_INTERVAL_MS } from '@/src/constants/config';
+
+const LAST_SYNCED_KEY = 'step_last_synced_steps';
+const LAST_SYNCED_DATE_KEY = 'step_last_synced_date';
 
 type StepContextValue = {
   todaySteps: number;
@@ -39,6 +43,7 @@ export function StepProvider({ children }: { children: ReactNode }) {
   const todayStepsRef = useRef(0);
   const syncIntervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const lastAchievementCheck = useRef(0);
+  const catchUpDone = useRef(false);
 
   // Check pedometer availability
   useEffect(() => {
@@ -48,7 +53,10 @@ export function StepProvider({ children }: { children: ReactNode }) {
   // Sync steps to Supabase and award XP for new steps
   const syncSteps = useCallback(
     async (steps: number) => {
-      if (!user || steps === lastSyncedSteps.current) return;
+      if (!user || steps <= 0 || steps === lastSyncedSteps.current) return;
+      // Don't sync until catch-up has run to avoid double-counting
+      if (!catchUpDone.current) return;
+
       try {
         const totalXP = xpFromSteps(steps);
         await StepService.updateStepCount(user.id, steps, totalXP);
@@ -73,6 +81,10 @@ export function StepProvider({ children }: { children: ReactNode }) {
         }
 
         lastSyncedSteps.current = steps;
+
+        // Persist sync state so we survive app restarts
+        AsyncStorage.setItem(LAST_SYNCED_KEY, String(steps)).catch(() => {});
+        AsyncStorage.setItem(LAST_SYNCED_DATE_KEY, getTodayString()).catch(() => {});
 
         // Check achievements every 5000 steps
         if (steps - lastAchievementCheck.current >= 5000) {
@@ -99,33 +111,48 @@ export function StepProvider({ children }: { children: ReactNode }) {
     [user]
   );
 
-  // Reset state on logout / user change
+  // Reset state on logout / user change, and load saved steps + catch-up XP
   useEffect(() => {
     if (!user || !isAuthenticated) {
       setTodaySteps(0);
       setIsTracking(false);
       lastSyncedSteps.current = 0;
       lastAchievementCheck.current = 0;
+      catchUpDone.current = false;
       return;
     }
 
     const loadSavedSteps = async () => {
       try {
+        // Restore persisted sync state for today
+        const [savedSyncStr, savedDate] = await Promise.all([
+          AsyncStorage.getItem(LAST_SYNCED_KEY),
+          AsyncStorage.getItem(LAST_SYNCED_DATE_KEY),
+        ]);
+
         const record = await StepService.getTodaySteps(user.id);
-        if (record.step_count > 0) {
-          setTodaySteps(record.step_count);
-          lastSyncedSteps.current = record.step_count;
+        const dbSteps = record.step_count;
+
+        if (dbSteps > 0) {
+          setTodaySteps(dbSteps);
         }
 
-        // Catch-up: reconcile steps with XP balance.
-        // If user has steps but XP wasn't awarded (e.g. first time after fix),
-        // compute expected XP from total steps across all days and award the gap.
+        // If we have a persisted sync value from today, use it;
+        // otherwise use the DB value (handles app restart correctly)
+        if (savedDate === getTodayString() && savedSyncStr) {
+          lastSyncedSteps.current = parseInt(savedSyncStr, 10) || dbSteps;
+        } else {
+          lastSyncedSteps.current = dbSteps;
+        }
+
+        // XP Catch-up: compare steps-source XP in ledger vs expected from total steps.
+        // This only uses 'steps' source XP, not activity/bonus, to avoid miscounting.
         try {
-          const xpData = await XPService.getUserXP(user.id);
-          const history = await StepService.getStepHistory(user.id, '2000-01-01', '2099-12-31');
+          const stepsXPAwarded = await XPService.getXPBySource(user.id, 'steps');
+          const history = await StepService.getStepHistory(user.id, '2020-01-01', getTodayString());
           const totalSteps = history.reduce((sum, d) => sum + d.step_count, 0);
-          const expectedXP = xpFromSteps(totalSteps);
-          const gap = expectedXP - xpData.total_xp;
+          const expectedStepsXP = xpFromSteps(totalSteps);
+          const gap = expectedStepsXP - stepsXPAwarded;
           if (gap > 0) {
             await XPService.addXP(
               user.id,
@@ -140,6 +167,9 @@ export function StepProvider({ children }: { children: ReactNode }) {
         }
       } catch (err) {
         console.warn('[StepContext] Failed to load saved steps:', err);
+      } finally {
+        // Mark catch-up as done so periodic sync can start awarding XP
+        catchUpDone.current = true;
       }
     };
 

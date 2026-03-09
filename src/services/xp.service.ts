@@ -28,7 +28,24 @@ export async function getUserXP(userId: string) {
 }
 
 /**
- * Add XP and update level.
+ * Get total XP awarded from a specific source (e.g. 'steps').
+ */
+export async function getXPBySource(userId: string, source: string): Promise<number> {
+  const { data, error } = await supabase
+    .from('xp_ledger')
+    .select('amount')
+    .eq('user_id', userId)
+    .eq('source', source);
+
+  if (error) throw error;
+  return (data ?? []).reduce((sum, row) => sum + (row.amount ?? 0), 0);
+}
+
+// Mutex to prevent concurrent addXP calls from racing
+let addXPLock: Promise<any> = Promise.resolve();
+
+/**
+ * Add XP and update level. Serialized to prevent race conditions.
  */
 export async function addXP(
   userId: string,
@@ -37,37 +54,44 @@ export async function addXP(
   sourceId?: string,
   description?: string
 ) {
-  // Insert ledger entry
-  const { error: ledgerError } = await supabase.from('xp_ledger').insert({
-    user_id: userId,
-    source,
-    source_id: sourceId ?? null,
-    amount,
-    description: description ?? null,
+  // Chain onto the lock so concurrent calls are serialized
+  const result = addXPLock.then(async () => {
+    // Insert ledger entry
+    const { error: ledgerError } = await supabase.from('xp_ledger').insert({
+      user_id: userId,
+      source,
+      source_id: sourceId ?? null,
+      amount,
+      description: description ?? null,
+    });
+    if (ledgerError) throw ledgerError;
+
+    // Get current XP after ledger insert
+    const current = await getUserXP(userId);
+    const newTotal = current.total_xp + amount;
+    const newLevel = levelFromTotalXP(newTotal);
+
+    // Update aggregate
+    const { error: updateError } = await supabase
+      .from('user_xp')
+      .update({
+        total_xp: newTotal,
+        current_level: newLevel,
+      })
+      .eq('user_id', userId);
+
+    if (updateError) throw updateError;
+
+    return {
+      totalXP: newTotal,
+      level: newLevel,
+      leveledUp: newLevel > current.current_level,
+    };
   });
-  if (ledgerError) throw ledgerError;
 
-  // Get current XP
-  const current = await getUserXP(userId);
-  const newTotal = current.total_xp + amount;
-  const newLevel = levelFromTotalXP(newTotal);
-
-  // Update aggregate
-  const { error: updateError } = await supabase
-    .from('user_xp')
-    .update({
-      total_xp: newTotal,
-      current_level: newLevel,
-    })
-    .eq('user_id', userId);
-
-  if (updateError) throw updateError;
-
-  return {
-    totalXP: newTotal,
-    level: newLevel,
-    leveledUp: newLevel > current.current_level,
-  };
+  // Update lock but don't let rejections break the chain
+  addXPLock = result.catch(() => {});
+  return result;
 }
 
 /**

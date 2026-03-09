@@ -4,6 +4,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useRef,
   type ReactNode,
 } from 'react';
 import { useAuth } from './AuthContext';
@@ -22,37 +23,57 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const userIdRef = useRef<string | null>(null);
 
   const refresh = useCallback(async () => {
-    if (!user) {
+    const userId = userIdRef.current;
+    if (!userId) {
       setIsLoading(false);
       return;
     }
     try {
-      // Timeout profile fetch — can hang if Supabase connection stalls
-      const profilePromise = ProfileService.getProfile(user.id);
+      const profilePromise = ProfileService.getProfile(userId);
       const timeoutPromise = new Promise<null>((resolve) =>
         setTimeout(() => resolve(null), 8000)
       );
       const data = await Promise.race([profilePromise, timeoutPromise]);
 
-      if (data) {
-        setProfile(data);
-      } else {
-        console.warn('[ProfileContext] Profile fetch timed out');
+      // Only update if we're still looking at the same user
+      if (userIdRef.current === userId) {
+        if (data) {
+          setProfile(data);
+        } else {
+          console.warn('[ProfileContext] Profile fetch timed out');
+          // On timeout, try once more with a shorter timeout
+          try {
+            const retryData = await Promise.race([
+              ProfileService.getProfile(userId),
+              new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
+            ]);
+            if (userIdRef.current === userId && retryData) {
+              setProfile(retryData);
+            }
+          } catch {
+            // Give up silently
+          }
+        }
       }
     } catch (err) {
       console.warn('[ProfileContext] Failed to load profile:', err);
     } finally {
-      setIsLoading(false);
+      if (userIdRef.current === userId) {
+        setIsLoading(false);
+      }
     }
-  }, [user]);
+  }, []); // No dependencies — uses ref for userId
 
   useEffect(() => {
     if (user) {
+      userIdRef.current = user.id;
       setIsLoading(true);
       refresh();
     } else {
+      userIdRef.current = null;
       setProfile(null);
       setIsLoading(false);
     }
