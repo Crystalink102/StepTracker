@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
@@ -33,26 +33,18 @@ function AuthGate() {
   const { profile, isLoading: profileLoading } = useProfile();
   const segments = useSegments();
   const router = useRouter();
-  const [isNavigationReady, setIsNavigationReady] = useState(false);
-  const doneLoading = !isLoading && !(isAuthenticated && profileLoading);
-
   // Register notifications when authenticated
   useNotifications();
 
-  // Wait for the Stack navigator to mount before navigating.
-  // The Stack only renders when doneLoading is true, so start the
-  // timer AFTER loading completes — not at component mount.
-  useEffect(() => {
-    if (!doneLoading) {
-      setIsNavigationReady(false);
-      return;
-    }
-    const timer = setTimeout(() => setIsNavigationReady(true), 150);
-    return () => clearTimeout(timer);
-  }, [doneLoading]);
+  // Check if the navigator has mounted and registered its routes.
+  // On web, key may be undefined but routes will exist.
+  // On Expo Go, both may be missing until the Stack mounts.
+  const rootState = useRootNavigationState();
+  const isNavigatorReady = !!(rootState?.key || rootState?.routes?.length);
 
   useEffect(() => {
-    if (!isNavigationReady) return;
+    if (!isNavigatorReady) return;
+    if (isLoading || (isAuthenticated && profileLoading)) return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboarding = segments[0] === '(onboarding)';
@@ -60,35 +52,22 @@ function AuthGate() {
     const onMFAScreen = inAuthGroup && segments[1] === 'verify-mfa';
     const needsOnboarding = isAuthenticated && profile && profile.height_cm === null;
 
-    const navigate = () => {
-      if (!isAuthenticated && !inAuthGroup) {
-        router.replace('/(auth)/login');
-      } else if (needsMFAVerification && !onMFAScreen) {
-        router.replace('/(auth)/verify-mfa');
-      } else if (isAuthenticated && !needsMFAVerification && inAuthGroup) {
-        if (needsOnboarding) {
-          router.replace('/(onboarding)/welcome');
-        } else {
-          router.replace('/(tabs)');
-        }
-      } else if (needsOnboarding && !inOnboarding && !needsMFAVerification) {
+    if (!isAuthenticated && !inAuthGroup) {
+      router.replace('/(auth)/login');
+    } else if (needsMFAVerification && !onMFAScreen) {
+      router.replace('/(auth)/verify-mfa');
+    } else if (isAuthenticated && !needsMFAVerification && inAuthGroup) {
+      if (needsOnboarding) {
         router.replace('/(onboarding)/welcome');
-      } else if (isAuthenticated && inOnboarding && !needsOnboarding && !needsMFAVerification) {
+      } else {
         router.replace('/(tabs)');
       }
-    };
-
-    try {
-      navigate();
-    } catch (err) {
-      // Navigator not ready yet — retry after a short delay
-      console.warn('[AuthGate] Navigation not ready, retrying:', err);
-      const retry = setTimeout(() => {
-        try { navigate(); } catch { /* give up silently */ }
-      }, 300);
-      return () => clearTimeout(retry);
+    } else if (needsOnboarding && !inOnboarding && !needsMFAVerification) {
+      router.replace('/(onboarding)/welcome');
+    } else if (isAuthenticated && inOnboarding && !needsOnboarding && !needsMFAVerification) {
+      router.replace('/(tabs)');
     }
-  }, [isAuthenticated, isLoading, profileLoading, profile, hasMFA, mfaVerified, segments, router, isNavigationReady]);
+  }, [isAuthenticated, isLoading, profileLoading, profile, hasMFA, mfaVerified, segments, router, isNavigatorReady]);
 
   if (isLoading || (isAuthenticated && profileLoading)) {
     return (
