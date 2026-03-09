@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
@@ -33,14 +33,20 @@ function AuthGate() {
   const { profile, isLoading: profileLoading } = useProfile();
   const segments = useSegments();
   const router = useRouter();
-  const navigationState = useRootNavigationState();
+  const [isNavigationReady, setIsNavigationReady] = useState(false);
 
   // Register notifications when authenticated
   useNotifications();
 
+  // Wait one frame for the navigator to mount before attempting navigation.
+  // This prevents the "REPLACE with payload" error on Expo Go / first render.
   useEffect(() => {
-    // Wait for navigator to be ready before navigating
-    if (!navigationState?.key) return;
+    const timer = requestAnimationFrame(() => setIsNavigationReady(true));
+    return () => cancelAnimationFrame(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!isNavigationReady) return;
     if (isLoading || (isAuthenticated && profileLoading)) return;
 
     const inAuthGroup = segments[0] === '(auth)';
@@ -68,7 +74,7 @@ function AuthGate() {
     } catch (err) {
       console.warn('[AuthGate] Navigation error:', err);
     }
-  }, [isAuthenticated, isLoading, profileLoading, profile, hasMFA, mfaVerified, segments, router, navigationState?.key]);
+  }, [isAuthenticated, isLoading, profileLoading, profile, hasMFA, mfaVerified, segments, router, isNavigationReady]);
 
   if (isLoading || (isAuthenticated && profileLoading)) {
     return (
