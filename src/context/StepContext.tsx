@@ -221,9 +221,11 @@ export function StepProvider({ children }: { children: ReactNode }) {
         currentDateRef.current = now;
         setTodaySteps(0);
         lastSyncedSteps.current = 0;
-        catchUpDone.current = false;
+        lastAchievementCheck.current = 0;
         AsyncStorage.setItem(LAST_SYNCED_DATE_KEY, now).catch(() => {});
         AsyncStorage.setItem(LAST_SYNCED_KEY, '0').catch(() => {});
+        // Re-enable sync immediately — no catch-up needed for a fresh day
+        catchUpDone.current = true;
       }
     };
     const interval = setInterval(checkDate, 30_000);
