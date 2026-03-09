@@ -168,18 +168,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
-    // Don't manually set state here — onAuthStateChange listener handles it.
-    // Setting state manually races with the listener and can cause double renders.
     try {
-      await AuthService.logout();
+      // Timeout signOut — it can hang on Expo Go with stale sessions
+      const signOutPromise = AuthService.logout();
+      const timeout = new Promise<void>((_, reject) =>
+        setTimeout(() => reject(new Error('signOut timed out')), 5000)
+      );
+      await Promise.race([signOutPromise, timeout]);
     } catch (err) {
-      // If signOut fails (e.g. network error), force-clear local state
-      // so the user isn't stuck in a "logged in but broken" state.
-      console.warn('[Auth] Logout error, clearing local state:', err);
+      console.warn('[Auth] Logout error:', err);
+    } finally {
+      // Always clear local state — don't rely solely on onAuthStateChange
+      // which can fail to fire on Expo Go
       setSession(null);
       setUser(null);
       setHasMFA(false);
       setMfaVerified(false);
+      clearQueue().catch(() => {});
     }
   }, []);
 
