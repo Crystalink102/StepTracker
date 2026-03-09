@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { Badge } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
@@ -23,6 +23,13 @@ export default function HeartRateInput({
   const estimatedHR = autoUnlocked
     ? estimateHRFromPace(currentSpeed, restingHR)
     : 0;
+
+  // Propagate updated estimated HR to parent when speed changes during auto mode
+  useEffect(() => {
+    if (mode === 'auto' && estimatedHR > 0) {
+      onHeartRateChange(estimatedHR, 'auto');
+    }
+  }, [estimatedHR, mode]);
 
   const handleManualChange = (text: string) => {
     setManualHR(text);

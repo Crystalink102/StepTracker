@@ -99,7 +99,7 @@ export async function processQueue(): Promise<void> {
         failed.push({
           ...op,
           retryCount: op.retryCount + 1,
-          // Keep original timestamp so backoff is cumulative from first attempt
+          timestamp: Date.now(), // Reset so backoff is measured from last attempt
         });
       }
     }

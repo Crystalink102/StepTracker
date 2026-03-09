@@ -30,6 +30,9 @@ export function useAchievements() {
 
   useEffect(() => {
     refresh();
+    return () => {
+      if (checkTimeoutRef.current) clearTimeout(checkTimeoutRef.current);
+    };
   }, [refresh]);
 
   const checkAndUnlock = useCallback(

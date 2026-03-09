@@ -16,7 +16,7 @@ export async function searchUsers(query: string, currentUserId?: string): Promis
     .from('profiles')
     .select('id, username, display_name, avatar_url')
     .not('username', 'is', null)
-    .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
+    .or(`username.ilike.%${query.replace(/[,.()"'\\%]/g, '')}%,display_name.ilike.%${query.replace(/[,.()"'\\%]/g, '')}%`)
     .limit(20);
 
   if (profileError) throw profileError;
