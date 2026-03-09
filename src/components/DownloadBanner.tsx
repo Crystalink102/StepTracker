@@ -4,7 +4,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 const DISMISSED_KEY = 'download_banner_dismissed';
-const DOWNLOAD_URL = 'https://expo.dev/accounts/cxshfo/projects/StepTracker/builds';
+// Update this URL after each EAS build
+const DOWNLOAD_URL = 'https://expo.dev/artifacts/eas/u27AjVdeEgr1VRu9USnXPH.apk';
 
 export default function DownloadBanner() {
   const [visible, setVisible] = useState(false);
