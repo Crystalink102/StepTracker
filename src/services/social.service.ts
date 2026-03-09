@@ -2,19 +2,33 @@ import { supabase } from './supabase';
 import { Friendship, UserSearchResult } from '@/src/types/database';
 import { getTodayString } from '@/src/utils/date-helpers';
 
-export async function searchUsers(query: string): Promise<UserSearchResult[]> {
+export async function searchUsers(query: string, currentUserId?: string): Promise<UserSearchResult[]> {
+  // Try the RPC function first
   const { data, error } = await supabase.rpc('search_users', {
     search_query: query,
   });
 
-  if (error) throw error;
-  return data ?? [];
+  if (!error) return data ?? [];
+
+  // Fallback: client-side search if RPC doesn't exist
+  console.warn('[Social] search_users RPC failed, using fallback:', error.message);
+  const { data: profiles, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, username, display_name, avatar_url')
+    .not('username', 'is', null)
+    .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
+    .limit(20);
+
+  if (profileError) throw profileError;
+
+  // Filter out current user on client side
+  return (profiles ?? []).filter((p) => p.id !== currentUserId) as UserSearchResult[];
 }
 
 export async function sendFriendRequest(requesterId: string, addresseeId: string): Promise<Friendship> {
   const { data, error } = await supabase
     .from('friendships')
-    .insert({ requester_id: requesterId, addressee_id: addresseeId })
+    .insert({ requester_id: requesterId, addressee_id: addresseeId, status: 'pending' })
     .select()
     .single();
 

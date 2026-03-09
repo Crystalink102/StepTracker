@@ -3,20 +3,24 @@ import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-nativ
 import { Input } from '@/src/components/ui';
 import UserSearchResultComp from '@/src/components/social/UserSearchResult';
 import { useFriends } from '@/src/hooks/useFriends';
+import { useAuth } from '@/src/context/AuthContext';
 import * as SocialService from '@/src/services/social.service';
 import { UserSearchResult } from '@/src/types/database';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 
 export default function SearchFriendsScreen() {
+  const { user } = useAuth();
   const { sendRequest } = useFriends();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<UserSearchResult[]>([]);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const handleSearch = useCallback((text: string) => {
     setQuery(text);
+    setSearchError('');
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
@@ -28,23 +32,31 @@ export default function SearchFriendsScreen() {
     debounceRef.current = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const data = await SocialService.searchUsers(text);
+        const data = await SocialService.searchUsers(text, user?.id);
         setResults(data);
-      } catch {
+      } catch (err) {
+        console.warn('[Search] Failed:', err);
         setResults([]);
+        setSearchError('Search failed. Please try again.');
       } finally {
         setIsSearching(false);
       }
     }, 400);
-  }, []);
+  }, [user?.id]);
 
   const handleAdd = useCallback(
-    async (userId: string) => {
+    async (targetUserId: string) => {
       try {
-        await sendRequest(userId);
-        setSentIds((prev) => new Set(prev).add(userId));
-      } catch {
-        // Already sent or error
+        await sendRequest(targetUserId);
+        setSentIds((prev) => new Set(prev).add(targetUserId));
+      } catch (err: any) {
+        const msg = err?.message || '';
+        if (msg.includes('duplicate') || msg.includes('unique')) {
+          // Already sent — mark as sent anyway
+          setSentIds((prev) => new Set(prev).add(targetUserId));
+        } else {
+          setSearchError('Failed to send request. Please try again.');
+        }
       }
     },
     [sendRequest]
@@ -70,6 +82,10 @@ export default function SearchFriendsScreen() {
           style={styles.loader}
         />
       )}
+
+      {searchError ? (
+        <Text style={styles.errorText}>{searchError}</Text>
+      ) : null}
 
       <FlatList
         data={results}
@@ -120,5 +136,12 @@ const styles = StyleSheet.create({
   emptyText: {
     color: Colors.textMuted,
     fontSize: FontSize.md,
+  },
+  errorText: {
+    color: Colors.danger,
+    fontSize: FontSize.sm,
+    textAlign: 'center' as const,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
   },
 });
