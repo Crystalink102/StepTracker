@@ -1,9 +1,13 @@
 import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 type StepData = {
   steps: number;
   source: 'health-connect' | 'healthkit' | 'pedometer' | 'none';
 };
+
+// Expo Go can't use native-only health modules (react-native-health, react-native-health-connect)
+const isExpoGo = Constants.executionEnvironment === 'storeClient';
 
 // ── Android: Health Connect ─────────────────────────────────────────────
 
@@ -137,15 +141,26 @@ async function getStepsFromPedometer(midnight: Date): Promise<number | null> {
   try {
     const { Pedometer } = await import('expo-sensors');
 
-    // Cache availability check so we don't call isAvailableAsync every poll
+    // Cache availability check so we don't call isAvailableAsync every poll.
+    // On iOS, isAvailableAsync can sometimes return false even when pedometer works,
+    // so we also try getStepCountAsync directly as a fallback.
     if (pedometerAvailable === null) {
-      pedometerAvailable = await Pedometer.isAvailableAsync();
+      try {
+        // Add a timeout — isAvailableAsync can hang on some platforms
+        const availPromise = Pedometer.isAvailableAsync();
+        const timeout = new Promise<boolean>((r) => setTimeout(() => r(true), 3000));
+        pedometerAvailable = await Promise.race([availPromise, timeout]);
+      } catch {
+        // Assume available and let getStepCountAsync fail if not
+        pedometerAvailable = true;
+      }
     }
     if (!pedometerAvailable) return null;
 
     const result = await Pedometer.getStepCountAsync(midnight, new Date());
     return result.steps;
-  } catch {
+  } catch (err) {
+    console.warn('[Health] Pedometer read failed:', err);
     return null;
   }
 }
@@ -159,6 +174,12 @@ async function getStepsFromPedometer(midnight: Date): Promise<number | null> {
 export async function initHealth(): Promise<StepData['source']> {
   if (Platform.OS === 'web') return 'none';
 
+  // In Expo Go, skip native health modules entirely — go straight to pedometer
+  if (isExpoGo) {
+    console.log('[Health] Expo Go detected, using pedometer fallback');
+    return 'pedometer';
+  }
+
   if (Platform.OS === 'android') {
     const hcOk = await initHealthConnect();
     if (hcOk) return 'health-connect';
@@ -169,7 +190,7 @@ export async function initHealth(): Promise<StepData['source']> {
     if (hkOk) return 'healthkit';
   }
 
-  // Fallback: raw pedometer (Expo Go, unsupported devices)
+  // Fallback: raw pedometer (unsupported devices)
   return 'pedometer';
 }
 
