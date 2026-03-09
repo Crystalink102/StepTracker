@@ -50,23 +50,22 @@ export default function EditProfileScreen() {
   }, [user]);
 
   const handlePickImage = async () => {
-    // Request media library permission first
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      showAlert('Permission Required', 'Please allow photo access to change your avatar.');
-      return;
-    }
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: 'images',
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.7,
-    });
-
-    if (result.canceled || !user) return;
-
     try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        showAlert('Permission Required', 'Please allow photo access to change your avatar.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: 'images',
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.7,
+      });
+
+      if (result.canceled || !user) return;
+
       const avatarUrl = await StorageService.uploadAvatar(
         user.id,
         result.assets[0].uri
@@ -75,7 +74,7 @@ export default function EditProfileScreen() {
       setProfile((prev) => (prev ? { ...prev, avatar_url: avatarUrl } : null));
       await refreshProfile();
     } catch (err: any) {
-      showAlert('Upload Failed', err.message);
+      showAlert('Upload Failed', err?.message || 'Could not update photo.');
     }
   };
 

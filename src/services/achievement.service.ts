@@ -8,8 +8,11 @@ export async function getDefinitions(): Promise<AchievementDefinition[]> {
     .select('*')
     .order('sort_order');
 
-  if (error) throw error;
-  return data;
+  if (error) {
+    console.warn('[Achievements] getDefinitions failed:', error.message);
+    return [];
+  }
+  return data ?? [];
 }
 
 export async function getUserAchievements(userId: string): Promise<UserAchievement[]> {
@@ -18,8 +21,11 @@ export async function getUserAchievements(userId: string): Promise<UserAchieveme
     .select('*')
     .eq('user_id', userId);
 
-  if (error) throw error;
-  return data;
+  if (error) {
+    console.warn('[Achievements] getUserAchievements failed:', error.message);
+    return [];
+  }
+  return data ?? [];
 }
 
 export async function unlockAchievement(

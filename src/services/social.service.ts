@@ -3,63 +3,29 @@ import { Friendship, UserSearchResult } from '@/src/types/database';
 import { getTodayString } from '@/src/utils/date-helpers';
 
 /**
- * Get all users visible to the current user. Simple, direct query.
- * Skips the RPC entirely — it's too restrictive (requires username not null).
+ * Get all users. Dead simple — one query, no joins, no RPC.
  */
 export async function getAllUsers(currentUserId?: string): Promise<UserSearchResult[]> {
-  console.log('[Social] getAllUsers called, currentUserId:', currentUserId);
-
-  // Step 1: Get ALL profiles
-  const { data: profiles, error } = await supabase
+  const { data, error } = await supabase
     .from('profiles')
     .select('id, username, display_name, avatar_url')
+    .neq('id', currentUserId ?? '')
     .order('created_at', { ascending: false })
     .limit(100);
 
-  console.log('[Social] Profiles query result:', { count: profiles?.length, error: error?.message });
-
-  if (error || !profiles) {
-    console.warn('[Social] getAllUsers profiles query failed:', error?.message);
+  if (error) {
+    console.warn('[Social] getAllUsers failed:', error.message);
     return [];
   }
 
-  // Step 2: Get friendship IDs to exclude (already friends/pending)
-  let excludedIds = new Set<string>();
-  if (currentUserId) {
-    excludedIds.add(currentUserId);
-    try {
-      const { data: friendships } = await supabase
-        .from('friendships')
-        .select('requester_id, addressee_id, status')
-        .or(`requester_id.eq.${currentUserId},addressee_id.eq.${currentUserId}`);
-
-      for (const f of friendships ?? []) {
-        if (f.status === 'pending' || f.status === 'accepted') {
-          excludedIds.add(f.requester_id);
-          excludedIds.add(f.addressee_id);
-        }
-      }
-    } catch (err) {
-      console.warn('[Social] Friendships query failed:', err);
-      // Continue — just don't filter by friendship status
-    }
-  }
-
-  console.log('[Social] Excluded IDs:', excludedIds.size, 'profiles total:', profiles.length);
-
-  // Step 3: Filter and map
-  const results = profiles
-    .filter((p) => !excludedIds.has(p.id))
-    .filter((p) => p.username || p.display_name) // Must have SOME name to display
+  return (data ?? [])
+    .filter((p) => p.username || p.display_name)
     .map((p) => ({
       id: p.id,
       username: p.username ?? p.display_name ?? 'user',
       display_name: p.display_name,
       avatar_url: p.avatar_url,
-    }));
-
-  console.log('[Social] getAllUsers returning', results.length, 'users');
-  return results as UserSearchResult[];
+    })) as UserSearchResult[];
 }
 
 /**
@@ -71,32 +37,26 @@ export async function searchUsers(query: string, currentUserId?: string): Promis
   const sanitized = query.trim().replace(/[,.()"'\\%]/g, '');
   if (!sanitized) return getAllUsers(currentUserId);
 
-  console.log('[Social] searchUsers called:', sanitized);
-
-  const { data: profiles, error } = await supabase
+  const { data, error } = await supabase
     .from('profiles')
     .select('id, username, display_name, avatar_url')
+    .neq('id', currentUserId ?? '')
     .or(`username.ilike.%${sanitized}%,display_name.ilike.%${sanitized}%`)
     .limit(50);
 
-  console.log('[Social] Search result:', { count: profiles?.length, error: error?.message });
-
-  if (error || !profiles) {
-    console.warn('[Social] searchUsers query failed:', error?.message);
+  if (error) {
+    console.warn('[Social] searchUsers failed:', error.message);
     return [];
   }
 
-  // Filter out current user
-  const results = profiles
-    .filter((p) => p.id !== currentUserId)
+  return (data ?? [])
+    .filter((p) => p.username || p.display_name)
     .map((p) => ({
       id: p.id,
       username: p.username ?? p.display_name ?? 'user',
       display_name: p.display_name,
       avatar_url: p.avatar_url,
-    }));
-
-  return results as UserSearchResult[];
+    })) as UserSearchResult[];
 }
 
 export async function sendFriendRequest(requesterId: string, addresseeId: string): Promise<Friendship> {
@@ -146,9 +106,10 @@ export async function getPendingRequests(userId: string): Promise<
     .eq('addressee_id', userId)
     .eq('status', 'pending');
 
-  if (error) throw error;
-  // Supabase join types don't infer correctly for foreign key relationships -
-  // the runtime data shape is correct but TS can't verify it from the schema.
+  if (error) {
+    console.warn('[Social] getPendingRequests failed:', error.message);
+    return [];
+  }
   return (data ?? []) as unknown as (Friendship & { requester: { username: string; display_name: string | null; avatar_url: string | null } })[];
 }
 
@@ -159,7 +120,10 @@ export async function getPendingCount(userId: string): Promise<number> {
     .eq('addressee_id', userId)
     .eq('status', 'pending');
 
-  if (error) throw error;
+  if (error) {
+    console.warn('[Social] getPendingCount failed:', error.message);
+    return 0;
+  }
   return count ?? 0;
 }
 
@@ -182,7 +146,10 @@ export async function getFriends(userId: string): Promise<
     .eq('status', 'accepted')
     .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
 
-  if (error) throw error;
+  if (error) {
+    console.warn('[Social] getFriends failed:', error.message);
+    return [];
+  }
   if (!friendships || friendships.length === 0) return [];
 
   // Get friend IDs
@@ -196,7 +163,10 @@ export async function getFriends(userId: string): Promise<
     .select('id, username, display_name, avatar_url, current_streak')
     .in('id', friendIds);
 
-  if (profileError) throw profileError;
+  if (profileError) {
+    console.warn('[Social] getFriends profiles failed:', profileError.message);
+    return [];
+  }
 
   // Get friend XP levels
   const { data: xpData } = await supabase
