@@ -41,7 +41,9 @@ export async function registerPushToken(userId: string): Promise<string | null> 
     if (finalStatus !== 'granted') return null;
 
     // getExpoPushTokenAsync can hang in Expo Go (SDK 53+), so add a timeout
-    const tokenPromise = notif.getExpoPushTokenAsync();
+    const tokenPromise = notif.getExpoPushTokenAsync({
+      projectId: 'e5aa7eb2-9903-475b-9836-df371134c63b',
+    });
     const timeoutPromise = new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000));
     const tokenData = await Promise.race([tokenPromise, timeoutPromise]);
 

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { Link, useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
+import { resetPasswordForEmail } from '@/src/services/auth.service';
 import { ConfirmModal } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
@@ -24,10 +25,28 @@ export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '' });
 
+  const [isResetting, setIsResetting] = useState(false);
   const isPhone = /^\+?\d{7,}$/.test(identifier.replace(/[\s-()]/g, ''));
 
   const showAlert = (title: string, message: string) =>
     setAlertModal({ visible: true, title, message });
+
+  const handleForgotPassword = async () => {
+    const email = identifier.trim();
+    if (!email || isPhone) {
+      showAlert('Enter Email', 'Please enter your email address above, then tap Forgot Password.');
+      return;
+    }
+    setIsResetting(true);
+    try {
+      await resetPasswordForEmail(email);
+      showAlert('Check Your Email', 'If an account exists with that email, a password reset link has been sent.');
+    } catch (err: any) {
+      showAlert('Reset Failed', err.message || 'Something went wrong.');
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   const handleLogin = async () => {
     if (!identifier.trim() || !password) {
@@ -92,6 +111,12 @@ export default function LoginScreen() {
               secureTextEntry
             />
           </View>
+
+          <TouchableOpacity onPress={handleForgotPassword} disabled={isResetting}>
+            <Text style={styles.forgotText}>
+              {isResetting ? 'Sending...' : 'Forgot Password?'}
+            </Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.button, isLoading && styles.buttonDisabled]}
@@ -202,6 +227,11 @@ const styles = StyleSheet.create({
   footerText: {
     color: Colors.textSecondary,
     fontSize: FontSize.md,
+  },
+  forgotText: {
+    color: Colors.primary,
+    fontSize: FontSize.sm,
+    textAlign: 'right' as const,
   },
   linkText: {
     color: Colors.primary,

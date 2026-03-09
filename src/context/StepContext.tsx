@@ -196,12 +196,16 @@ export function StepProvider({ children }: { children: ReactNode }) {
     if (!isAvailable || Platform.OS === 'web') return;
 
     const poll = async () => {
-      const data = await HealthService.getTodaySteps();
-      if (data.steps >= 0) {
-        // Use the health platform value as the source of truth.
-        // Only go up — never decrease the count mid-day (health sync lag).
-        setTodaySteps((prev) => Math.max(prev, data.steps));
-        setIsTracking(true);
+      try {
+        const data = await HealthService.getTodaySteps();
+        if (data.steps >= 0) {
+          // Use the health platform value as the source of truth.
+          // Only go up — never decrease the count mid-day (health sync lag).
+          setTodaySteps((prev) => Math.max(prev, data.steps));
+          setIsTracking(true);
+        }
+      } catch (err) {
+        console.warn('[StepContext] Step poll failed:', err);
       }
     };
 

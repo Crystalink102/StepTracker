@@ -164,6 +164,16 @@ export async function getAssuranceLevel() {
 }
 
 // ============================================================
+// Password Reset
+// ============================================================
+export async function resetPasswordForEmail(email: string) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: REDIRECT_URL,
+  });
+  if (error) throw friendlyAuthError(error);
+}
+
+// ============================================================
 // Session
 // ============================================================
 export async function getSession() {
