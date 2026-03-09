@@ -13,14 +13,19 @@ export async function getUserXP(userId: string) {
 
   if (error && error.code === 'PGRST116') {
     // No XP row - create one
-    const { data: newXP, error: insertError } = await supabase
-      .from('user_xp')
-      .insert({ user_id: userId, total_xp: 0, current_level: 1 })
-      .select()
-      .single();
+    try {
+      const { data: newXP, error: insertError } = await supabase
+        .from('user_xp')
+        .insert({ user_id: userId, total_xp: 0, current_level: 1 })
+        .select()
+        .single();
 
-    if (insertError) throw insertError;
-    return newXP;
+      if (insertError) throw insertError;
+      return newXP;
+    } catch {
+      // If insert fails (RLS), return safe defaults
+      return { user_id: userId, total_xp: 0, current_level: 1, updated_at: new Date().toISOString() };
+    }
   }
 
   if (error) throw error;

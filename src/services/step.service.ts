@@ -16,14 +16,19 @@ export async function getTodaySteps(userId: string) {
 
   if (error && error.code === 'PGRST116') {
     // No record for today, create one
-    const { data: newRecord, error: insertError } = await supabase
-      .from('daily_steps')
-      .insert({ user_id: userId, date: today, step_count: 0, xp_earned: 0 })
-      .select()
-      .single();
+    try {
+      const { data: newRecord, error: insertError } = await supabase
+        .from('daily_steps')
+        .insert({ user_id: userId, date: today, step_count: 0, xp_earned: 0 })
+        .select()
+        .single();
 
-    if (insertError) throw insertError;
-    return newRecord;
+      if (insertError) throw insertError;
+      return newRecord;
+    } catch {
+      // Return safe defaults if insert fails
+      return { id: '', user_id: userId, date: today, step_count: 0, xp_earned: 0, created_at: '', updated_at: '' };
+    }
   }
 
   if (error) throw error;

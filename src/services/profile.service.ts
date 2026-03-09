@@ -13,14 +13,40 @@ export async function getProfile(userId: string) {
 
   if (error && error.code === 'PGRST116') {
     // No profile row - create one
-    const { data: newProfile, error: insertError } = await supabase
-      .from('profiles')
-      .insert({ id: userId })
-      .select()
-      .single();
+    try {
+      const { data: newProfile, error: insertError } = await supabase
+        .from('profiles')
+        .insert({ id: userId })
+        .select()
+        .single();
 
-    if (insertError) throw insertError;
-    return newProfile;
+      if (insertError) throw insertError;
+      return newProfile;
+    } catch (insertErr) {
+      console.warn('[Profile] Insert failed, returning defaults:', insertErr);
+      // Return a default profile so the app doesn't break
+      return {
+        id: userId,
+        username: null,
+        display_name: null,
+        avatar_url: null,
+        resting_hr: 70,
+        date_of_birth: null,
+        height_cm: null,
+        weight_kg: null,
+        current_streak: 0,
+        last_streak_date: null,
+        daily_step_goal: 10000,
+        push_token: null,
+        notify_daily_reminder: true,
+        notify_streak_warning: true,
+        notify_achievements: true,
+        notify_friend_requests: true,
+        notify_weekly_summary: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+    }
   }
 
   if (error) throw error;

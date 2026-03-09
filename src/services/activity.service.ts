@@ -8,13 +8,14 @@ export async function createActivity(
   userId: string,
   type: 'run' | 'walk'
 ): Promise<Activity> {
+  const now = new Date().toISOString();
   const { data, error } = await supabase
     .from('activities')
     .insert({
       user_id: userId,
       type,
       status: 'active',
-      started_at: new Date().toISOString(),
+      started_at: now,
       duration_seconds: 0,
       distance_meters: 0,
       xp_earned: 0,
@@ -22,7 +23,9 @@ export async function createActivity(
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    throw new Error(`Failed to create activity: ${error.message}`);
+  }
   return data;
 }
 

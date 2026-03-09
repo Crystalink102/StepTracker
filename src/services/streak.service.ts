@@ -25,7 +25,10 @@ export async function checkAndUpdateStreak(userId: string): Promise<StreakResult
     .eq('id', userId)
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.warn('[Streak] Profile fetch failed:', error.message);
+    return { streak: 0, showPopup: false };
+  }
 
   const today = getDateString(new Date());
   const yesterday = getYesterday();

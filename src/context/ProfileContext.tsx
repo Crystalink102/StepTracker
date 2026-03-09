@@ -34,36 +34,19 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
     try {
       const profilePromise = ProfileService.getProfile(userId);
       const timeoutPromise = new Promise<null>((resolve) =>
-        setTimeout(() => resolve(null), 8000)
+        setTimeout(() => resolve(null), 5000)
       );
       const data = await Promise.race([profilePromise, timeoutPromise]);
 
       // Only update if we're still looking at the same user
-      if (userIdRef.current === userId) {
-        if (data) {
-          setProfile(data);
-        } else {
-          console.warn('[ProfileContext] Profile fetch timed out');
-          // On timeout, try once more with a shorter timeout
-          try {
-            const retryData = await Promise.race([
-              ProfileService.getProfile(userId),
-              new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
-            ]);
-            if (userIdRef.current === userId && retryData) {
-              setProfile(retryData);
-            }
-          } catch {
-            // Give up silently
-          }
-        }
+      if (userIdRef.current === userId && data) {
+        setProfile(data);
       }
     } catch (err) {
       console.warn('[ProfileContext] Failed to load profile:', err);
     } finally {
-      if (userIdRef.current === userId) {
-        setIsLoading(false);
-      }
+      // ALWAYS set loading to false — never leave the app stuck on a loading screen
+      setIsLoading(false);
     }
   }, []); // No dependencies — uses ref for userId
 

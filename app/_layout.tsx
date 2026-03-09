@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, ActivityIndicator } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
@@ -33,11 +33,14 @@ function AuthGate() {
   const { profile, isLoading: profileLoading } = useProfile();
   const segments = useSegments();
   const router = useRouter();
+  const navigationState = useRootNavigationState();
 
   // Register notifications when authenticated
   useNotifications();
 
   useEffect(() => {
+    // Wait for navigator to be ready before navigating
+    if (!navigationState?.key) return;
     if (isLoading || (isAuthenticated && profileLoading)) return;
 
     const inAuthGroup = segments[0] === '(auth)';
@@ -46,23 +49,26 @@ function AuthGate() {
     const onMFAScreen = inAuthGroup && segments[1] === 'verify-mfa';
     const needsOnboarding = isAuthenticated && profile && profile.height_cm === null;
 
-    if (!isAuthenticated && !inAuthGroup) {
-      router.replace('/(auth)/login');
-    } else if (needsMFAVerification && !onMFAScreen) {
-      // User logged in but hasn't verified MFA yet
-      router.replace('/(auth)/verify-mfa');
-    } else if (isAuthenticated && !needsMFAVerification && inAuthGroup) {
-      if (needsOnboarding) {
+    try {
+      if (!isAuthenticated && !inAuthGroup) {
+        router.replace('/(auth)/login');
+      } else if (needsMFAVerification && !onMFAScreen) {
+        router.replace('/(auth)/verify-mfa');
+      } else if (isAuthenticated && !needsMFAVerification && inAuthGroup) {
+        if (needsOnboarding) {
+          router.replace('/(onboarding)/welcome');
+        } else {
+          router.replace('/(tabs)');
+        }
+      } else if (needsOnboarding && !inOnboarding && !needsMFAVerification) {
         router.replace('/(onboarding)/welcome');
-      } else {
+      } else if (isAuthenticated && inOnboarding && !needsOnboarding && !needsMFAVerification) {
         router.replace('/(tabs)');
       }
-    } else if (needsOnboarding && !inOnboarding && !needsMFAVerification) {
-      router.replace('/(onboarding)/welcome');
-    } else if (isAuthenticated && inOnboarding && !needsOnboarding && !needsMFAVerification) {
-      router.replace('/(tabs)');
+    } catch (err) {
+      console.warn('[AuthGate] Navigation error:', err);
     }
-  }, [isAuthenticated, isLoading, profileLoading, profile, hasMFA, mfaVerified, segments, router]);
+  }, [isAuthenticated, isLoading, profileLoading, profile, hasMFA, mfaVerified, segments, router, navigationState?.key]);
 
   if (isLoading || (isAuthenticated && profileLoading)) {
     return (
