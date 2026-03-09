@@ -202,7 +202,23 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
 
   const startActivity = useCallback(
     async (type: 'run' | 'walk') => {
-      if (!user) return;
+      if (!user) throw new Error('You must be logged in to start an activity.');
+
+      // Clean up any orphaned active activities from previous failed starts
+      try {
+        const orphaned = await ActivityService.getActiveActivity(user.id);
+        if (orphaned) {
+          await ActivityService.updateActivity(orphaned.id, {
+            status: 'completed',
+            ended_at: new Date().toISOString(),
+          }).catch(() => {});
+        }
+      } catch {
+        // Ignore — no orphaned activity
+      }
+
+      // Start location FIRST — if GPS fails, don't create the activity
+      await startBackgroundLocation();
 
       const activity = await ActivityService.createActivity(user.id, type);
       setCurrentActivity(activity);
@@ -214,8 +230,6 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       setIsPaused(false);
       lastWaypointRef.current = null;
       isStoppingRef.current = false;
-
-      await startBackgroundLocation();
     },
     [user]
   );

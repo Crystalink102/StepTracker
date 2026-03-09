@@ -50,6 +50,7 @@ export default function ActivityScreen() {
   const [heartRate, setHeartRate] = useState<number | undefined>(undefined);
   const [hrSource, setHrSource] = useState<'manual' | 'auto'>('manual');
   const [restingHR, setRestingHR] = useState(70);
+  const [isStarting, setIsStarting] = useState(false);
   const [showStopConfirm, setShowStopConfirm] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -64,14 +65,18 @@ export default function ActivityScreen() {
 
   const handleStart = useCallback(
     async (type: 'run' | 'walk') => {
+      if (isStarting) return;
+      setIsStarting(true);
       try {
         await startActivity(type);
       } catch (err: any) {
-        setErrorMessage(err.message || 'Could not start activity.');
+        setErrorMessage(err.message || 'Could not start activity. Check location permissions.');
         setShowErrorModal(true);
+      } finally {
+        setIsStarting(false);
       }
     },
-    [startActivity]
+    [startActivity, isStarting]
   );
 
   const handleStop = useCallback(() => {
@@ -140,6 +145,7 @@ export default function ActivityScreen() {
       <RunControls
         isActive={isActive}
         isPaused={isPaused}
+        isStarting={isStarting}
         onStart={handleStart}
         onPause={pauseActivity}
         onResume={resumeActivity}

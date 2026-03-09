@@ -1,9 +1,10 @@
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 type RunControlsProps = {
   isActive: boolean;
   isPaused: boolean;
+  isStarting?: boolean;
   onStart: (type: 'run' | 'walk') => void;
   onPause: () => void;
   onResume: () => void;
@@ -13,6 +14,7 @@ type RunControlsProps = {
 export default function RunControls({
   isActive,
   isPaused,
+  isStarting,
   onStart,
   onPause,
   onResume,
@@ -22,20 +24,30 @@ export default function RunControls({
     return (
       <View style={styles.startContainer}>
         <TouchableOpacity
-          style={[styles.startButton, { backgroundColor: Colors.primary }]}
+          style={[styles.startButton, { backgroundColor: Colors.primary }, isStarting && styles.buttonDisabled]}
           onPress={() => onStart('run')}
+          disabled={isStarting}
           accessibilityRole="button"
           accessibilityLabel="Start a run"
         >
-          <Text style={styles.startText}>Start Run</Text>
+          {isStarting ? (
+            <ActivityIndicator color={Colors.white} />
+          ) : (
+            <Text style={styles.startText}>Start Run</Text>
+          )}
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.startButton, { backgroundColor: Colors.secondary }]}
+          style={[styles.startButton, { backgroundColor: Colors.secondary }, isStarting && styles.buttonDisabled]}
           onPress={() => onStart('walk')}
+          disabled={isStarting}
           accessibilityRole="button"
           accessibilityLabel="Start a walk"
         >
-          <Text style={styles.startText}>Start Walk</Text>
+          {isStarting ? (
+            <ActivityIndicator color={Colors.white} />
+          ) : (
+            <Text style={styles.startText}>Start Walk</Text>
+          )}
         </TouchableOpacity>
       </View>
     );
@@ -90,6 +102,9 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
   activeContainer: {
     flexDirection: 'row',
