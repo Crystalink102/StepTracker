@@ -24,7 +24,7 @@ export default function ConfirmModal({
   onCancel,
 }: ConfirmModalProps) {
   return (
-    <Modal transparent animationType="fade" visible={visible}>
+    <Modal transparent animationType="fade" visible={visible} onRequestClose={onCancel ?? onConfirm}>
       <View style={styles.overlay}>
         <View style={styles.dialog}>
           <Text style={styles.title}>{title}</Text>
