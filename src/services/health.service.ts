@@ -98,13 +98,19 @@ async function initHealthKit(): Promise<boolean> {
   }
 }
 
-async function getStepsFromHealthKit(date: Date): Promise<number | null> {
+async function getStepsFromHealthKit(): Promise<number | null> {
   try {
     const AppleHealthKit = (await import('react-native-health')).default;
 
+    const midnight = new Date();
+    midnight.setHours(0, 0, 0, 0);
+
     return new Promise((resolve) => {
       AppleHealthKit.getStepCount(
-        { date: date.toISOString() },
+        {
+          startDate: midnight.toISOString(),
+          endDate: new Date().toISOString(),
+        },
         (err: any, results: any) => {
           if (err) {
             console.warn('[Health] HealthKit step read failed:', err);
@@ -186,7 +192,7 @@ export async function getTodaySteps(): Promise<StepData> {
 
   // Try HealthKit (iOS)
   if (Platform.OS === 'ios' && healthKitInitialized) {
-    const steps = await getStepsFromHealthKit(new Date());
+    const steps = await getStepsFromHealthKit();
     if (steps !== null) {
       return { steps, source: 'healthkit' };
     }
