@@ -10,7 +10,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // --- Preference types ---
 
-export type DistanceUnit = 'km' | 'mi';
+export type DistanceUnit = 'km' | 'mi' | 'm';
 export type HeightUnit = 'cm' | 'ft';
 export type WeightUnit = 'kg' | 'lb';
 

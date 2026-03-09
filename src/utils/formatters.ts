@@ -27,6 +27,7 @@ export function formatDuration(seconds: number): string {
 /**
  * Format pace as mm:ss
  * When unit is 'mi', converts from sec/km to sec/mi.
+ * When unit is 'm', shows sec/km (same as km mode).
  */
 export function formatPace(secondsPerKm: number, unit: DistanceUnit = 'km'): string {
   const paceValue = unit === 'mi' ? secondsPerKm / KM_TO_MI : secondsPerKm;
@@ -40,11 +41,12 @@ export function formatPace(secondsPerKm: number, unit: DistanceUnit = 'km'): str
  * Pace unit label: "/km" or "/mi"
  */
 export function paceUnitLabel(unit: DistanceUnit = 'km'): string {
-  return unit === 'mi' ? '/mi' : '/km';
+  if (unit === 'mi') return '/mi';
+  return '/km';
 }
 
 /**
- * Format distance: meters → "1.23 km" or "0.76 mi"
+ * Format distance: meters → "1.23 km" or "0.76 mi" or "1234 m"
  */
 export function formatDistance(meters: number, unit: DistanceUnit = 'km'): string {
   if (unit === 'mi') {
@@ -53,6 +55,9 @@ export function formatDistance(meters: number, unit: DistanceUnit = 'km'): strin
     const ft = meters * M_TO_FT;
     return `${Math.round(ft)} ft`;
   }
+  if (unit === 'm') {
+    return `${Math.round(meters)} m`;
+  }
   if (meters >= 1000) {
     return `${(meters / 1000).toFixed(2)} km`;
   }
@@ -60,13 +65,16 @@ export function formatDistance(meters: number, unit: DistanceUnit = 'km'): strin
 }
 
 /**
- * Format distance short: meters → "1.2km" or "0.8mi"
+ * Format distance short: meters → "1.2km" or "0.8mi" or "1234m"
  */
 export function formatDistanceShort(meters: number, unit: DistanceUnit = 'km'): string {
   if (unit === 'mi') {
     const mi = meters * KM_TO_MI / 1000;
     if (mi >= 0.1) return `${mi.toFixed(1)}mi`;
     return `${Math.round(meters * M_TO_FT)}ft`;
+  }
+  if (unit === 'm') {
+    return `${Math.round(meters)}m`;
   }
   if (meters >= 1000) {
     return `${(meters / 1000).toFixed(1)}km`;
@@ -75,11 +83,14 @@ export function formatDistanceShort(meters: number, unit: DistanceUnit = 'km'): 
 }
 
 /**
- * Format speed: m/s → km/h or mph string
+ * Format speed: m/s → km/h, mph, or m/s string
  */
 export function formatSpeed(metersPerSecond: number, unit: DistanceUnit = 'km'): string {
   if (unit === 'mi') {
     return `${(metersPerSecond * 3.6 * KM_TO_MI).toFixed(1)} mph`;
+  }
+  if (unit === 'm') {
+    return `${metersPerSecond.toFixed(1)} m/s`;
   }
   return `${(metersPerSecond * 3.6).toFixed(1)} km/h`;
 }
@@ -88,7 +99,9 @@ export function formatSpeed(metersPerSecond: number, unit: DistanceUnit = 'km'):
  * Speed unit label
  */
 export function speedUnitLabel(unit: DistanceUnit = 'km'): string {
-  return unit === 'mi' ? 'mph' : 'km/h';
+  if (unit === 'mi') return 'mph';
+  if (unit === 'm') return 'm/s';
+  return 'km/h';
 }
 
 /**
@@ -96,19 +109,25 @@ export function speedUnitLabel(unit: DistanceUnit = 'km'): string {
  * Returns the numeric value (not formatted).
  */
 export function metersToDisplayDistance(meters: number, unit: DistanceUnit = 'km'): number {
-  return unit === 'mi' ? meters * KM_TO_MI / 1000 : meters / 1000;
+  if (unit === 'mi') return meters * KM_TO_MI / 1000;
+  if (unit === 'm') return meters;
+  return meters / 1000;
 }
 
 /**
- * Distance unit label: "kilometers" or "miles"
+ * Distance unit label: "kilometers", "miles", or "meters"
  */
 export function distanceUnitLabel(unit: DistanceUnit = 'km'): string {
-  return unit === 'mi' ? 'miles' : 'kilometers';
+  if (unit === 'mi') return 'miles';
+  if (unit === 'm') return 'meters';
+  return 'kilometers';
 }
 
 /**
- * Short distance unit: "km" or "mi"
+ * Short distance unit: "km", "mi", or "m"
  */
 export function distanceUnitShort(unit: DistanceUnit = 'km'): string {
-  return unit === 'mi' ? 'mi' : 'km';
+  if (unit === 'mi') return 'mi';
+  if (unit === 'm') return 'm';
+  return 'km';
 }

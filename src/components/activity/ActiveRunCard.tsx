@@ -23,7 +23,7 @@ export default function ActiveRunCard({
 }: ActiveRunCardProps) {
   const { preferences } = usePreferences();
   const unit = preferences.distanceUnit;
-  const speedDisplay = unit === 'mi' ? currentSpeed * 0.621371 : currentSpeed;
+  const speedDisplay = unit === 'mi' ? currentSpeed * 0.621371 : unit === 'm' ? currentSpeed / 3.6 : currentSpeed;
 
   return (
     <Card style={styles.card}>

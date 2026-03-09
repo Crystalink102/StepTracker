@@ -78,4 +78,17 @@ describe('formatSpeed', () => {
   it('handles zero', () => {
     expect(formatSpeed(0)).toBe('0.0 km/h');
   });
+
+  it('shows m/s when unit is m', () => {
+    expect(formatSpeed(2.5, 'm')).toBe('2.5 m/s');
+    expect(formatSpeed(0, 'm')).toBe('0.0 m/s');
+  });
+});
+
+describe('formatDistance with meters unit', () => {
+  it('always shows meters', () => {
+    expect(formatDistance(500, 'm')).toBe('500 m');
+    expect(formatDistance(1500, 'm')).toBe('1500 m');
+    expect(formatDistance(10000, 'm')).toBe('10000 m');
+  });
 });

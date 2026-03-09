@@ -19,13 +19,13 @@ export default function StatsOverview({
 }: StatsOverviewProps) {
   const { preferences } = usePreferences();
   const unit = preferences.distanceUnit;
-  const displayDist = unit === 'mi' ? totalDistanceKm * 0.621371 : totalDistanceKm;
+  const displayDist = unit === 'mi' ? totalDistanceKm * 0.621371 : unit === 'm' ? totalDistanceKm * 1000 : totalDistanceKm;
 
   const stats = [
     { label: 'Total XP', value: formatNumber(totalXP) },
     { label: 'Steps', value: formatNumber(totalSteps) },
     { label: 'Activities', value: String(totalActivities) },
-    { label: 'Distance', value: `${displayDist.toFixed(1)} ${distanceUnitShort(unit)}` },
+    { label: 'Distance', value: `${unit === 'm' ? formatNumber(Math.round(displayDist)) : displayDist.toFixed(1)} ${distanceUnitShort(unit)}` },
   ];
 
   return (

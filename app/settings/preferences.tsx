@@ -97,6 +97,7 @@ export default function PreferencesScreen() {
         label="Distance"
         description="Affects pace, speed, and distance displays"
         options={[
+          { label: 'Meters', value: 'm' },
           { label: 'Kilometers', value: 'km' },
           { label: 'Miles', value: 'mi' },
         ]}

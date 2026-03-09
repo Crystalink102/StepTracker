@@ -38,14 +38,14 @@ export default function StepCounter() {
   const { displayDist, cal, min } = useMemo(() => {
     const distM = distanceFromSteps(todaySteps, profile?.height_cm ?? null);
     return {
-      displayDist: unit === 'mi' ? distM * 0.000621371 : distM / 1000,
+      displayDist: unit === 'mi' ? distM * 0.000621371 : unit === 'm' ? distM : distM / 1000,
       cal: caloriesFromSteps(todaySteps, profile?.weight_kg ?? null),
       min: activeMinutesFromSteps(todaySteps),
     };
   }, [todaySteps, profile?.height_cm, profile?.weight_kg, unit]);
 
   return (
-    <Card style={styles.card} accessible accessibilityLabel={`Today's steps: ${formatNumber(todaySteps)}. Distance: ${displayDist.toFixed(2)} ${distanceUnitShort(unit)}. Calories: ${cal}. Active minutes: ${min}.`}>
+    <Card style={styles.card} accessible accessibilityLabel={`Today's steps: ${formatNumber(todaySteps)}. Distance: ${unit === 'm' ? Math.round(displayDist) : displayDist.toFixed(2)} ${distanceUnitShort(unit)}. Calories: ${cal}. Active minutes: ${min}.`}>
       <View style={styles.header}>
         <Text style={styles.label}>TODAY'S STEPS</Text>
         <View
@@ -57,7 +57,7 @@ export default function StepCounter() {
 
       <View style={styles.stats}>
         <View style={styles.stat}>
-          <Text style={styles.statValue}>{displayDist.toFixed(2)}</Text>
+          <Text style={styles.statValue}>{unit === 'm' ? Math.round(displayDist).toLocaleString() : displayDist.toFixed(2)}</Text>
           <Text style={styles.statLabel}>{distanceUnitShort(unit)}</Text>
         </View>
         <View style={styles.divider} />

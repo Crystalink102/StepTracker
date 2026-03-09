@@ -81,7 +81,7 @@ const DARK_MAP_STYLE = [
 function getDistanceSplits(coordinates: Coord[], unit: DistanceUnit = 'km'): { coord: Coord; label: number }[] {
   if (coordinates.length < 2) return [];
 
-  const splitDistance = unit === 'mi' ? 1609.34 : 1000;
+  const splitDistance = unit === 'mi' ? 1609.34 : unit === 'm' ? 500 : 1000;
   const splits: { coord: Coord; label: number }[] = [];
   let accumulatedMeters = 0;
   let nextSplit = 1;
