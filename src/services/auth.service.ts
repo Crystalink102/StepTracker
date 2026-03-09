@@ -1,7 +1,12 @@
-import * as Linking from 'expo-linking';
+import { Platform } from 'react-native';
 import { supabase } from './supabase';
 
-const REDIRECT_URL = Linking.createURL('auth/callback');
+// Use the app's custom scheme for native builds so email confirmation
+// links open the app directly. Linking.createURL() generates Expo Dev
+// tunnel URLs during development which break for real users.
+const REDIRECT_URL = Platform.OS === 'web'
+  ? `${typeof window !== 'undefined' ? window.location.origin : ''}/auth/callback`
+  : 'steptracker://auth/callback';
 
 /**
  * Convert Supabase auth errors into user-friendly messages.
