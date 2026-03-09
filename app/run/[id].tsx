@@ -42,21 +42,13 @@ export default function RunDetailScreen() {
       .finally(() => setIsLoading(false));
   }, [id]);
 
-  if (isLoading) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
-  }
+  // All hooks must be called before any early returns to avoid React error #310
+  const routeCoords = useMemo(
+    () => waypoints.map((wp) => ({ latitude: wp.latitude, longitude: wp.longitude })),
+    [waypoints]
+  );
 
-  if (!activity) {
-    return (
-      <View style={[styles.container, styles.centered]}>
-        <Text style={styles.errorText}>Activity not found</Text>
-      </View>
-    );
-  }
+  const hasRoute = routeCoords.length > 1;
 
   const handleShare = async () => {
     if (!activity) return;
@@ -83,12 +75,21 @@ export default function RunDetailScreen() {
     await Share.share({ message: lines.join('\n') });
   };
 
-  const routeCoords = useMemo(
-    () => waypoints.map((wp) => ({ latitude: wp.latitude, longitude: wp.longitude })),
-    [waypoints]
-  );
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
 
-  const hasRoute = routeCoords.length > 1;
+  if (!activity) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.errorText}>Activity not found</Text>
+      </View>
+    );
+  }
 
   return (
     <>
