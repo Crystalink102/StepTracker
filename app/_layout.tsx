@@ -34,20 +34,25 @@ function AuthGate() {
   const segments = useSegments();
   const router = useRouter();
   const [isNavigationReady, setIsNavigationReady] = useState(false);
+  const doneLoading = !isLoading && !(isAuthenticated && profileLoading);
 
   // Register notifications when authenticated
   useNotifications();
 
-  // Wait for the navigator to fully mount before attempting navigation.
-  // requestAnimationFrame (~16ms) is too fast for Expo Go — use setTimeout.
+  // Wait for the Stack navigator to mount before navigating.
+  // The Stack only renders when doneLoading is true, so start the
+  // timer AFTER loading completes — not at component mount.
   useEffect(() => {
-    const timer = setTimeout(() => setIsNavigationReady(true), 100);
+    if (!doneLoading) {
+      setIsNavigationReady(false);
+      return;
+    }
+    const timer = setTimeout(() => setIsNavigationReady(true), 150);
     return () => clearTimeout(timer);
-  }, []);
+  }, [doneLoading]);
 
   useEffect(() => {
     if (!isNavigationReady) return;
-    if (isLoading || (isAuthenticated && profileLoading)) return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboarding = segments[0] === '(onboarding)';
@@ -80,7 +85,7 @@ function AuthGate() {
       console.warn('[AuthGate] Navigation not ready, retrying:', err);
       const retry = setTimeout(() => {
         try { navigate(); } catch { /* give up silently */ }
-      }, 200);
+      }, 300);
       return () => clearTimeout(retry);
     }
   }, [isAuthenticated, isLoading, profileLoading, profile, hasMFA, mfaVerified, segments, router, isNavigationReady]);
