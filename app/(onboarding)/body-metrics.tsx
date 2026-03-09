@@ -24,6 +24,7 @@ export default function BodyMetricsScreen() {
   const [heightError, setHeightError] = useState('');
   const [weightError, setWeightError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   const handleContinue = async () => {
     if (!user) return;
@@ -64,6 +65,7 @@ export default function BodyMetricsScreen() {
     if (hasError) return;
 
     setIsSaving(true);
+    setSaveError('');
     try {
       const updates: Record<string, number> = {};
       if (height.trim()) {
@@ -80,8 +82,9 @@ export default function BodyMetricsScreen() {
         await refreshProfile();
       }
       router.push('/(onboarding)/daily-goal');
-    } catch (err) {
+    } catch (err: any) {
       console.warn('[Onboarding] Failed to save metrics:', err);
+      setSaveError(err.message || 'Could not save your info. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -122,6 +125,9 @@ export default function BodyMetricsScreen() {
         </View>
 
         <View style={styles.bottom}>
+          {saveError ? (
+            <Text style={styles.errorText}>{saveError}</Text>
+          ) : null}
           <Button
             title="Continue"
             onPress={handleContinue}
@@ -175,5 +181,10 @@ const styles = StyleSheet.create({
   bottom: {
     gap: Spacing.md,
     paddingBottom: Spacing.lg,
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: FontSize.sm,
+    textAlign: 'center',
   },
 });

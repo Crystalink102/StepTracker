@@ -5,13 +5,16 @@ import StepGoalRing from '@/src/components/home/StepGoalRing';
 import StepCounter from '@/src/components/home/StepCounter';
 import StreakCard from '@/src/components/home/StreakCard';
 import StreakPopup from '@/src/components/home/StreakPopup';
+import AchievementPopup from '@/src/components/achievements/AchievementPopup';
 import { OfflineBanner } from '@/src/components/ui';
 import { useStreak } from '@/src/hooks/useStreak';
+import { useAchievements } from '@/src/hooks/useAchievements';
 import { useNetwork } from '@/src/context/NetworkContext';
 import { Colors, Spacing } from '@/src/constants/theme';
 
 export default function HomeScreen() {
   const { streak, showPopup, dismissPopup } = useStreak();
+  const { pendingPopup, dismissPopup: dismissAchievement } = useAchievements();
   const { isOnline } = useNetwork();
 
   return (
@@ -28,6 +31,7 @@ export default function HomeScreen() {
         <StreakCard streak={streak} />
       </ScrollView>
       <StreakPopup visible={showPopup} streak={streak} onDismiss={dismissPopup} />
+      <AchievementPopup achievement={pendingPopup} onDismiss={dismissAchievement} />
     </SafeAreaView>
   );
 }

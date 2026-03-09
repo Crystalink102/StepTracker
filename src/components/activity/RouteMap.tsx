@@ -97,6 +97,7 @@ function getDistanceSplits(coordinates: Coord[], unit: DistanceUnit = 'km'): { c
     );
 
     accumulatedMeters += segmentDist;
+    if (segmentDist === 0) continue;
 
     while (accumulatedMeters >= nextSplit * splitDistance) {
       const overshoot = accumulatedMeters - nextSplit * splitDistance;

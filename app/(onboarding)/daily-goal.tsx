@@ -24,6 +24,7 @@ export default function DailyGoalScreen() {
   const [showCustom, setShowCustom] = useState(false);
   const [customError, setCustomError] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   const handleFinish = async () => {
     if (!user) return;
@@ -40,6 +41,7 @@ export default function DailyGoalScreen() {
     }
 
     setIsSaving(true);
+    setSaveError('');
     try {
       const updates: Record<string, number> = { daily_step_goal: goal };
       try {
@@ -54,8 +56,9 @@ export default function DailyGoalScreen() {
       await ProfileService.updateProfile(user.id, updates);
       await refreshProfile();
       router.replace('/(tabs)');
-    } catch (err) {
+    } catch (err: any) {
       console.warn('[Onboarding] Failed to save goal:', err);
+      setSaveError(err.message || 'Could not save your goal. Please try again.');
     } finally {
       setIsSaving(false);
     }
@@ -118,6 +121,9 @@ export default function DailyGoalScreen() {
         </View>
 
         <View style={styles.bottom}>
+          {saveError ? (
+            <Text style={styles.errorText}>{saveError}</Text>
+          ) : null}
           <Button
             title="Let's Go!"
             onPress={handleFinish}
@@ -205,5 +211,11 @@ const styles = StyleSheet.create({
   },
   bottom: {
     paddingBottom: Spacing.lg,
+    gap: Spacing.sm,
+  },
+  errorText: {
+    color: '#ef4444',
+    fontSize: FontSize.sm,
+    textAlign: 'center',
   },
 });

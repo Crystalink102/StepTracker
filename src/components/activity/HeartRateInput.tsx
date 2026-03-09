@@ -29,7 +29,7 @@ export default function HeartRateInput({
     if (mode === 'auto' && estimatedHR > 0) {
       onHeartRateChange(estimatedHR, 'auto');
     }
-  }, [estimatedHR, mode]);
+  }, [estimatedHR, mode, onHeartRateChange]);
 
   const handleManualChange = (text: string) => {
     setManualHR(text);

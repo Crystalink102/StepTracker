@@ -237,19 +237,29 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   const pauseActivity = useCallback(async () => {
     if (!currentActivity) return;
     setIsPaused(true);
-    await ActivityService.updateActivity(currentActivity.id, {
-      status: 'paused',
-      duration_seconds: elapsedSeconds,
-      distance_meters: distanceMeters,
-    });
+    try {
+      await ActivityService.updateActivity(currentActivity.id, {
+        status: 'paused',
+        duration_seconds: elapsedSeconds,
+        distance_meters: distanceMeters,
+      });
+    } catch (err) {
+      setIsPaused(false);
+      throw err;
+    }
   }, [currentActivity, elapsedSeconds, distanceMeters]);
 
   const resumeActivity = useCallback(async () => {
     if (!currentActivity) return;
     setIsPaused(false);
-    await ActivityService.updateActivity(currentActivity.id, {
-      status: 'active',
-    });
+    try {
+      await ActivityService.updateActivity(currentActivity.id, {
+        status: 'active',
+      });
+    } catch (err) {
+      setIsPaused(true);
+      throw err;
+    }
   }, [currentActivity]);
 
   const stopActivity = useCallback(
