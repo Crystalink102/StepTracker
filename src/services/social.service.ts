@@ -12,16 +12,44 @@ export async function searchUsers(query: string, currentUserId?: string): Promis
 
   // Fallback: client-side search if RPC doesn't exist
   console.warn('[Social] search_users RPC failed, using fallback:', error.message);
-  const { data: profiles, error: profileError } = await supabase
+  const sanitized = query.replace(/[,.()"'\\%]/g, '');
+  let qb = supabase
     .from('profiles')
     .select('id, username, display_name, avatar_url')
-    .not('username', 'is', null)
-    .or(`username.ilike.%${query.replace(/[,.()"'\\%]/g, '')}%,display_name.ilike.%${query.replace(/[,.()"'\\%]/g, '')}%`)
-    .limit(20);
+    .not('username', 'is', null);
+
+  if (sanitized.length > 0) {
+    qb = qb.or(`username.ilike.%${sanitized}%,display_name.ilike.%${sanitized}%`);
+  }
+
+  const { data: profiles, error: profileError } = await qb
+    .order('username', { ascending: true })
+    .limit(50);
 
   if (profileError) throw profileError;
 
   // Filter out current user on client side
+  return (profiles ?? []).filter((p) => p.id !== currentUserId) as UserSearchResult[];
+}
+
+export async function getAllUsers(currentUserId?: string): Promise<UserSearchResult[]> {
+  // Try RPC with empty query first — returns all non-friend users
+  const { data, error } = await supabase.rpc('search_users', {
+    search_query: '',
+  });
+
+  if (!error) return data ?? [];
+
+  // Fallback: fetch all profiles
+  console.warn('[Social] search_users RPC failed for getAllUsers, using fallback:', error.message);
+  const { data: profiles, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, username, display_name, avatar_url')
+    .not('username', 'is', null)
+    .order('username', { ascending: true })
+    .limit(50);
+
+  if (profileError) throw profileError;
   return (profiles ?? []).filter((p) => p.id !== currentUserId) as UserSearchResult[];
 }
 

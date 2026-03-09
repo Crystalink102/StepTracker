@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import { Input } from '@/src/components/ui';
 import UserSearchResultComp from '@/src/components/social/UserSearchResult';
@@ -15,8 +15,25 @@ export default function SearchFriendsScreen() {
   const [results, setResults] = useState<UserSearchResult[]>([]);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
   const [isSearching, setIsSearching] = useState(false);
+  const [isLoadingAll, setIsLoadingAll] = useState(true);
+  const [allUsers, setAllUsers] = useState<UserSearchResult[]>([]);
   const [searchError, setSearchError] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  // Load all users on mount
+  useEffect(() => {
+    if (!user) return;
+    SocialService.getAllUsers(user.id)
+      .then((data) => {
+        setAllUsers(data);
+        setResults(data);
+      })
+      .catch((err) => {
+        console.warn('[Search] Failed to load users:', err);
+        setSearchError('Failed to load users.');
+      })
+      .finally(() => setIsLoadingAll(false));
+  }, [user]);
 
   const handleSearch = useCallback((text: string) => {
     setQuery(text);
@@ -24,8 +41,9 @@ export default function SearchFriendsScreen() {
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    if (text.length < 2) {
-      setResults([]);
+    if (text.length === 0) {
+      // Show all users when search is cleared
+      setResults(allUsers);
       return;
     }
 
@@ -42,7 +60,7 @@ export default function SearchFriendsScreen() {
         setIsSearching(false);
       }
     }, 400);
-  }, [user?.id]);
+  }, [user?.id, allUsers]);
 
   const handleAdd = useCallback(
     async (targetUserId: string) => {
@@ -62,6 +80,8 @@ export default function SearchFriendsScreen() {
     [sendRequest]
   );
 
+  const displayData = results;
+
   return (
     <View style={styles.container}>
       <View style={styles.searchBox}>
@@ -75,7 +95,7 @@ export default function SearchFriendsScreen() {
         />
       </View>
 
-      {isSearching && (
+      {(isSearching || isLoadingAll) && (
         <ActivityIndicator
           size="small"
           color={Colors.primary}
@@ -88,7 +108,7 @@ export default function SearchFriendsScreen() {
       ) : null}
 
       <FlatList
-        data={results}
+        data={displayData}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <UserSearchResultComp
@@ -100,9 +120,11 @@ export default function SearchFriendsScreen() {
           />
         )}
         ListEmptyComponent={
-          query.length >= 2 && !isSearching ? (
+          !isLoadingAll && !isSearching ? (
             <View style={styles.empty}>
-              <Text style={styles.emptyText}>No users found</Text>
+              <Text style={styles.emptyText}>
+                {query.length > 0 ? 'No users found' : 'No other users yet'}
+              </Text>
             </View>
           ) : null
         }
