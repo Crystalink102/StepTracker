@@ -8,6 +8,7 @@ type UserSearchResultProps = {
   avatarUrl: string | null;
   onAdd: () => void;
   added?: boolean;
+  isAdding?: boolean;
 };
 
 export default function UserSearchResult({
@@ -16,6 +17,7 @@ export default function UserSearchResult({
   avatarUrl,
   onAdd,
   added = false,
+  isAdding = false,
 }: UserSearchResultProps) {
   return (
     <View style={styles.container}>
@@ -28,7 +30,8 @@ export default function UserSearchResult({
         title={added ? 'Sent' : 'Add'}
         onPress={onAdd}
         variant={added ? 'ghost' : 'primary'}
-        disabled={added}
+        disabled={added || isAdding}
+        isLoading={isAdding}
         style={styles.addBtn}
       />
     </View>

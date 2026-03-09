@@ -14,6 +14,7 @@ export default function SearchFriendsScreen() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<UserSearchResult[]>([]);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  const [addingIds, setAddingIds] = useState<Set<string>>(new Set());
   const [isSearching, setIsSearching] = useState(false);
   const [isLoadingAll, setIsLoadingAll] = useState(true);
   const [allUsers, setAllUsers] = useState<UserSearchResult[]>([]);
@@ -23,6 +24,7 @@ export default function SearchFriendsScreen() {
   // Load all users on mount
   useEffect(() => {
     if (!user) return;
+    setIsLoadingAll(true);
     SocialService.getAllUsers(user.id)
       .then((data) => {
         setAllUsers(data);
@@ -41,43 +43,58 @@ export default function SearchFriendsScreen() {
 
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
-    if (text.length === 0) {
+    if (text.trim().length === 0) {
       // Show all users when search is cleared
       setResults(allUsers);
+      setIsSearching(false);
       return;
     }
 
+    setIsSearching(true);
     debounceRef.current = setTimeout(async () => {
-      setIsSearching(true);
       try {
-        const data = await SocialService.searchUsers(text, user?.id);
+        const data = await SocialService.searchUsers(text.trim(), user?.id);
         setResults(data);
       } catch (err) {
         console.warn('[Search] Failed:', err);
-        setResults([]);
-        setSearchError('Search failed. Please try again.');
+        // On search failure, filter allUsers locally as last resort
+        const lower = text.trim().toLowerCase();
+        setResults(
+          allUsers.filter(
+            (u) =>
+              u.username?.toLowerCase().includes(lower) ||
+              u.display_name?.toLowerCase().includes(lower)
+          )
+        );
       } finally {
         setIsSearching(false);
       }
-    }, 400);
+    }, 300);
   }, [user?.id, allUsers]);
 
   const handleAdd = useCallback(
     async (targetUserId: string) => {
+      if (addingIds.has(targetUserId) || sentIds.has(targetUserId)) return;
+      setAddingIds((prev) => new Set(prev).add(targetUserId));
       try {
         await sendRequest(targetUserId);
         setSentIds((prev) => new Set(prev).add(targetUserId));
       } catch (err: any) {
         const msg = err?.message || '';
         if (msg.includes('duplicate') || msg.includes('unique')) {
-          // Already sent — mark as sent anyway
           setSentIds((prev) => new Set(prev).add(targetUserId));
         } else {
           setSearchError('Failed to send request. Please try again.');
         }
+      } finally {
+        setAddingIds((prev) => {
+          const next = new Set(prev);
+          next.delete(targetUserId);
+          return next;
+        });
       }
     },
-    [sendRequest]
+    [sendRequest, addingIds, sentIds]
   );
 
   const displayData = results;
@@ -117,6 +134,7 @@ export default function SearchFriendsScreen() {
             avatarUrl={item.avatar_url}
             onAdd={() => handleAdd(item.id)}
             added={sentIds.has(item.id)}
+            isAdding={addingIds.has(item.id)}
           />
         )}
         ListEmptyComponent={

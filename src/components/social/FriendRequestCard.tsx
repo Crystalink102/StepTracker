@@ -8,6 +8,7 @@ type FriendRequestCardProps = {
   avatarUrl: string | null;
   onAccept: () => void;
   onDecline: () => void;
+  isProcessing?: boolean;
 };
 
 export default function FriendRequestCard({
@@ -16,6 +17,7 @@ export default function FriendRequestCard({
   avatarUrl,
   onAccept,
   onDecline,
+  isProcessing = false,
 }: FriendRequestCardProps) {
   return (
     <View style={styles.container}>
@@ -25,8 +27,8 @@ export default function FriendRequestCard({
         <Text style={styles.username}>@{username}</Text>
       </View>
       <View style={styles.actions}>
-        <Button title="Accept" onPress={onAccept} variant="primary" style={styles.btn} />
-        <Button title="Decline" onPress={onDecline} variant="ghost" style={styles.btn} />
+        <Button title="Accept" onPress={onAccept} variant="primary" style={styles.btn} disabled={isProcessing} isLoading={isProcessing} />
+        <Button title="Decline" onPress={onDecline} variant="ghost" style={styles.btn} disabled={isProcessing} />
       </View>
     </View>
   );

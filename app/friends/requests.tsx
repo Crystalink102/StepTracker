@@ -1,3 +1,4 @@
+import { useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { useFriends } from '@/src/hooks/useFriends';
 import FriendRequestCard from '@/src/components/social/FriendRequestCard';
@@ -6,6 +7,31 @@ import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 export default function FriendRequestsScreen() {
   const { pendingRequests, isLoading, acceptRequest, declineRequest, refresh } =
     useFriends();
+  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+
+  const handleAccept = useCallback(async (id: string) => {
+    if (processingIds.has(id)) return;
+    setProcessingIds((prev) => new Set(prev).add(id));
+    try {
+      await acceptRequest(id);
+    } catch (err) {
+      console.warn('[Requests] Accept failed:', err);
+    } finally {
+      setProcessingIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
+    }
+  }, [acceptRequest, processingIds]);
+
+  const handleDecline = useCallback(async (id: string) => {
+    if (processingIds.has(id)) return;
+    setProcessingIds((prev) => new Set(prev).add(id));
+    try {
+      await declineRequest(id);
+    } catch (err) {
+      console.warn('[Requests] Decline failed:', err);
+    } finally {
+      setProcessingIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
+    }
+  }, [declineRequest, processingIds]);
 
   return (
     <View style={styles.container}>
@@ -17,8 +43,9 @@ export default function FriendRequestsScreen() {
             username={item.requester?.username ?? ''}
             displayName={item.requester?.display_name ?? null}
             avatarUrl={item.requester?.avatar_url ?? null}
-            onAccept={() => acceptRequest(item.id)}
-            onDecline={() => declineRequest(item.id)}
+            onAccept={() => handleAccept(item.id)}
+            onDecline={() => handleDecline(item.id)}
+            isProcessing={processingIds.has(item.id)}
           />
         )}
         ListEmptyComponent={

@@ -2,16 +2,38 @@ import { supabase } from './supabase';
 import { Friendship, UserSearchResult } from '@/src/types/database';
 import { getTodayString } from '@/src/utils/date-helpers';
 
+/**
+ * Fetch existing friend/pending user IDs so we can filter them out client-side.
+ */
+async function getExcludedUserIds(currentUserId: string): Promise<Set<string>> {
+  const { data } = await supabase
+    .from('friendships')
+    .select('requester_id, addressee_id')
+    .or(`requester_id.eq.${currentUserId},addressee_id.eq.${currentUserId}`)
+    .in('status', ['pending', 'accepted']);
+
+  const ids = new Set<string>();
+  ids.add(currentUserId);
+  for (const f of data ?? []) {
+    ids.add(f.requester_id);
+    ids.add(f.addressee_id);
+  }
+  return ids;
+}
+
 export async function searchUsers(query: string, currentUserId?: string): Promise<UserSearchResult[]> {
   // Try the RPC function first
-  const { data, error } = await supabase.rpc('search_users', {
-    search_query: query,
-  });
+  try {
+    const { data, error } = await supabase.rpc('search_users', {
+      search_query: query,
+    });
+    if (!error && data && data.length >= 0) return data;
+  } catch (err) {
+    console.warn('[Social] search_users RPC error:', err);
+  }
 
-  if (!error) return data ?? [];
-
-  // Fallback: client-side search if RPC doesn't exist
-  console.warn('[Social] search_users RPC failed, using fallback:', error.message);
+  // Fallback: client-side search
+  console.warn('[Social] Using client-side search fallback');
   const sanitized = query.replace(/[,.()"'\\%]/g, '');
   let qb = supabase
     .from('profiles')
@@ -28,29 +50,35 @@ export async function searchUsers(query: string, currentUserId?: string): Promis
 
   if (profileError) throw profileError;
 
-  // Filter out current user on client side
-  return (profiles ?? []).filter((p) => p.id !== currentUserId) as UserSearchResult[];
+  // Filter out current user and existing friends/pending
+  const excluded = currentUserId ? await getExcludedUserIds(currentUserId) : new Set<string>();
+  return (profiles ?? []).filter((p) => !excluded.has(p.id)) as UserSearchResult[];
 }
 
 export async function getAllUsers(currentUserId?: string): Promise<UserSearchResult[]> {
   // Try RPC with empty query first — returns all non-friend users
-  const { data, error } = await supabase.rpc('search_users', {
-    search_query: '',
-  });
+  try {
+    const { data, error } = await supabase.rpc('search_users', {
+      search_query: '',
+    });
+    if (!error && data && data.length >= 0) return data;
+  } catch (err) {
+    console.warn('[Social] getAllUsers RPC error:', err);
+  }
 
-  if (!error) return data ?? [];
-
-  // Fallback: fetch all profiles
-  console.warn('[Social] search_users RPC failed for getAllUsers, using fallback:', error.message);
+  // Fallback: fetch all profiles, filter out friends client-side
+  console.warn('[Social] Using client-side getAllUsers fallback');
   const { data: profiles, error: profileError } = await supabase
     .from('profiles')
     .select('id, username, display_name, avatar_url')
     .not('username', 'is', null)
     .order('username', { ascending: true })
-    .limit(50);
+    .limit(100);
 
   if (profileError) throw profileError;
-  return (profiles ?? []).filter((p) => p.id !== currentUserId) as UserSearchResult[];
+
+  const excluded = currentUserId ? await getExcludedUserIds(currentUserId) : new Set<string>();
+  return (profiles ?? []).filter((p) => !excluded.has(p.id)) as UserSearchResult[];
 }
 
 export async function sendFriendRequest(requesterId: string, addresseeId: string): Promise<Friendship> {
