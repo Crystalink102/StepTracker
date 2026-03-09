@@ -16,6 +16,7 @@ import { useProfile } from '@/src/hooks/useProfile';
 import { Colors } from '@/src/constants/theme';
 
 import { ErrorScreen } from '@/src/components/ui';
+import DownloadBanner from '@/src/components/DownloadBanner';
 
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
   return <ErrorScreen error={error} retry={retry} />;
@@ -81,6 +82,7 @@ function AuthGate() {
   return (
     <>
       <StatusBar style="light" />
+      <DownloadBanner />
       <Stack
         screenOptions={{
           headerShown: false,
