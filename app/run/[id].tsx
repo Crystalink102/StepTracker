@@ -148,7 +148,9 @@ export default function RunDetailScreen() {
           {/* Big distance display */}
           <View style={styles.distanceSection}>
             <Text style={styles.distanceValue}>
-              {metersToDisplayDistance(activity.distance_meters, unit).toFixed(2)}
+              {unit === 'm'
+                ? Math.round(metersToDisplayDistance(activity.distance_meters, unit)).toLocaleString()
+                : metersToDisplayDistance(activity.distance_meters, unit).toFixed(2)}
             </Text>
             <Text style={styles.distanceUnit}>{distanceUnitLabel(unit)}</Text>
           </View>
