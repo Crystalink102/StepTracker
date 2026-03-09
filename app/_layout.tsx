@@ -38,11 +38,11 @@ function AuthGate() {
   // Register notifications when authenticated
   useNotifications();
 
-  // Wait one frame for the navigator to mount before attempting navigation.
-  // This prevents the "REPLACE with payload" error on Expo Go / first render.
+  // Wait for the navigator to fully mount before attempting navigation.
+  // requestAnimationFrame (~16ms) is too fast for Expo Go — use setTimeout.
   useEffect(() => {
-    const timer = requestAnimationFrame(() => setIsNavigationReady(true));
-    return () => cancelAnimationFrame(timer);
+    const timer = setTimeout(() => setIsNavigationReady(true), 100);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
@@ -55,7 +55,7 @@ function AuthGate() {
     const onMFAScreen = inAuthGroup && segments[1] === 'verify-mfa';
     const needsOnboarding = isAuthenticated && profile && profile.height_cm === null;
 
-    try {
+    const navigate = () => {
       if (!isAuthenticated && !inAuthGroup) {
         router.replace('/(auth)/login');
       } else if (needsMFAVerification && !onMFAScreen) {
@@ -71,8 +71,17 @@ function AuthGate() {
       } else if (isAuthenticated && inOnboarding && !needsOnboarding && !needsMFAVerification) {
         router.replace('/(tabs)');
       }
+    };
+
+    try {
+      navigate();
     } catch (err) {
-      console.warn('[AuthGate] Navigation error:', err);
+      // Navigator not ready yet — retry after a short delay
+      console.warn('[AuthGate] Navigation not ready, retrying:', err);
+      const retry = setTimeout(() => {
+        try { navigate(); } catch { /* give up silently */ }
+      }, 200);
+      return () => clearTimeout(retry);
     }
   }, [isAuthenticated, isLoading, profileLoading, profile, hasMFA, mfaVerified, segments, router, isNavigationReady]);
 
