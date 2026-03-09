@@ -5,7 +5,7 @@ import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/const
 
 const DISMISSED_KEY = 'download_banner_dismissed';
 // Update this URL after each EAS build
-const DOWNLOAD_URL = 'https://expo.dev/artifacts/eas/u27AjVdeEgr1VRu9USnXPH.apk';
+const DOWNLOAD_URL = 'https://expo.dev/artifacts/eas/wTcEmWqi21ASdrNeNTFsxB.apk';
 
 export default function DownloadBanner() {
   const [visible, setVisible] = useState(false);
