@@ -21,28 +21,46 @@ function getYesterday(): string {
 export async function checkAndUpdateStreak(userId: string): Promise<StreakResult> {
   const { data: profile, error } = await supabase
     .from('profiles')
-    .select('current_streak, last_streak_date')
+    .select('current_streak, last_streak_date, daily_step_goal')
     .eq('id', userId)
     .single();
 
   if (error) throw error;
 
   const today = getDateString(new Date());
+  const yesterday = getYesterday();
   const currentStreak = profile.current_streak ?? 0;
   const lastDate = profile.last_streak_date;
+  const goal = profile.daily_step_goal ?? 10000;
 
   // Already checked today - no popup
   if (lastDate === today) {
     return { streak: currentStreak, showPopup: false };
   }
 
+  // Check if yesterday's step goal was met (for streak continuation)
+  let yesterdayGoalMet = false;
+  if (lastDate === yesterday) {
+    const { data: yesterdaySteps } = await supabase
+      .from('daily_steps')
+      .select('step_count')
+      .eq('user_id', userId)
+      .eq('date', yesterday)
+      .single();
+
+    yesterdayGoalMet = (yesterdaySteps?.step_count ?? 0) >= goal;
+  }
+
   let newStreak: number;
 
-  if (lastDate === getYesterday()) {
-    // Streak continues
+  if (lastDate === yesterday && yesterdayGoalMet) {
+    // Streak continues — yesterday's goal was met
     newStreak = currentStreak + 1;
+  } else if (lastDate === yesterday) {
+    // Opened yesterday but didn't meet goal — streak resets
+    newStreak = 1;
   } else {
-    // Streak resets (first time or gap)
+    // Gap of 2+ days — streak resets
     newStreak = 1;
   }
 

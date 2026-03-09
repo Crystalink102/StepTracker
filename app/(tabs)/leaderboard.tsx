@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/src/context/AuthContext';
@@ -20,8 +21,8 @@ export default function LeaderboardScreen() {
     refresh,
   } = useLeaderboard();
 
-  const topThree = entries.slice(0, 3);
-  const rest = entries.slice(3);
+  const topThree = useMemo(() => entries.slice(0, 3), [entries]);
+  const rest = useMemo(() => entries.slice(3), [entries]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>

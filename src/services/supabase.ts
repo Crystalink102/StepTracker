@@ -17,6 +17,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, 
     storage,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    // On web, detect session tokens from URL (auth redirects); on native, use deep links instead
+    detectSessionInUrl: Platform.OS === 'web',
   },
 });

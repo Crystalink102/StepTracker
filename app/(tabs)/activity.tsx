@@ -58,7 +58,7 @@ export default function ActivityScreen() {
   useEffect(() => {
     if (!user) return;
     ProfileService.getProfile(user.id)
-      .then((p) => setRestingHR(p.resting_hr))
+      .then((p) => { if (p.resting_hr != null) setRestingHR(p.resting_hr); })
       .catch(() => {});
   }, [user]);
 

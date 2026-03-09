@@ -7,13 +7,13 @@ import {
   useRef,
   type ReactNode,
 } from 'react';
-import { Pedometer } from 'expo-sensors';
-import { AppState } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/src/context/AuthContext';
 import * as StepService from '@/src/services/step.service';
 import * as XPService from '@/src/services/xp.service';
 import * as AchievementService from '@/src/services/achievement.service';
+import * as HealthService from '@/src/services/health.service';
 import { xpFromSteps } from '@/src/utils/xp-calculator';
 import { enqueue } from '@/src/services/offline-queue';
 import { getTodayString } from '@/src/utils/date-helpers';
@@ -22,16 +22,20 @@ import { STEP_SYNC_INTERVAL_MS } from '@/src/constants/config';
 const LAST_SYNCED_KEY = 'step_last_synced_steps';
 const LAST_SYNCED_DATE_KEY = 'step_last_synced_date';
 
+type StepSource = 'health-connect' | 'healthkit' | 'pedometer' | 'none';
+
 type StepContextValue = {
   todaySteps: number;
   isAvailable: boolean;
   isTracking: boolean;
+  stepSource: StepSource;
 };
 
 const StepContext = createContext<StepContextValue>({
   todaySteps: 0,
   isAvailable: false,
   isTracking: false,
+  stepSource: 'none',
 });
 
 export function StepProvider({ children }: { children: ReactNode }) {
@@ -39,29 +43,41 @@ export function StepProvider({ children }: { children: ReactNode }) {
   const [todaySteps, setTodaySteps] = useState(0);
   const [isAvailable, setIsAvailable] = useState(false);
   const [isTracking, setIsTracking] = useState(false);
+  const [stepSource, setStepSource] = useState<StepSource>('none');
   const lastSyncedSteps = useRef(0);
   const todayStepsRef = useRef(0);
   const syncIntervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const lastAchievementCheck = useRef(0);
   const catchUpDone = useRef(false);
 
-  // Check pedometer availability
+  // Initialize best available health platform.
+  // Depends on isAuthenticated so it re-runs after login (fixes race condition
+  // where health init completes before user logs in, or vice versa).
   useEffect(() => {
-    Pedometer.isAvailableAsync().then(setIsAvailable);
-  }, []);
+    if (Platform.OS === 'web') return;
+    if (!isAuthenticated) return;
+
+    HealthService.initHealth()
+      .then((source) => {
+        setStepSource(source);
+        setIsAvailable(source !== 'none');
+      })
+      .catch(() => {
+        setStepSource('none');
+        setIsAvailable(false);
+      });
+  }, [isAuthenticated]);
 
   // Sync steps to Supabase and award XP for new steps
   const syncSteps = useCallback(
     async (steps: number) => {
       if (!user || steps <= 0 || steps === lastSyncedSteps.current) return;
-      // Don't sync until catch-up has run to avoid double-counting
       if (!catchUpDone.current) return;
 
       try {
         const totalXP = xpFromSteps(steps);
         await StepService.updateStepCount(user.id, steps, totalXP);
 
-        // Award XP for the delta (new steps since last sync)
         const delta = steps - lastSyncedSteps.current;
         if (delta > 0) {
           const xpDelta = xpFromSteps(delta);
@@ -82,11 +98,9 @@ export function StepProvider({ children }: { children: ReactNode }) {
 
         lastSyncedSteps.current = steps;
 
-        // Persist sync state so we survive app restarts
         AsyncStorage.setItem(LAST_SYNCED_KEY, String(steps)).catch(() => {});
         AsyncStorage.setItem(LAST_SYNCED_DATE_KEY, getTodayString()).catch(() => {});
 
-        // Check achievements every 5000 steps
         if (steps - lastAchievementCheck.current >= 5000) {
           lastAchievementCheck.current = steps;
           AchievementService.checkAchievements(user.id, {
@@ -111,7 +125,7 @@ export function StepProvider({ children }: { children: ReactNode }) {
     [user]
   );
 
-  // Reset state on logout / user change, and load saved steps + catch-up XP
+  // Load saved steps from DB on login
   useEffect(() => {
     if (!user || !isAuthenticated) {
       setTodaySteps(0);
@@ -124,7 +138,6 @@ export function StepProvider({ children }: { children: ReactNode }) {
 
     const loadSavedSteps = async () => {
       try {
-        // Restore persisted sync state for today
         const [savedSyncStr, savedDate] = await Promise.all([
           AsyncStorage.getItem(LAST_SYNCED_KEY),
           AsyncStorage.getItem(LAST_SYNCED_DATE_KEY),
@@ -137,84 +150,75 @@ export function StepProvider({ children }: { children: ReactNode }) {
           setTodaySteps(dbSteps);
         }
 
-        // If we have a persisted sync value from today, use it;
-        // otherwise use the DB value (handles app restart correctly)
         if (savedDate === getTodayString() && savedSyncStr) {
           lastSyncedSteps.current = parseInt(savedSyncStr, 10) || dbSteps;
         } else {
           lastSyncedSteps.current = dbSteps;
         }
-
-        // XP Catch-up: compare steps-source XP in ledger vs expected from total steps.
-        // This only uses 'steps' source XP, not activity/bonus, to avoid miscounting.
-        try {
-          const stepsXPAwarded = await XPService.getXPBySource(user.id, 'steps');
-          const history = await StepService.getStepHistory(user.id, '2020-01-01', getTodayString());
-          const totalSteps = history.reduce((sum, d) => sum + d.step_count, 0);
-          const expectedStepsXP = xpFromSteps(totalSteps);
-          const gap = expectedStepsXP - stepsXPAwarded;
-          if (gap > 0) {
-            await XPService.addXP(
-              user.id,
-              gap,
-              'steps',
-              undefined,
-              `Step XP catch-up (${totalSteps.toLocaleString()} total steps)`
-            );
-          }
-        } catch (xpErr) {
-          console.warn('[StepContext] XP catch-up failed:', xpErr);
-        }
       } catch (err) {
         console.warn('[StepContext] Failed to load saved steps:', err);
       } finally {
-        // Mark catch-up as done so periodic sync can start awarding XP
         catchUpDone.current = true;
       }
     };
 
     loadSavedSteps();
+
+    // XP catch-up (non-blocking, delayed)
+    const xpCatchUp = async () => {
+      try {
+        const stepsXPAwarded = await XPService.getXPBySource(user.id, 'steps');
+        const history = await StepService.getStepHistory(user.id, '2020-01-01', getTodayString());
+        const totalSteps = history.reduce((sum, d) => sum + d.step_count, 0);
+        const expectedStepsXP = xpFromSteps(totalSteps);
+        const gap = expectedStepsXP - stepsXPAwarded;
+        if (gap > 0) {
+          await XPService.addXP(
+            user.id,
+            gap,
+            'steps',
+            undefined,
+            `Step XP catch-up (${totalSteps.toLocaleString()} total steps)`
+          );
+        }
+      } catch (xpErr) {
+        console.warn('[StepContext] XP catch-up failed:', xpErr);
+      }
+    };
+
+    const xpTimer = setTimeout(xpCatchUp, 5000);
+    return () => clearTimeout(xpTimer);
   }, [user, isAuthenticated]);
 
-  // Subscribe to pedometer
+  // Poll steps from the best available health source.
+  // Priority: Health Connect (Android) > HealthKit (iOS) > raw Pedometer > none
   useEffect(() => {
-    if (!isAvailable) return;
+    if (!isAvailable || Platform.OS === 'web') return;
 
-    // Get steps since midnight as our baseline
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
+    const poll = async () => {
+      const data = await HealthService.getTodaySteps();
+      if (data.steps >= 0) {
+        // Use the health platform value as the source of truth.
+        // Only go up — never decrease the count mid-day (health sync lag).
+        setTodaySteps((prev) => Math.max(prev, data.steps));
+        setIsTracking(true);
+      }
+    };
 
-    // Establish the baseline BEFORE subscribing to watch, so incremental
-    // deltas from watchStepCount are added on top of the correct total.
-    let baselineSteps = 0;
-    let baselineSet = false;
+    // Initial fetch + poll every 5 seconds
+    poll();
+    const interval = setInterval(poll, 5000);
 
-    Pedometer.getStepCountAsync(start, new Date())
-      .then((result) => {
-        baselineSteps = result.steps;
-        baselineSet = true;
-        setTodaySteps((prev) => Math.max(prev, baselineSteps));
-      })
-      .catch(() => {});
-
-    // Watch for new steps — only adds steps that arrive AFTER getStepCountAsync
-    const subscription = Pedometer.watchStepCount((result) => {
-      if (!baselineSet) return; // Don't add deltas until baseline is established
-      setTodaySteps((prev) => prev + result.steps);
-      setIsTracking(true);
-    });
-
-    return () => subscription.remove();
+    return () => clearInterval(interval);
   }, [isAvailable]);
 
-  // Detect midnight rollover and reset step count for the new day
+  // Midnight rollover
   const currentDateRef = useRef(getTodayString());
   useEffect(() => {
     const checkDate = () => {
       const now = getTodayString();
       if (now !== currentDateRef.current) {
         currentDateRef.current = now;
-        // New day — reset steps and sync state
         setTodaySteps(0);
         lastSyncedSteps.current = 0;
         catchUpDone.current = false;
@@ -222,9 +226,7 @@ export function StepProvider({ children }: { children: ReactNode }) {
         AsyncStorage.setItem(LAST_SYNCED_KEY, '0').catch(() => {});
       }
     };
-    // Check every 30s for date change
     const interval = setInterval(checkDate, 30_000);
-    // Also check when app comes to foreground
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') checkDate();
     });
@@ -234,18 +236,17 @@ export function StepProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Keep ref in sync with state for use in intervals/callbacks
+  // Keep refs in sync
   useEffect(() => {
     todayStepsRef.current = todaySteps;
   }, [todaySteps]);
 
-  // Keep syncSteps ref in sync for stable interval/callback references
   const syncStepsRef = useRef(syncSteps);
   useEffect(() => {
     syncStepsRef.current = syncSteps;
   }, [syncSteps]);
 
-  // Periodic sync to Supabase (stable interval, no re-creation)
+  // Periodic sync to Supabase
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -272,7 +273,7 @@ export function StepProvider({ children }: { children: ReactNode }) {
   }, []);
 
   return (
-    <StepContext.Provider value={{ todaySteps, isAvailable, isTracking }}>
+    <StepContext.Provider value={{ todaySteps, isAvailable, isTracking, stepSource }}>
       {children}
     </StepContext.Provider>
   );

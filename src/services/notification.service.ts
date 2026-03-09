@@ -64,8 +64,6 @@ export async function scheduleDailyReminder(): Promise<void> {
   const notif = await getNotifications();
   if (!notif) return;
 
-  await cancelAllNotifications();
-
   await notif.scheduleNotificationAsync({
     content: {
       title: "Don't forget to walk!",

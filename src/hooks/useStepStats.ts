@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '@/src/context/AuthContext';
+import { usePreferences } from '@/src/context/PreferencesContext';
 import * as StepService from '@/src/services/step.service';
 import { DailySteps } from '@/src/types/database';
 
@@ -11,10 +12,15 @@ export type StepDay = {
   steps: number;
 };
 
-function getWeekRange() {
+function getWeekRange(weekStartsMonday: boolean) {
   const now = new Date();
-  const day = now.getDay();
-  const diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday start
+  const day = now.getDay(); // 0 = Sun, 1 = Mon, ...
+  let diff: number;
+  if (weekStartsMonday) {
+    diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday start
+  } else {
+    diff = now.getDate() - day; // Sunday start
+  }
   const start = new Date(now);
   start.setDate(diff);
   start.setHours(0, 0, 0, 0);
@@ -53,6 +59,7 @@ function getShortDate(dateStr: string): string {
 
 export function useStepStats() {
   const { user } = useAuth();
+  const { preferences } = usePreferences();
   const [period, setPeriod] = useState<StepStatPeriod>('week');
   const [data, setData] = useState<StepDay[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,7 +69,7 @@ export function useStepStats() {
     setIsLoading(true);
 
     try {
-      const range = period === 'week' ? getWeekRange() : getMonthRange();
+      const range = period === 'week' ? getWeekRange(preferences.weekStartsMonday) : getMonthRange();
       const startStr = toDateString(range.start);
       const endStr = toDateString(range.end);
 
@@ -89,7 +96,7 @@ export function useStepStats() {
     } finally {
       setIsLoading(false);
     }
-  }, [user, period]);
+  }, [user, period, preferences.weekStartsMonday]);
 
   useEffect(() => {
     loadData();

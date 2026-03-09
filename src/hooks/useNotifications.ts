@@ -19,6 +19,9 @@ export function useNotifications() {
   useEffect(() => {
     if (!profile || !user || Platform.OS === 'web') return;
 
+    // Cancel all existing notifications first, then re-schedule enabled ones
+    NotificationService.cancelAllNotifications().catch(() => {});
+
     // Schedule or cancel notifications based on preferences
     if (profile.notify_daily_reminder) {
       NotificationService.scheduleDailyReminder().catch(() => {});
@@ -47,8 +50,5 @@ export function useNotifications() {
         .catch(() => {});
     }
 
-    if (!profile.notify_daily_reminder && !profile.notify_streak_warning && !profile.notify_weekly_summary) {
-      NotificationService.cancelAllNotifications().catch(() => {});
-    }
   }, [profile, user]);
 }
