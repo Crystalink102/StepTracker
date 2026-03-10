@@ -114,31 +114,29 @@ export const GPS_MIN_MOVE_M = 1.5;
 
 /**
  * Check if a GPS distance reading is plausible.
- * Uses speed + accuracy context to aggressively filter standstill drift:
- * - Standing still (speed < 0.3 m/s): require > 10m — GPS jitter is typically 3-8m
- * - Barely moving (speed 0.3–1.0 m/s): require > 5m
- * - Actually moving (speed >= 1.0 m/s): standard 1.5m minimum
- * - If GPS accuracy is available, also require distance > accuracy × 0.8
+ * Uses GPS speed to distinguish real movement from standstill jitter:
+ * - Truly standing still (speed < 0.2 m/s): require 5m — filters 3-8m GPS jitter
+ * - Uncertain (speed 0.2–0.5 m/s): require 2m — allows slow walking
+ * - Moving (speed >= 0.5 m/s): standard 1.5m — trust the movement
+ * Accuracy floor only applies at standstill to avoid blocking real walks.
  */
 export function isPlausibleGPSMove(
   distanceMeters: number,
   currentSpeedMs?: number | null,
   accuracyMeters?: number | null
 ): boolean {
-  // Speed-based minimum distance thresholds
   let minMove: number;
-  if (currentSpeedMs != null && currentSpeedMs < 0.3) {
-    minMove = 10; // Standing still — phone GPS can jitter 3-8m easily
-  } else if (currentSpeedMs != null && currentSpeedMs < 1.0) {
-    minMove = 5;  // Very slow — likely drift or shuffling
+  if (currentSpeedMs != null && currentSpeedMs < 0.2) {
+    // Truly standing still — GPS jitter can be 3-8m
+    minMove = 5;
+    // At standstill, also factor in accuracy (poor signal = bigger jitter)
+    if (accuracyMeters != null && accuracyMeters > 10) {
+      minMove = Math.max(minMove, accuracyMeters * 0.5);
+    }
+  } else if (currentSpeedMs != null && currentSpeedMs < 0.5) {
+    minMove = 2; // Might be drift, might be slow walking — modest filter
   } else {
-    minMove = GPS_MIN_MOVE_M;
-  }
-
-  // Accuracy-based floor: movement should exceed the GPS error radius
-  if (accuracyMeters != null && accuracyMeters > 0) {
-    const accuracyFloor = accuracyMeters * 0.8;
-    minMove = Math.max(minMove, accuracyFloor);
+    minMove = GPS_MIN_MOVE_M; // Actually moving — trust it
   }
 
   return distanceMeters >= minMove && distanceMeters <= GPS_MAX_JUMP_M;

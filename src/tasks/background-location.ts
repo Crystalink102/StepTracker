@@ -95,8 +95,8 @@ export async function startBackgroundLocation() {
       foregroundSub = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.BestForNavigation,
-          timeInterval: 2000,
-          distanceInterval: 1,
+          timeInterval: 1000,
+          distanceInterval: 0,
         },
         (loc) => {
           if (globalLocationCallback) globalLocationCallback(loc);
@@ -119,8 +119,8 @@ export async function startBackgroundLocation() {
 
   await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
     accuracy: Location.Accuracy.BestForNavigation,
-    timeInterval: 1500,
-    distanceInterval: 2,
+    timeInterval: 1000,
+    distanceInterval: 0,
     showsBackgroundLocationIndicator: true,
     foregroundService: {
       notificationTitle: '5tepTracker',
@@ -163,7 +163,7 @@ function startWebPolling() {
     } catch {
       // Skip this tick if getCurrentPosition fails
     }
-  }, 2000);
+  }, 1000);
 }
 
 function stopWebPolling() {
