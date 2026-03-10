@@ -308,6 +308,41 @@ export interface Database {
         };
         Relationships: [];
       };
+      activity_likes: {
+        Row: {
+          id: string;
+          activity_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          activity_id: string;
+          user_id: string;
+        };
+        Update: {
+          activity_id?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
+      activity_comments: {
+        Row: {
+          id: string;
+          activity_id: string;
+          user_id: string;
+          content: string;
+          created_at: string;
+        };
+        Insert: {
+          activity_id: string;
+          user_id: string;
+          content: string;
+        };
+        Update: {
+          content?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -379,4 +414,41 @@ export type UserSearchResult = {
   username: string;
   display_name: string | null;
   avatar_url: string | null;
+};
+
+export type ActivityLike = {
+  id: string;
+  activity_id: string;
+  user_id: string;
+  created_at: string;
+};
+
+export type ActivityComment = {
+  id: string;
+  activity_id: string;
+  user_id: string;
+  content: string;
+  created_at: string;
+};
+
+export type Challenge = {
+  id: string;
+  creator_id: string;
+  title: string;
+  description: string;
+  type: 'steps' | 'distance' | 'duration' | 'activities';
+  target_value: number;
+  start_date: string;
+  end_date: string;
+  status: 'active' | 'completed' | 'cancelled';
+  created_at: string;
+};
+
+export type ChallengeParticipant = {
+  id: string;
+  challenge_id: string;
+  user_id: string;
+  current_progress: number;
+  completed: boolean;
+  joined_at: string;
 };

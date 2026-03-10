@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,9 @@ import {
   Dimensions,
   Share,
   TouchableOpacity,
+  Modal,
+  Pressable,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, Stack } from 'expo-router';
@@ -16,6 +19,7 @@ import RouteMap from '@/src/components/activity/RouteMap';
 import SplitsTable from '@/src/components/activity/SplitsTable';
 import ElevationProfile from '@/src/components/activity/ElevationProfile';
 import RunPersonalBests from '@/src/components/activity/RunPersonalBests';
+import HeartRateZones from '@/src/components/activity/HeartRateZones';
 import { Badge } from '@/src/components/ui';
 import { Activity, ActivityWaypoint } from '@/src/types/database';
 import { formatRelativeDate, formatTime } from '@/src/utils/date-helpers';
@@ -29,7 +33,10 @@ import {
   distanceUnitLabel,
 } from '@/src/utils/formatters';
 import { usePreferences } from '@/src/context/PreferencesContext';
+import { useProfile } from '@/src/hooks/useProfile';
 import { haversineDistance } from '@/src/utils/geo';
+import { exportActivity } from '@/src/utils/export';
+import { ageFromDOB, calculateMaxHR } from '@/src/utils/hr-zones';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -76,7 +83,26 @@ export default function RunDetailScreen() {
   const [waypoints, setWaypoints] = useState<ActivityWaypoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { preferences } = usePreferences();
+  const { profile } = useProfile();
   const unit = preferences.distanceUnit;
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = useCallback(
+    async (format: 'gpx' | 'csv') => {
+      if (!activity) return;
+      setShowExportModal(false);
+      setIsExporting(true);
+      try {
+        await exportActivity(activity, waypoints, format);
+      } catch (err: any) {
+        Alert.alert('Export failed', err?.message ?? 'Something went wrong');
+      } finally {
+        setIsExporting(false);
+      }
+    },
+    [activity, waypoints]
+  );
 
   useEffect(() => {
     if (!id) return;
@@ -97,6 +123,12 @@ export default function RunDetailScreen() {
   const hasRoute = routeCoords.length > 1;
   const maxSpeed = useMemo(() => getMaxSpeed(waypoints), [waypoints]);
   const elevGain = useMemo(() => getElevationGain(waypoints), [waypoints]);
+
+  // Compute max HR from user's date of birth, or default to 190
+  const userMaxHR = useMemo(() => {
+    const age = ageFromDOB(profile?.date_of_birth);
+    return age ? calculateMaxHR(age) : 190;
+  }, [profile?.date_of_birth]);
 
   const handleShare = async () => {
     if (!activity) return;
@@ -236,9 +268,22 @@ export default function RunDetailScreen() {
               </View>
             </View>
             {activity.status === 'completed' && (
-              <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
-                <Ionicons name="share-outline" size={20} color={Colors.primary} />
-              </TouchableOpacity>
+              <View style={styles.headerActions}>
+                <TouchableOpacity
+                  onPress={() => setShowExportModal(true)}
+                  style={styles.shareButton}
+                  disabled={isExporting}
+                >
+                  {isExporting ? (
+                    <ActivityIndicator size="small" color={Colors.primary} />
+                  ) : (
+                    <Ionicons name="download-outline" size={20} color={Colors.primary} />
+                  )}
+                </TouchableOpacity>
+                <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
+                  <Ionicons name="share-outline" size={20} color={Colors.primary} />
+                </TouchableOpacity>
+              </View>
             )}
           </View>
 
@@ -263,6 +308,13 @@ export default function RunDetailScreen() {
             ))}
           </View>
 
+          {/* Heart Rate Zones */}
+          {activity.avg_heart_rate != null && activity.avg_heart_rate > 0 && (
+            <View style={styles.section}>
+              <HeartRateZones avgHeartRate={activity.avg_heart_rate} maxHR={userMaxHR} />
+            </View>
+          )}
+
           {/* Personal Bests (if any set on this run) */}
           {id && (
             <View style={styles.section}>
@@ -285,6 +337,55 @@ export default function RunDetailScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Export format picker */}
+      <Modal
+        visible={showExportModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowExportModal(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowExportModal(false)}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Export Activity</Text>
+
+            <TouchableOpacity
+              style={styles.exportOption}
+              onPress={() => handleExport('gpx')}
+            >
+              <Ionicons name="map-outline" size={22} color={Colors.primary} />
+              <View style={styles.exportOptionText}>
+                <Text style={styles.exportOptionTitle}>GPX File</Text>
+                <Text style={styles.exportOptionDesc}>
+                  Standard GPS format — works with Strava, Garmin, etc.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.exportOption}
+              onPress={() => handleExport('csv')}
+            >
+              <Ionicons name="document-text-outline" size={22} color={Colors.primary} />
+              <View style={styles.exportOptionText}>
+                <Text style={styles.exportOptionTitle}>CSV File</Text>
+                <Text style={styles.exportOptionDesc}>
+                  Spreadsheet format — open in Excel, Google Sheets, etc.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.cancelButton}
+              onPress={() => setShowExportModal(false)}
+            >
+              <Text style={styles.cancelText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </Pressable>
+      </Modal>
     </>
   );
 }
@@ -405,7 +506,64 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
+  headerActions: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+  },
   section: {
     marginTop: Spacing.xl,
+  },
+
+  /* Export modal */
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    padding: Spacing.xxl,
+    paddingBottom: 40,
+  },
+  modalTitle: {
+    color: Colors.textPrimary,
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
+    marginBottom: Spacing.xl,
+    textAlign: 'center',
+  },
+  exportOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceLight,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing.md,
+    gap: Spacing.md,
+  },
+  exportOptionText: {
+    flex: 1,
+  },
+  exportOptionTitle: {
+    color: Colors.textPrimary,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold,
+  },
+  exportOptionDesc: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.sm,
+    marginTop: 2,
+  },
+  cancelButton: {
+    alignItems: 'center',
+    paddingVertical: Spacing.lg,
+    marginTop: Spacing.sm,
+  },
+  cancelText: {
+    color: Colors.textMuted,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.medium,
   },
 });

@@ -10,6 +10,7 @@ import {
 import { AppState, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '@/src/context/AuthContext';
+import { useProfile } from '@/src/hooks/useProfile';
 import * as StepService from '@/src/services/step.service';
 import * as XPService from '@/src/services/xp.service';
 import * as AchievementService from '@/src/services/achievement.service';
@@ -40,6 +41,7 @@ const StepContext = createContext<StepContextValue>({
 
 export function StepProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth();
+  const { profile } = useProfile();
   const [todaySteps, setTodaySteps] = useState(0);
   const [isAvailable, setIsAvailable] = useState(false);
   const [isTracking, setIsTracking] = useState(false);
@@ -49,6 +51,7 @@ export function StepProvider({ children }: { children: ReactNode }) {
   const syncIntervalRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const lastAchievementCheck = useRef(0);
   const catchUpDone = useRef(false);
+  const notifyAchievementsRef = useRef(profile?.notify_achievements ?? true);
 
   // Initialize best available health platform.
   // Depends on isAuthenticated so it re-runs after login (fixes race condition
@@ -103,9 +106,11 @@ export function StepProvider({ children }: { children: ReactNode }) {
 
         if (steps - lastAchievementCheck.current >= 5000) {
           lastAchievementCheck.current = steps;
-          AchievementService.checkAchievements(user.id, {
-            todaySteps: steps,
-          }).catch(() => {});
+          AchievementService.checkAchievements(
+            user.id,
+            { todaySteps: steps },
+            { sendNotifications: notifyAchievementsRef.current }
+          ).catch(() => {});
         }
       } catch (err) {
         console.warn('[StepContext] Sync failed, queuing offline:', err);
@@ -246,6 +251,10 @@ export function StepProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     todayStepsRef.current = todaySteps;
   }, [todaySteps]);
+
+  useEffect(() => {
+    notifyAchievementsRef.current = profile?.notify_achievements ?? true;
+  }, [profile?.notify_achievements]);
 
   const syncStepsRef = useRef(syncSteps);
   useEffect(() => {

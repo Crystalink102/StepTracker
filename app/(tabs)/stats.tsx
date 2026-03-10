@@ -16,8 +16,9 @@ import { usePreferences } from '@/src/context/PreferencesContext';
 import * as StepService from '@/src/services/step.service';
 import * as ActivityService from '@/src/services/activity.service';
 import * as PersonalBestService from '@/src/services/personal-best.service';
-import { PersonalBest, Activity } from '@/src/types/database';
+import { PersonalBest, Activity, DailySteps } from '@/src/types/database';
 import { STANDARD_DISTANCES } from '@/src/constants/config';
+import WeeklyTrends from '@/src/components/stats/WeeklyTrends';
 import {
   formatDuration,
   formatDistance,
@@ -26,6 +27,8 @@ import {
   paceUnitLabel,
 } from '@/src/utils/formatters';
 import { activeMinutesFromSteps, distanceFromSteps } from '@/src/utils/fitness';
+import { ageFromDOB, calculateMaxHR } from '@/src/utils/hr-zones';
+import HRZonesReference from '@/src/components/stats/HRZonesReference';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 type LifetimeStats = {
@@ -110,6 +113,7 @@ export default function StatsScreen() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [personalBests, setPersonalBests] = useState<PersonalBest[]>([]);
   const [totalSteps, setTotalSteps] = useState(0);
+  const [stepHistory, setStepHistory] = useState<DailySteps[]>([]);
 
   const loadData = async () => {
     if (!user) return;
@@ -121,6 +125,7 @@ export default function StatsScreen() {
       ]);
       setActivities(acts.filter((a) => a.status === 'completed'));
       setPersonalBests(pbs);
+      setStepHistory(stepHistory);
       setTotalSteps(stepHistory.reduce((sum, d) => sum + d.step_count, 0));
     } catch (err) {
       console.warn('[Stats] Failed to load:', err);
@@ -170,6 +175,12 @@ export default function StatsScreen() {
 
   const activeMinutes = activeMinutesFromSteps(totalSteps);
   const stepDistance = distanceFromSteps(totalSteps, profile?.height_cm ?? null);
+
+  // Compute max HR from user's date of birth, or default to 190
+  const userMaxHR = useMemo(() => {
+    const age = ageFromDOB(profile?.date_of_birth);
+    return age ? calculateMaxHR(age) : 190;
+  }, [profile?.date_of_birth]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
@@ -253,6 +264,17 @@ export default function StatsScreen() {
               label="Longest Duration"
             />
           </View>
+        </View>
+
+        {/* Weekly Trends */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Weekly Trends</Text>
+          <WeeklyTrends
+            activities={activities}
+            stepHistory={stepHistory}
+            unit={unit}
+            weightKg={profile?.weight_kg ?? null}
+          />
         </View>
 
         {/* Pace Stats */}
@@ -395,6 +417,12 @@ export default function StatsScreen() {
               }
             />
           </View>
+        </View>
+
+        {/* Heart Rate Zones Reference */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Heart Rate Zones</Text>
+          <HRZonesReference maxHR={userMaxHR} />
         </View>
       </ScrollView>
     </SafeAreaView>

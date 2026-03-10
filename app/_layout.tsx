@@ -14,6 +14,7 @@ import { NetworkProvider } from '@/src/context/NetworkContext';
 import { useNotifications } from '@/src/hooks/useNotifications';
 import { useProfile } from '@/src/hooks/useProfile';
 import { Colors } from '@/src/constants/theme';
+import { ThemeProvider, useTheme } from '@/src/context/ThemeContext';
 
 import { ErrorScreen } from '@/src/components/ui';
 import DownloadBanner from '@/src/components/DownloadBanner';
@@ -31,6 +32,7 @@ SplashScreen.preventAutoHideAsync();
 function AuthGate() {
   const { isAuthenticated, isLoading, hasMFA, mfaVerified } = useAuth();
   const { profile, isLoading: profileLoading } = useProfile();
+  const { colors, isDark } = useTheme();
   const segments = useSegments();
   const router = useRouter();
   const [stackMounted, setStackMounted] = useState(false);
@@ -82,24 +84,24 @@ function AuthGate() {
       <View
         style={{
           flex: 1,
-          backgroundColor: Colors.background,
+          backgroundColor: colors.background,
           alignItems: 'center',
           justifyContent: 'center',
         }}
       >
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }
 
   return (
     <>
-      <StatusBar style="light" />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
       <DownloadBanner />
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: Colors.background },
+          contentStyle: { backgroundColor: colors.background },
           animation: 'fade',
         }}
         screenListeners={{
@@ -138,6 +140,14 @@ function AuthGate() {
         />
         <Stack.Screen
           name="run"
+          options={{
+            headerShown: false,
+            presentation: 'card',
+            animation: 'slide_from_right',
+          }}
+        />
+        <Stack.Screen
+          name="challenges"
           options={{
             headerShown: false,
             presentation: 'card',
@@ -186,11 +196,13 @@ export default function RootLayout() {
       <ProfileProvider>
         <PreferencesProvider>
           <NetworkProvider>
-            <StepProvider>
-              <ActivityProvider>
-                <AuthGate />
-              </ActivityProvider>
-            </StepProvider>
+            <ThemeProvider>
+              <StepProvider>
+                <ActivityProvider>
+                  <AuthGate />
+                </ActivityProvider>
+              </StepProvider>
+            </ThemeProvider>
           </NetworkProvider>
         </PreferencesProvider>
       </ProfileProvider>

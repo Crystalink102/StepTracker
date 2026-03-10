@@ -1,6 +1,6 @@
 import { View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { usePreferences, type DistanceUnit, type HeightUnit, type WeightUnit } from '@/src/context/PreferencesContext';
+import { usePreferences, type DistanceUnit, type HeightUnit, type WeightUnit, type ThemeMode } from '@/src/context/PreferencesContext';
 import { resetTutorial } from '@/src/components/tutorial/TutorialOverlay';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
@@ -91,6 +91,20 @@ export default function PreferencesScreen() {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <SectionHeader title="APPEARANCE" />
+
+      <SettingSegment<ThemeMode>
+        label="Theme"
+        description="Choose your preferred color scheme"
+        options={[
+          { label: 'Dark', value: 'dark' },
+          { label: 'Light', value: 'light' },
+          { label: 'System', value: 'system' },
+        ]}
+        value={preferences.theme}
+        onChange={(v) => updatePreference('theme', v)}
+      />
+
       <SectionHeader title="UNITS" />
 
       <SettingSegment<DistanceUnit>
@@ -139,6 +153,13 @@ export default function PreferencesScreen() {
         description="Prevent screen from sleeping during activities"
         value={preferences.keepScreenOn}
         onToggle={(v) => updatePreference('keepScreenOn', v)}
+      />
+
+      <SettingToggle
+        label="Audio Cues"
+        description="Announce distance milestones and pace during runs"
+        value={preferences.audioCues}
+        onToggle={(v) => updatePreference('audioCues', v)}
       />
 
       <SectionHeader title="GENERAL" />

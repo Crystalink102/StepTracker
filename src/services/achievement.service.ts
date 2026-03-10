@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import * as XPService from './xp.service';
+import * as NotificationService from './notification.service';
 import { AchievementDefinition, UserAchievement } from '@/src/types/database';
 
 export async function getDefinitions(): Promise<AchievementDefinition[]> {
@@ -59,9 +60,15 @@ type AchievementContext = {
   currentLevel?: number;
 };
 
+type CheckOptions = {
+  /** Whether to fire a local push notification for each unlocked achievement. Defaults to false. */
+  sendNotifications?: boolean;
+};
+
 export async function checkAchievements(
   userId: string,
-  context: AchievementContext
+  context: AchievementContext,
+  options?: CheckOptions
 ): Promise<{ newlyUnlocked: AchievementDefinition[] }> {
   const [definitions, userAchievements] = await Promise.all([
     getDefinitions(),
@@ -110,6 +117,13 @@ export async function checkAchievements(
           ).catch((xpErr) => {
             console.warn('[Achievements] XP award failed for', def.id, ':', xpErr);
           });
+        }
+        // Fire local push notification if enabled
+        if (options?.sendNotifications) {
+          NotificationService.sendAchievementNotification(
+            def.title,
+            def.xp_reward ?? 0
+          ).catch(() => {});
         }
       } catch (err) {
         // Expected: unique constraint violation = already unlocked (race condition)

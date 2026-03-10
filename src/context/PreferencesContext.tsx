@@ -14,6 +14,8 @@ export type DistanceUnit = 'km' | 'mi' | 'm';
 export type HeightUnit = 'cm' | 'ft';
 export type WeightUnit = 'kg' | 'lb';
 
+export type ThemeMode = 'dark' | 'light' | 'system';
+
 export type Preferences = {
   distanceUnit: DistanceUnit;
   heightUnit: HeightUnit;
@@ -23,6 +25,8 @@ export type Preferences = {
   mapTraffic: boolean;
   keepScreenOn: boolean;
   weekStartsMonday: boolean;
+  audioCues: boolean;
+  theme: ThemeMode;
 };
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -34,6 +38,8 @@ const DEFAULT_PREFERENCES: Preferences = {
   mapTraffic: false,
   keepScreenOn: true,
   weekStartsMonday: true,
+  audioCues: false,
+  theme: 'dark',
 };
 
 const STORAGE_KEY = 'user_preferences';

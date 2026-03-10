@@ -4,6 +4,8 @@ import XPCard from '@/src/components/home/XPCard';
 import StepGoalRing from '@/src/components/home/StepGoalRing';
 import StepCounter from '@/src/components/home/StepCounter';
 import StreakCard from '@/src/components/home/StreakCard';
+import TrainingLoadCard from '@/src/components/home/TrainingLoadCard';
+import ChallengesHomeCard from '@/src/components/challenges/ChallengesHomeCard';
 import StreakPopup from '@/src/components/home/StreakPopup';
 import AchievementPopup from '@/src/components/achievements/AchievementPopup';
 import { OfflineBanner } from '@/src/components/ui';
@@ -28,6 +30,8 @@ export default function HomeScreen() {
         <XPCard />
         <StepGoalRing />
         <StepCounter />
+        <TrainingLoadCard />
+        <ChallengesHomeCard />
         <StreakCard streak={streak} />
       </ScrollView>
       <StreakPopup visible={showPopup} streak={streak} onDismiss={dismissPopup} />

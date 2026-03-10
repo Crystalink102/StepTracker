@@ -1,10 +1,20 @@
 import { useState } from 'react';
-import { View, Text, Switch, StyleSheet, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  Switch,
+  StyleSheet,
+  ActivityIndicator,
+  TouchableOpacity,
+  Platform,
+  Alert,
+} from 'react-native';
 import { useAuth } from '@/src/context/AuthContext';
 import { useProfile } from '@/src/hooks/useProfile';
 import * as ProfileService from '@/src/services/profile.service';
+import * as NotificationService from '@/src/services/notification.service';
 import { Profile } from '@/src/types/database';
-import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 type NotifSetting = {
   key: keyof Pick<Profile, 'notify_daily_reminder' | 'notify_streak_warning' | 'notify_achievements' | 'notify_friend_requests' | 'notify_weekly_summary'>;
@@ -36,15 +46,15 @@ const SETTINGS: NotifSetting[] = [
   {
     key: 'notify_weekly_summary',
     label: 'Weekly Summary',
-    description: 'Sunday evening recap of your week',
+    description: 'Sunday morning recap of your week',
   },
 ];
 
 export default function NotificationsScreen() {
   const { user } = useAuth();
   const { profile, refresh: refreshProfile } = useProfile();
-  const [isLoading, setIsLoading] = useState(false);
   const [optimistic, setOptimistic] = useState<Partial<Record<NotifSetting['key'], boolean>>>({});
+  const [isSending, setIsSending] = useState(false);
 
   const handleToggle = async (key: NotifSetting['key'], value: boolean) => {
     if (!user || !profile) return;
@@ -53,8 +63,11 @@ export default function NotificationsScreen() {
     setOptimistic((prev) => ({ ...prev, [key]: value }));
 
     try {
+      // Save preference to DB
       await ProfileService.updateProfile(user.id, { [key]: value });
       await refreshProfile();
+      // The useNotifications hook reacts to profile changes and
+      // will automatically cancel/re-schedule notifications
     } catch {
       // Revert on error
       setOptimistic((prev) => ({ ...prev, [key]: !value }));
@@ -64,6 +77,39 @@ export default function NotificationsScreen() {
   const getValue = (key: NotifSetting['key']): boolean => {
     if (key in optimistic) return optimistic[key]!;
     return profile?.[key] ?? true;
+  };
+
+  const handleTestNotification = async () => {
+    if (Platform.OS === 'web') {
+      Alert.alert('Not Available', 'Push notifications are not available on web.');
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const permission = await NotificationService.getPermissionStatus();
+      if (permission !== 'granted') {
+        const granted = await NotificationService.requestPermissions();
+        if (!granted) {
+          Alert.alert(
+            'Permissions Required',
+            'Please enable notifications in your device settings to receive push notifications.'
+          );
+          setIsSending(false);
+          return;
+        }
+      }
+
+      await NotificationService.sendLocalNotification(
+        'Test Notification \u{1F6CE}\u{FE0F}',
+        'If you see this, notifications are working!',
+        { type: 'daily_reminder' }
+      );
+    } catch {
+      Alert.alert('Error', 'Failed to send test notification. Make sure notification permissions are enabled.');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   if (!profile) {
@@ -90,6 +136,26 @@ export default function NotificationsScreen() {
           />
         </View>
       ))}
+
+      {/* Test Notification Button */}
+      <TouchableOpacity
+        style={[styles.testButton, isSending && styles.testButtonDisabled]}
+        onPress={handleTestNotification}
+        disabled={isSending}
+        activeOpacity={0.7}
+      >
+        {isSending ? (
+          <ActivityIndicator size="small" color={Colors.white} />
+        ) : (
+          <Text style={styles.testButtonText}>Send Test Notification</Text>
+        )}
+      </TouchableOpacity>
+
+      {Platform.OS === 'web' && (
+        <Text style={styles.webNote}>
+          Push notifications are only available on iOS and Android.
+        </Text>
+      )}
     </View>
   );
 }
@@ -125,5 +191,30 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
     fontSize: FontSize.sm,
     marginTop: 2,
+  },
+  testButton: {
+    marginTop: Spacing.xxxl,
+    backgroundColor: Colors.primary,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48,
+  },
+  testButtonDisabled: {
+    opacity: 0.6,
+  },
+  testButtonText: {
+    color: Colors.white,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold,
+  },
+  webNote: {
+    marginTop: Spacing.lg,
+    color: Colors.textMuted,
+    fontSize: FontSize.sm,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });

@@ -1,4 +1,5 @@
-export const Colors = {
+// --- Dark theme colors (original) ---
+export const DarkColors = {
   primary: '#A855F7',       // Purple 500 - main brand
   primaryLight: '#C084FC',  // Purple 400
   primaryDark: '#7E22CE',   // Purple 700
@@ -24,6 +25,44 @@ export const Colors = {
   black: '#000000',
   transparent: 'transparent',
 };
+
+// --- Light theme colors ---
+export const LightColors: typeof DarkColors = {
+  primary: '#A855F7',       // Purple 500 - stays the same
+  primaryLight: '#C084FC',  // Purple 400
+  primaryDark: '#7E22CE',   // Purple 700
+  secondary: '#A855F7',
+  secondaryLight: '#C084FC',
+  secondaryDark: '#7E22CE',
+  accent: '#E9D5FF',
+  accentLight: '#F3E8FF',
+  danger: '#EF4444',
+  dangerLight: '#FCA5A5',
+  warning: '#F59E0B',
+  gold: '#FFD700',
+
+  // Neutrals - light theme
+  background: '#F5F5F5',    // Light gray background
+  surface: '#F4F4F5',       // Zinc 100
+  surfaceLight: '#E4E4E7',  // Zinc 200
+  border: '#D4D4D8',        // Zinc 300
+  textPrimary: '#18181B',   // Zinc 900
+  textSecondary: '#52525B', // Zinc 600
+  textMuted: '#71717A',     // Zinc 500
+  white: '#FFFFFF',
+  black: '#000000',
+  transparent: 'transparent',
+};
+
+export type ThemeColors = typeof DarkColors;
+
+/** Returns the color set for the given theme mode */
+export function getColors(theme: 'dark' | 'light'): ThemeColors {
+  return theme === 'dark' ? DarkColors : LightColors;
+}
+
+// Default export stays dark for backward compatibility
+export const Colors = DarkColors;
 
 export const Spacing = {
   xs: 4,

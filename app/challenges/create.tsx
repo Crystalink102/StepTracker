@@ -1,0 +1,370 @@
+import { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { useChallenges } from '@/src/hooks/useChallenges';
+import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import type { Challenge } from '@/src/types/database';
+
+// ─── Options ────────────────────────────────────────────────────────
+const CHALLENGE_TYPES: { value: Challenge['type']; label: string; icon: string }[] = [
+  { value: 'steps', label: 'Steps', icon: 'footsteps' },
+  { value: 'distance', label: 'Distance', icon: 'navigate' },
+  { value: 'duration', label: 'Duration', icon: 'timer' },
+  { value: 'activities', label: 'Activities', icon: 'fitness' },
+];
+
+const DURATIONS: { label: string; days: number }[] = [
+  { label: '1 Week', days: 7 },
+  { label: '2 Weeks', days: 14 },
+  { label: '1 Month', days: 30 },
+];
+
+const DEFAULT_TARGETS: Record<string, number> = {
+  steps: 50000,
+  distance: 25000, // meters
+  duration: 3600,  // seconds
+  activities: 5,
+};
+
+function formatTargetPreview(type: string, value: number): string {
+  switch (type) {
+    case 'steps':
+      return `${value.toLocaleString()} steps`;
+    case 'distance':
+      return `${(value / 1000).toFixed(1)} km`;
+    case 'duration': {
+      const hrs = Math.floor(value / 3600);
+      const mins = Math.round((value % 3600) / 60);
+      return hrs > 0 ? `${hrs}h ${mins}m` : `${mins} min`;
+    }
+    case 'activities':
+      return `${value} activities`;
+    default:
+      return `${value}`;
+  }
+}
+
+function getTargetPlaceholder(type: string): string {
+  switch (type) {
+    case 'steps': return 'e.g. 50000';
+    case 'distance': return 'Meters (e.g. 25000 = 25km)';
+    case 'duration': return 'Seconds (e.g. 3600 = 1hr)';
+    case 'activities': return 'e.g. 5';
+    default: return 'Target value';
+  }
+}
+
+export default function CreateChallengeScreen() {
+  const router = useRouter();
+  const { create } = useChallenges();
+
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [type, setType] = useState<Challenge['type']>('steps');
+  const [targetStr, setTargetStr] = useState(DEFAULT_TARGETS.steps.toString());
+  const [durationDays, setDurationDays] = useState(7);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const targetValue = parseInt(targetStr, 10) || 0;
+
+  const handleCreate = async () => {
+    if (!title.trim()) {
+      Alert.alert('Missing title', 'Give your challenge a name.');
+      return;
+    }
+    if (targetValue <= 0) {
+      Alert.alert('Invalid target', 'Set a target value greater than zero.');
+      return;
+    }
+
+    setIsSaving(true);
+    const now = new Date();
+    const endDate = new Date(now);
+    endDate.setDate(endDate.getDate() + durationDays);
+
+    const challenge = await create({
+      title: title.trim(),
+      description: description.trim(),
+      type,
+      target_value: targetValue,
+      start_date: now.toISOString(),
+      end_date: endDate.toISOString(),
+    });
+
+    setIsSaving(false);
+
+    if (challenge) {
+      router.back();
+    } else {
+      Alert.alert('Error', 'Failed to create challenge. The challenges table may not exist yet.');
+    }
+  };
+
+  return (
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+    >
+      {/* Title */}
+      <Text style={styles.label}>Title</Text>
+      <TextInput
+        style={styles.input}
+        value={title}
+        onChangeText={setTitle}
+        placeholder="Walk 50k steps this week"
+        placeholderTextColor={Colors.textMuted}
+        maxLength={60}
+      />
+
+      {/* Description */}
+      <Text style={styles.label}>Description (optional)</Text>
+      <TextInput
+        style={[styles.input, styles.multilineInput]}
+        value={description}
+        onChangeText={setDescription}
+        placeholder="Any extra details about the challenge..."
+        placeholderTextColor={Colors.textMuted}
+        multiline
+        maxLength={200}
+      />
+
+      {/* Type picker */}
+      <Text style={styles.label}>Type</Text>
+      <View style={styles.row}>
+        {CHALLENGE_TYPES.map((t) => (
+          <TouchableOpacity
+            key={t.value}
+            style={[styles.chip, type === t.value && styles.chipActive]}
+            onPress={() => {
+              setType(t.value);
+              setTargetStr(DEFAULT_TARGETS[t.value].toString());
+            }}
+          >
+            <Ionicons
+              name={t.icon as any}
+              size={16}
+              color={type === t.value ? Colors.white : Colors.textSecondary}
+            />
+            <Text
+              style={[
+                styles.chipText,
+                type === t.value && styles.chipTextActive,
+              ]}
+            >
+              {t.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Target */}
+      <Text style={styles.label}>Target</Text>
+      <TextInput
+        style={styles.input}
+        value={targetStr}
+        onChangeText={setTargetStr}
+        placeholder={getTargetPlaceholder(type)}
+        placeholderTextColor={Colors.textMuted}
+        keyboardType="number-pad"
+      />
+
+      {/* Duration */}
+      <Text style={styles.label}>Duration</Text>
+      <View style={styles.row}>
+        {DURATIONS.map((d) => (
+          <TouchableOpacity
+            key={d.days}
+            style={[styles.chip, durationDays === d.days && styles.chipActive]}
+            onPress={() => setDurationDays(d.days)}
+          >
+            <Text
+              style={[
+                styles.chipText,
+                durationDays === d.days && styles.chipTextActive,
+              ]}
+            >
+              {d.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      {/* Preview card */}
+      <Text style={[styles.label, { marginTop: Spacing.xl }]}>Preview</Text>
+      <View style={styles.previewCard}>
+        <View style={styles.previewHeader}>
+          <View style={styles.previewTypeTag}>
+            <Ionicons
+              name={CHALLENGE_TYPES.find((t) => t.value === type)?.icon as any ?? 'help-circle'}
+              size={14}
+              color={Colors.primary}
+            />
+            <Text style={styles.previewTypeLabel}>
+              {CHALLENGE_TYPES.find((t) => t.value === type)?.label}
+            </Text>
+          </View>
+          <Text style={styles.previewDays}>{durationDays}d</Text>
+        </View>
+        <Text style={styles.previewTitle}>{title || 'Your Challenge Title'}</Text>
+        <Text style={styles.previewTarget}>
+          Goal: {formatTargetPreview(type, targetValue)}
+        </Text>
+        {description ? (
+          <Text style={styles.previewDesc} numberOfLines={2}>
+            {description}
+          </Text>
+        ) : null}
+      </View>
+
+      {/* Create button */}
+      <TouchableOpacity
+        style={[styles.createBtn, isSaving && styles.createBtnDisabled]}
+        onPress={handleCreate}
+        disabled={isSaving}
+        activeOpacity={0.8}
+      >
+        {isSaving ? (
+          <ActivityIndicator color={Colors.white} />
+        ) : (
+          <Text style={styles.createBtnText}>Create Challenge</Text>
+        )}
+      </TouchableOpacity>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  content: {
+    padding: Spacing.lg,
+    paddingBottom: 60,
+  },
+  label: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
+    textTransform: 'uppercase',
+    marginBottom: Spacing.sm,
+    marginTop: Spacing.lg,
+  },
+  input: {
+    backgroundColor: Colors.surface,
+    color: Colors.textPrimary,
+    fontSize: FontSize.lg,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  multilineInput: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  row: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: Colors.surface,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm + 2,
+    borderRadius: BorderRadius.sm,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  chipActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  chipText: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.medium,
+  },
+  chipTextActive: {
+    color: Colors.white,
+  },
+  previewCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderStyle: 'dashed',
+  },
+  previewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  previewTypeTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: Colors.surfaceLight,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderRadius: BorderRadius.sm,
+  },
+  previewTypeLabel: {
+    color: Colors.primary,
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.semibold,
+    textTransform: 'uppercase',
+  },
+  previewDays: {
+    color: Colors.textMuted,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
+  },
+  previewTitle: {
+    color: Colors.textPrimary,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+    marginBottom: 2,
+  },
+  previewTarget: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.sm,
+    marginBottom: Spacing.xs,
+  },
+  previewDesc: {
+    color: Colors.textMuted,
+    fontSize: FontSize.sm,
+  },
+  createBtn: {
+    backgroundColor: Colors.primary,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    marginTop: Spacing.xxl,
+  },
+  createBtnDisabled: {
+    opacity: 0.6,
+  },
+  createBtnText: {
+    color: Colors.white,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+  },
+});

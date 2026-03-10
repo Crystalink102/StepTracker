@@ -63,6 +63,16 @@ function StatsIcon({ color, size, focused }: TabIconProps) {
   );
 }
 
+function FeedIcon({ color, size, focused }: TabIconProps) {
+  return (
+    <Ionicons
+      name={focused ? 'people' : 'people-outline'}
+      size={size}
+      color={color}
+    />
+  );
+}
+
 function ProfileIcon({ color, size, focused }: TabIconProps) {
   return (
     <Ionicons
@@ -161,6 +171,13 @@ export default function TabLayout() {
           options={{
             title: 'Home',
             tabBarIcon: (props) => <HomeIcon {...props} />,
+          }}
+        />
+        <Tabs.Screen
+          name="feed"
+          options={{
+            title: 'Feed',
+            tabBarIcon: (props) => <FeedIcon {...props} />,
           }}
         />
         <Tabs.Screen

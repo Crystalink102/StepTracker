@@ -1,18 +1,23 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, ScrollView, StyleSheet, Platform } from 'react-native';
+import { View, ScrollView, StyleSheet, Platform, TouchableOpacity, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useActivity } from '@/src/context/ActivityContext';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { useXP } from '@/src/hooks/useXP';
 import { useAuth } from '@/src/context/AuthContext';
+import { useIntervalTimer, IntervalConfig, DEFAULT_INTERVAL_CONFIG } from '@/src/hooks/useIntervalTimer';
 import ActiveRunCard from '@/src/components/activity/ActiveRunCard';
 import LiveRouteMap from '@/src/components/activity/LiveRouteMap';
 import RunControls from '@/src/components/activity/RunControls';
 import HeartRateInput from '@/src/components/activity/HeartRateInput';
+import IntervalSetup from '@/src/components/activity/IntervalSetup';
+import IntervalDisplay from '@/src/components/activity/IntervalDisplay';
 import { ConfirmModal } from '@/src/components/ui';
 import * as ProfileService from '@/src/services/profile.service';
-import { Colors, Spacing } from '@/src/constants/theme';
+import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+
+type RunMode = 'free' | 'interval';
 
 export default function ActivityScreen() {
   const { user } = useAuth();
@@ -55,6 +60,20 @@ export default function ActivityScreen() {
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  // Interval mode state
+  const [runMode, setRunMode] = useState<RunMode>('free');
+  const [showIntervalSetup, setShowIntervalSetup] = useState(false);
+  const [intervalConfig, setIntervalConfig] = useState<IntervalConfig>({ ...DEFAULT_INTERVAL_CONFIG });
+  const [intervalActive, setIntervalActive] = useState(false);
+
+  // Interval timer hook
+  const intervalTimer = useIntervalTimer(
+    intervalConfig,
+    intervalActive && isActive,
+    isPaused,
+    preferences.hapticFeedback,
+  );
+
   // Load resting HR from profile
   useEffect(() => {
     if (!user) return;
@@ -63,12 +82,38 @@ export default function ActivityScreen() {
       .catch(() => {});
   }, [user]);
 
+  // Reset interval state when activity stops
+  useEffect(() => {
+    if (!isActive) {
+      setIntervalActive(false);
+    }
+  }, [isActive]);
+
   const handleStart = useCallback(
     async (type: 'run' | 'walk') => {
       if (isStarting) return;
       setIsStarting(true);
       try {
         await startActivity(type);
+      } catch (err: any) {
+        setErrorMessage(err.message || 'Could not start activity. Check location permissions.');
+        setShowErrorModal(true);
+      } finally {
+        setIsStarting(false);
+      }
+    },
+    [startActivity, isStarting]
+  );
+
+  const handleIntervalStart = useCallback(
+    async (config: IntervalConfig) => {
+      if (isStarting) return;
+      setIntervalConfig(config);
+      setShowIntervalSetup(false);
+      setIsStarting(true);
+      try {
+        await startActivity('run');
+        setIntervalActive(true);
       } catch (err: any) {
         setErrorMessage(err.message || 'Could not start activity. Check location permissions.');
         setShowErrorModal(true);
@@ -87,6 +132,7 @@ export default function ActivityScreen() {
     setShowStopConfirm(false);
     try {
       const result = await stopActivity(heartRate, hrSource);
+      setIntervalActive(false);
       if (result) {
         // Navigate to run detail to show the route map
         router.push(`/run/${result.id}` as any);
@@ -111,6 +157,12 @@ export default function ActivityScreen() {
     [waypoints]
   );
 
+  // Mode toggle handler -- only when not active
+  const handleModeToggle = useCallback((mode: RunMode) => {
+    setRunMode(mode);
+    setShowIntervalSetup(mode === 'interval');
+  }, []);
+
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
       <ScrollView
@@ -118,6 +170,56 @@ export default function ActivityScreen() {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        {/* Mode toggle -- only visible before starting */}
+        {!isActive && (
+          <View style={styles.modeToggleContainer}>
+            <View style={styles.modeToggle}>
+              <TouchableOpacity
+                style={[
+                  styles.modeButton,
+                  runMode === 'free' && styles.modeButtonActive,
+                ]}
+                onPress={() => handleModeToggle('free')}
+              >
+                <Text
+                  style={[
+                    styles.modeButtonText,
+                    runMode === 'free' && styles.modeButtonTextActive,
+                  ]}
+                >
+                  Free Run
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.modeButton,
+                  runMode === 'interval' && styles.modeButtonActive,
+                ]}
+                onPress={() => handleModeToggle('interval')}
+              >
+                <Text
+                  style={[
+                    styles.modeButtonText,
+                    runMode === 'interval' && styles.modeButtonTextActive,
+                  ]}
+                >
+                  Interval
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Interval setup card -- shown before starting in interval mode */}
+        {!isActive && showIntervalSetup && (
+          <IntervalSetup
+            onStart={handleIntervalStart}
+            onCancel={() => handleModeToggle('free')}
+            isStarting={isStarting}
+          />
+        )}
+
+        {/* Active run card -- always visible */}
         <ActiveRunCard
           type={currentActivity?.type ?? 'run'}
           elapsedSeconds={elapsedSeconds}
@@ -127,9 +229,28 @@ export default function ActivityScreen() {
           isPaused={isPaused}
         />
 
+        {/* Interval display -- during active interval run */}
+        {isActive && intervalActive && (
+          <IntervalDisplay
+            currentPhase={intervalTimer.currentPhase}
+            phaseTimeRemaining={intervalTimer.phaseTimeRemaining}
+            currentInterval={intervalTimer.currentInterval}
+            totalIntervals={intervalTimer.totalIntervals}
+            totalElapsed={intervalTimer.totalElapsed}
+            totalDuration={intervalTimer.totalDuration}
+            isComplete={intervalTimer.isComplete}
+            isRunning={intervalTimer.isRunning}
+          />
+        )}
+
         {/* Live route map during active run */}
         {isActive && mapCoords.length > 0 && (
-          <LiveRouteMap waypoints={mapCoords} isActive={isActive} />
+          <LiveRouteMap
+            waypoints={mapCoords}
+            isActive={isActive}
+            distanceMeters={distanceMeters}
+            currentPaceSecPerKm={currentPaceSecPerKm}
+          />
         )}
 
         {isActive && currentActivity && (
@@ -142,15 +263,18 @@ export default function ActivityScreen() {
         )}
       </ScrollView>
 
-      <RunControls
-        isActive={isActive}
-        isPaused={isPaused}
-        isStarting={isStarting}
-        onStart={handleStart}
-        onPause={pauseActivity}
-        onResume={resumeActivity}
-        onStop={handleStop}
-      />
+      {/* Show normal RunControls for free mode or during active runs */}
+      {(runMode === 'free' || isActive) && (
+        <RunControls
+          isActive={isActive}
+          isPaused={isPaused}
+          isStarting={isStarting}
+          onStart={handleStart}
+          onPause={pauseActivity}
+          onResume={resumeActivity}
+          onStop={handleStop}
+        />
+      )}
 
       <ConfirmModal
         visible={showStopConfirm}
@@ -184,5 +308,32 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: Spacing.xxxl,
+  },
+  modeToggleContainer: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+  },
+  modeToggle: {
+    flexDirection: 'row',
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    padding: 4,
+  },
+  modeButton: {
+    flex: 1,
+    paddingVertical: Spacing.md,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+  },
+  modeButtonActive: {
+    backgroundColor: Colors.primary,
+  },
+  modeButtonText: {
+    color: Colors.textMuted,
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
+  },
+  modeButtonTextActive: {
+    color: Colors.white,
   },
 });

@@ -9,7 +9,16 @@ import {
 } from 'react';
 import * as Location from 'expo-location';
 import { useAuth } from '@/src/context/AuthContext';
+import { usePreferences } from '@/src/context/PreferencesContext';
 import { useXP } from '@/src/hooks/useXP';
+import {
+  setAudioCuesEnabled,
+  resetMilestones,
+  announceStart,
+  announcePause,
+  announceResume,
+  checkMilestone,
+} from '@/src/utils/audio-cues';
 import * as ActivityService from '@/src/services/activity.service';
 import * as PBService from '@/src/services/personal-best.service';
 import * as AchievementService from '@/src/services/achievement.service';
@@ -59,6 +68,7 @@ const ActivityContext = createContext<ActivityContextValue | null>(null);
 export function ActivityProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const { addXP } = useXP();
+  const { preferences } = usePreferences();
 
   const [currentActivity, setCurrentActivity] = useState<Activity | null>(null);
   const [isPaused, setIsPaused] = useState(false);
@@ -98,6 +108,30 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isActive, isPaused]);
+
+  // --- Audio cues ---
+
+  // Keep the audio-cue module in sync with the user's preference
+  useEffect(() => {
+    setAudioCuesEnabled(preferences.audioCues);
+  }, [preferences.audioCues]);
+
+  // Use refs for values the milestone check needs (avoids re-renders)
+  const elapsedSecondsRef = useRef(elapsedSeconds);
+  const paceRef = useRef(currentPaceSecPerKm);
+  elapsedSecondsRef.current = elapsedSeconds;
+  paceRef.current = currentPaceSecPerKm;
+
+  // Check for distance milestones whenever distanceMeters changes
+  useEffect(() => {
+    if (!isActive || isPaused || distanceMeters === 0) return;
+    checkMilestone(
+      distanceMeters,
+      elapsedSecondsRef.current,
+      paceRef.current,
+      preferences.distanceUnit
+    );
+  }, [distanceMeters, isActive, isPaused, preferences.distanceUnit]);
 
   // Location callback handler - uses refs for isPaused/isActive to avoid
   // recreating the callback (which would reset the GPS subscription).
@@ -226,6 +260,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       await startBackgroundLocation();
 
       const activity = await ActivityService.createActivity(user.id, type);
+      resetMilestones();
       setCurrentActivity(activity);
       setElapsedSeconds(0);
       setDistanceMeters(0);
@@ -235,6 +270,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       setIsPaused(false);
       lastWaypointRef.current = null;
       isStoppingRef.current = false;
+      announceStart(type);
     },
     [user]
   );
@@ -242,6 +278,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   const pauseActivity = useCallback(async () => {
     if (!currentActivity) return;
     setIsPaused(true);
+    announcePause();
     try {
       await ActivityService.updateActivity(currentActivity.id, {
         status: 'paused',
@@ -257,6 +294,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   const resumeActivity = useCallback(async () => {
     if (!currentActivity) return;
     setIsPaused(false);
+    announceResume();
     try {
       await ActivityService.updateActivity(currentActivity.id, {
         status: 'active',

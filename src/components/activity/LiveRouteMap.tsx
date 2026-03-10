@@ -1,6 +1,6 @@
 import { useRef, useEffect, useMemo } from 'react';
-import { View, StyleSheet, Platform } from 'react-native';
-import { Colors, BorderRadius, Spacing } from '@/src/constants/theme';
+import { View, Text, StyleSheet, Platform, Animated, Easing } from 'react-native';
+import { Colors, BorderRadius, Spacing, FontSize, FontWeight } from '@/src/constants/theme';
 
 // react-native-maps doesn't support web
 let MapView: any = null;
@@ -22,6 +22,10 @@ type LiveRouteMapProps = {
   waypoints: Coord[];
   /** Whether the activity is currently active */
   isActive: boolean;
+  /** Total distance in meters */
+  distanceMeters: number;
+  /** Current pace in seconds per km */
+  currentPaceSecPerKm: number;
 };
 
 /** Dark map style for Android */
@@ -54,7 +58,97 @@ const DARK_MAP_STYLE = [
   },
 ];
 
-export default function LiveRouteMap({ waypoints, isActive }: LiveRouteMapProps) {
+/** Format distance for display */
+function formatDistance(meters: number): string {
+  if (meters < 1000) return `${Math.round(meters)}m`;
+  return `${(meters / 1000).toFixed(2)} km`;
+}
+
+/** Format pace (sec/km) for display */
+function formatPace(secPerKm: number): string {
+  if (secPerKm <= 0 || !isFinite(secPerKm)) return '--:--';
+  const mins = Math.floor(secPerKm / 60);
+  const secs = Math.round(secPerKm % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+/** Pulsing blue dot for current position (native only) */
+function PulsingDot() {
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.6,
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [pulseAnim]);
+
+  return (
+    <View style={styles.currentPosContainer}>
+      <Animated.View
+        style={[
+          styles.currentPosRing,
+          { transform: [{ scale: pulseAnim }] },
+        ]}
+      />
+      <View style={styles.currentPosDot} />
+    </View>
+  );
+}
+
+/** Web fallback: show a simple coordinate list + stats */
+function WebFallback({ waypoints, distanceMeters, currentPaceSecPerKm }: Omit<LiveRouteMapProps, 'isActive'>) {
+  const lastCoord = waypoints.length > 0 ? waypoints[waypoints.length - 1] : null;
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.webFallback}>
+        <Text style={styles.webFallbackTitle}>Live Route</Text>
+        <Text style={styles.webFallbackSubtitle}>Map not available on web</Text>
+
+        <View style={styles.webStatsRow}>
+          <View style={styles.webStat}>
+            <Text style={styles.webStatValue}>{formatDistance(distanceMeters)}</Text>
+            <Text style={styles.webStatLabel}>Distance</Text>
+          </View>
+          <View style={styles.webStatDivider} />
+          <View style={styles.webStat}>
+            <Text style={styles.webStatValue}>{formatPace(currentPaceSecPerKm)}</Text>
+            <Text style={styles.webStatLabel}>Pace /km</Text>
+          </View>
+        </View>
+
+        {lastCoord && (
+          <Text style={styles.webCoordText}>
+            {lastCoord.latitude.toFixed(5)}, {lastCoord.longitude.toFixed(5)}
+          </Text>
+        )}
+        <Text style={styles.webWaypointCount}>{waypoints.length} waypoints recorded</Text>
+      </View>
+    </View>
+  );
+}
+
+export default function LiveRouteMap({
+  waypoints,
+  isActive,
+  distanceMeters,
+  currentPaceSecPerKm,
+}: LiveRouteMapProps) {
   const mapRef = useRef<any>(null);
   const lastAnimateRef = useRef(0);
 
@@ -85,7 +179,16 @@ export default function LiveRouteMap({ waypoints, isActive }: LiveRouteMapProps)
     return waypoints.filter((_, i) => i % step === 0 || i === waypoints.length - 1);
   }, [waypoints]);
 
-  if (!MapView) return null;
+  // Web fallback
+  if (!MapView) {
+    return (
+      <WebFallback
+        waypoints={waypoints}
+        distanceMeters={distanceMeters}
+        currentPaceSecPerKm={currentPaceSecPerKm}
+      />
+    );
+  }
 
   const currentPos = waypoints.length > 0 ? waypoints[waypoints.length - 1] : null;
   const startPos = waypoints.length > 0 ? waypoints[0] : null;
@@ -111,14 +214,14 @@ export default function LiveRouteMap({ waypoints, isActive }: LiveRouteMapProps)
         pitchEnabled={false}
         userInterfaceStyle="dark"
         customMapStyle={Platform.OS === 'android' ? DARK_MAP_STYLE : undefined}
-        showsUserLocation={true}
+        showsUserLocation={false}
         showsMyLocationButton={false}
         showsCompass={false}
         showsScale={false}
         showsPointsOfInterest={false}
         toolbarEnabled={false}
       >
-        {/* Route trail (downsampled for performance) */}
+        {/* Route trail - glow layer */}
         {displayCoords.length > 1 && (
           <>
             <Polyline
@@ -134,7 +237,7 @@ export default function LiveRouteMap({ waypoints, isActive }: LiveRouteMapProps)
           </>
         )}
 
-        {/* Start marker */}
+        {/* Start marker - green dot */}
         {startPos && (
           <Marker
             coordinate={startPos}
@@ -146,14 +249,38 @@ export default function LiveRouteMap({ waypoints, isActive }: LiveRouteMapProps)
             </View>
           </Marker>
         )}
+
+        {/* Current position - pulsing blue dot */}
+        {currentPos && (
+          <Marker
+            coordinate={currentPos}
+            anchor={{ x: 0.5, y: 0.5 }}
+            tracksViewChanges={isActive}
+          >
+            <PulsingDot />
+          </Marker>
+        )}
       </MapView>
+
+      {/* Distance & pace overlay */}
+      <View style={styles.overlay}>
+        <View style={styles.overlayStat}>
+          <Text style={styles.overlayValue}>{formatDistance(distanceMeters)}</Text>
+          <Text style={styles.overlayLabel}>dist</Text>
+        </View>
+        <View style={styles.overlayDivider} />
+        <View style={styles.overlayStat}>
+          <Text style={styles.overlayValue}>{formatPace(currentPaceSecPerKm)}</Text>
+          <Text style={styles.overlayLabel}>/km</Text>
+        </View>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    height: 200,
+    height: 240,
     marginHorizontal: Spacing.lg,
     marginTop: Spacing.lg,
     borderRadius: BorderRadius.lg,
@@ -164,6 +291,8 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
+
+  // Start marker (green)
   startMarker: {
     width: 18,
     height: 18,
@@ -177,5 +306,116 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: '#22C55E',
+  },
+
+  // Current position (pulsing blue dot)
+  currentPosContainer: {
+    width: 28,
+    height: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  currentPosRing: {
+    position: 'absolute',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+  },
+  currentPosDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#3B82F6',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+  },
+
+  // Distance & pace overlay
+  overlay: {
+    position: 'absolute',
+    bottom: Spacing.sm,
+    left: Spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(9, 9, 11, 0.85)',
+    borderRadius: BorderRadius.md,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs + 2,
+  },
+  overlayStat: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 3,
+  },
+  overlayValue: {
+    color: Colors.textPrimary,
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
+  },
+  overlayLabel: {
+    color: Colors.textMuted,
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.medium,
+  },
+  overlayDivider: {
+    width: 1,
+    height: 14,
+    backgroundColor: Colors.border,
+    marginHorizontal: Spacing.sm,
+  },
+
+  // Web fallback
+  webFallback: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.lg,
+  },
+  webFallbackTitle: {
+    color: Colors.textPrimary,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold,
+    marginBottom: Spacing.xs,
+  },
+  webFallbackSubtitle: {
+    color: Colors.textMuted,
+    fontSize: FontSize.sm,
+    marginBottom: Spacing.lg,
+  },
+  webStatsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.md,
+  },
+  webStat: {
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+  },
+  webStatValue: {
+    color: Colors.textPrimary,
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
+  },
+  webStatLabel: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.xs,
+    marginTop: 2,
+  },
+  webStatDivider: {
+    width: 1,
+    height: 24,
+    backgroundColor: Colors.border,
+  },
+  webCoordText: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.xs,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    marginTop: Spacing.sm,
+  },
+  webWaypointCount: {
+    color: Colors.textMuted,
+    fontSize: FontSize.xs,
+    marginTop: Spacing.xs,
   },
 });
