@@ -4,23 +4,25 @@ import { useFriends } from '@/src/hooks/useFriends';
 import FriendCard from '@/src/components/social/FriendCard';
 import { Badge, EmptyState } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 export default function FriendsScreen() {
+  const { colors } = useTheme();
   const router = useRouter();
   const { friends, pendingCount, isLoading, refresh } = useFriends();
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.headerActions}>
         <TouchableOpacity
-          style={styles.actionBtn}
+          style={[styles.actionBtn, { backgroundColor: colors.surface }]}
           onPress={() => router.push('/friends/search' as any)}
         >
           <Text style={styles.actionText}>Search</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.actionBtn}
+          style={[styles.actionBtn, { backgroundColor: colors.surface }]}
           onPress={() => router.push('/friends/requests' as any)}
         >
           <View style={styles.actionRow}>
@@ -34,14 +36,19 @@ export default function FriendsScreen() {
         data={friends}
         keyExtractor={(item) => item.friendshipId}
         renderItem={({ item }) => (
-          <FriendCard
-            username={item.username}
-            displayName={item.display_name}
-            avatarUrl={item.avatar_url}
-            level={item.current_level}
-            todaySteps={item.today_steps}
-            streak={item.current_streak}
-          />
+          <TouchableOpacity
+            activeOpacity={0.7}
+            onPress={() => router.push(`/friends/${item.friendId}` as any)}
+          >
+            <FriendCard
+              username={item.username}
+              displayName={item.display_name}
+              avatarUrl={item.avatar_url}
+              level={item.current_level}
+              todaySteps={item.today_steps}
+              streak={item.current_streak}
+            />
+          </TouchableOpacity>
         )}
         ListEmptyComponent={
           <EmptyState

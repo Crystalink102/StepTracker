@@ -1,3 +1,5 @@
+export { ErrorBoundary } from '@/src/components/ui/TabErrorBoundary';
+
 import { useMemo } from 'react';
 import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,8 +9,10 @@ import LeaderboardFilters from '@/src/components/leaderboard/LeaderboardFilters'
 import LeaderboardPodium from '@/src/components/leaderboard/LeaderboardPodium';
 import LeaderboardRow from '@/src/components/leaderboard/LeaderboardRow';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 export default function LeaderboardScreen() {
+  const { colors } = useTheme();
   const { user } = useAuth();
   const {
     metric,
@@ -27,8 +31,8 @@ export default function LeaderboardScreen() {
   const rest = useMemo(() => entries.slice(3), [entries]);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
-      <Text style={styles.screenTitle}>Ranks</Text>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
+      <Text style={[styles.screenTitle, { color: colors.textPrimary }]}>Ranks</Text>
 
       <LeaderboardFilters
         metric={metric}
@@ -56,8 +60,8 @@ export default function LeaderboardScreen() {
         ListEmptyComponent={
           !isLoading ? (
             <View style={styles.empty}>
-              <Text style={styles.emptyText}>No data yet</Text>
-              <Text style={styles.emptySubtext}>
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No data yet</Text>
+              <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
                 Start walking to appear on the leaderboard
               </Text>
             </View>

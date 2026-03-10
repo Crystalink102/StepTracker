@@ -1,3 +1,5 @@
+export { ErrorBoundary } from '@/src/components/ui/TabErrorBoundary';
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, ScrollView, StyleSheet, Platform, TouchableOpacity, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,6 +8,8 @@ import { useActivity } from '@/src/context/ActivityContext';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { useXP } from '@/src/hooks/useXP';
 import { useAuth } from '@/src/context/AuthContext';
+import { useToast } from '@/src/hooks/useToast';
+import { playButtonPress } from '@/src/utils/sounds';
 import { useIntervalTimer, IntervalConfig, DEFAULT_INTERVAL_CONFIG } from '@/src/hooks/useIntervalTimer';
 import ActiveRunCard from '@/src/components/activity/ActiveRunCard';
 import LiveRouteMap from '@/src/components/activity/LiveRouteMap';
@@ -16,14 +20,17 @@ import IntervalDisplay from '@/src/components/activity/IntervalDisplay';
 import { ConfirmModal } from '@/src/components/ui';
 import * as ProfileService from '@/src/services/profile.service';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type RunMode = 'free' | 'interval';
 
 export default function ActivityScreen() {
+  const { colors } = useTheme();
   const { user } = useAuth();
   const router = useRouter();
   const { level } = useXP();
   const { preferences } = usePreferences();
+  const { showToast } = useToast();
   const {
     currentActivity,
     isActive,
@@ -92,56 +99,75 @@ export default function ActivityScreen() {
   const handleStart = useCallback(
     async (type: 'run' | 'walk') => {
       if (isStarting) return;
+      playButtonPress(preferences.hapticFeedback);
       setIsStarting(true);
       try {
         await startActivity(type);
+        showToast('Activity started', 'success');
       } catch (err: any) {
+        showToast(err.message || 'Could not start activity', 'error');
         setErrorMessage(err.message || 'Could not start activity. Check location permissions.');
         setShowErrorModal(true);
       } finally {
         setIsStarting(false);
       }
     },
-    [startActivity, isStarting]
+    [startActivity, isStarting, preferences.hapticFeedback, showToast]
   );
 
   const handleIntervalStart = useCallback(
     async (config: IntervalConfig) => {
       if (isStarting) return;
+      playButtonPress(preferences.hapticFeedback);
       setIntervalConfig(config);
       setShowIntervalSetup(false);
       setIsStarting(true);
       try {
         await startActivity('run');
         setIntervalActive(true);
+        showToast('Interval started', 'success');
       } catch (err: any) {
+        showToast(err.message || 'Could not start activity', 'error');
         setErrorMessage(err.message || 'Could not start activity. Check location permissions.');
         setShowErrorModal(true);
       } finally {
         setIsStarting(false);
       }
     },
-    [startActivity, isStarting]
+    [startActivity, isStarting, preferences.hapticFeedback, showToast]
   );
 
   const handleStop = useCallback(() => {
+    playButtonPress(preferences.hapticFeedback);
     setShowStopConfirm(true);
-  }, []);
+  }, [preferences.hapticFeedback]);
 
   const confirmStop = useCallback(async () => {
     setShowStopConfirm(false);
     try {
       const result = await stopActivity(heartRate, hrSource);
       setIntervalActive(false);
+      showToast('Activity saved', 'success');
       if (result) {
         // Navigate to run detail to show the route map
         router.push(`/run/${result.id}` as any);
       }
     } catch (err: any) {
+      showToast(err.message || 'Failed to save activity', 'error');
       setErrorMessage(err.message);
       setShowErrorModal(true);
     }
-  }, [stopActivity, heartRate, hrSource, router]);
+  }, [stopActivity, heartRate, hrSource, router, showToast]);
+
+  const handlePause = useCallback(async () => {
+    playButtonPress(preferences.hapticFeedback);
+    await pauseActivity();
+  }, [pauseActivity, preferences.hapticFeedback]);
+
+  const handleResume = useCallback(async () => {
+    playButtonPress(preferences.hapticFeedback);
+    await resumeActivity();
+  }, [resumeActivity, preferences.hapticFeedback]);
 
   const handleHeartRateChange = useCallback(
     (hr: number | undefined, source: 'manual' | 'auto') => {
@@ -164,7 +190,7 @@ export default function ActivityScreen() {
   }, []);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
@@ -173,7 +199,7 @@ export default function ActivityScreen() {
         {/* Mode toggle -- only visible before starting */}
         {!isActive && (
           <View style={styles.modeToggleContainer}>
-            <View style={styles.modeToggle}>
+            <View style={[styles.modeToggle, { backgroundColor: colors.surface }]}>
               <TouchableOpacity
                 style={[
                   styles.modeButton,
@@ -184,6 +210,7 @@ export default function ActivityScreen() {
                 <Text
                   style={[
                     styles.modeButtonText,
+                    { color: colors.textMuted },
                     runMode === 'free' && styles.modeButtonTextActive,
                   ]}
                 >
@@ -200,6 +227,7 @@ export default function ActivityScreen() {
                 <Text
                   style={[
                     styles.modeButtonText,
+                    { color: colors.textMuted },
                     runMode === 'interval' && styles.modeButtonTextActive,
                   ]}
                 >
@@ -270,8 +298,8 @@ export default function ActivityScreen() {
           isPaused={isPaused}
           isStarting={isStarting}
           onStart={handleStart}
-          onPause={pauseActivity}
-          onResume={resumeActivity}
+          onPause={handlePause}
+          onResume={handleResume}
           onStop={handleStop}
         />
       )}

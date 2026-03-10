@@ -4,13 +4,17 @@ import { Input } from '@/src/components/ui';
 import UserSearchResultComp from '@/src/components/social/UserSearchResult';
 import { useFriends } from '@/src/hooks/useFriends';
 import { useAuth } from '@/src/context/AuthContext';
+import { useToast } from '@/src/hooks/useToast';
 import * as SocialService from '@/src/services/social.service';
 import { UserSearchResult } from '@/src/types/database';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 export default function SearchFriendsScreen() {
+  const { colors } = useTheme();
   const { user } = useAuth();
   const { sendRequest } = useFriends();
+  const { showToast } = useToast();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<UserSearchResult[]>([]);
   const [sentIds, setSentIds] = useState<Set<string>>(new Set());
@@ -20,6 +24,8 @@ export default function SearchFriendsScreen() {
   const [allUsers, setAllUsers] = useState<UserSearchResult[]>([]);
   const [searchError, setSearchError] = useState('');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  // Track the latest search so stale responses are discarded
+  const searchIdRef = useRef(0);
 
   // Load all users on mount
   useEffect(() => {
@@ -44,6 +50,8 @@ export default function SearchFriendsScreen() {
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     if (text.trim().length === 0) {
+      // Cancel any in-flight search
+      searchIdRef.current++;
       // Show all users when search is cleared
       setResults(allUsers);
       setIsSearching(false);
@@ -52,10 +60,16 @@ export default function SearchFriendsScreen() {
 
     setIsSearching(true);
     debounceRef.current = setTimeout(async () => {
+      // Capture a unique ID for this search so we can discard stale results
+      const thisSearchId = ++searchIdRef.current;
+
       try {
         const data = await SocialService.searchUsers(text.trim(), user?.id);
+        // Only apply results if this is still the latest search
+        if (thisSearchId !== searchIdRef.current) return;
         setResults(data);
       } catch (err) {
+        if (thisSearchId !== searchIdRef.current) return;
         console.warn('[Search] Failed:', err);
         // On search failure, filter allUsers locally as last resort
         const lower = text.trim().toLowerCase();
@@ -67,9 +81,11 @@ export default function SearchFriendsScreen() {
           )
         );
       } finally {
-        setIsSearching(false);
+        if (thisSearchId === searchIdRef.current) {
+          setIsSearching(false);
+        }
       }
-    }, 300);
+    }, 500);
   }, [user?.id, allUsers]);
 
   const handleAdd = useCallback(
@@ -79,6 +95,7 @@ export default function SearchFriendsScreen() {
       try {
         await sendRequest(targetUserId);
         setSentIds((prev) => new Set(prev).add(targetUserId));
+        showToast('Friend request sent!', 'success');
       } catch (err: any) {
         const msg = err?.message || '';
         if (msg.includes('duplicate') || msg.includes('unique')) {
@@ -100,7 +117,7 @@ export default function SearchFriendsScreen() {
   const displayData = results;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.searchBox}>
         <Input
           label=""
@@ -140,7 +157,7 @@ export default function SearchFriendsScreen() {
         ListEmptyComponent={
           !isLoadingAll && !isSearching ? (
             <View style={styles.empty}>
-              <Text style={styles.emptyText}>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>
                 {query.length > 0 ? 'No users found' : 'No other users yet'}
               </Text>
             </View>

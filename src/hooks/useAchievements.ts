@@ -2,10 +2,12 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/src/context/AuthContext';
 import * as AchievementService from '@/src/services/achievement.service';
 import * as NotificationService from '@/src/services/notification.service';
+import { useNotificationCenterContext } from '@/src/context/NotificationCenterContext';
 import { AchievementDefinition, UserAchievement } from '@/src/types/database';
 
 export function useAchievements() {
   const { user } = useAuth();
+  const { addNotification } = useNotificationCenterContext();
   const [definitions, setDefinitions] = useState<AchievementDefinition[]>([]);
   const [userAchievements, setUserAchievements] = useState<UserAchievement[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,6 +60,13 @@ export function useAchievements() {
                 achievement.title,
                 achievement.xp_reward
               ).catch(() => {});
+              // Add to in-app notification center
+              addNotification(
+                'achievement',
+                'Achievement Unlocked!',
+                `${achievement.title}${achievement.xp_reward > 0 ? ` \u2022 +${achievement.xp_reward} XP` : ''}`,
+                { achievementId: achievement.id }
+              );
             }
             // Refresh the list
             await refresh();
@@ -67,7 +76,7 @@ export function useAchievements() {
         }
       }, 1000);
     },
-    [user, refresh]
+    [user, refresh, addNotification]
   );
 
   const dismissPopup = useCallback(() => {

@@ -1,8 +1,11 @@
+import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { usePreferences, type DistanceUnit, type HeightUnit, type WeightUnit, type ThemeMode } from '@/src/context/PreferencesContext';
 import { resetTutorial } from '@/src/components/tutorial/TutorialOverlay';
+import { isFreezeEnabled, setFreezeEnabled } from '@/src/services/streak.service';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 // --- Reusable setting row components ---
 
@@ -17,17 +20,18 @@ function SettingToggle({
   value: boolean;
   onToggle: (v: boolean) => void;
 }) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.row} accessible accessibilityRole="switch" accessibilityState={{ checked: value }}>
+    <View style={[styles.row, { backgroundColor: colors.surface }]} accessible accessibilityRole="switch" accessibilityState={{ checked: value }}>
       <View style={styles.rowText}>
-        <Text style={styles.rowLabel}>{label}</Text>
-        {description && <Text style={styles.rowDescription}>{description}</Text>}
+        <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
+        {description && <Text style={[styles.rowDescription, { color: colors.textMuted }]}>{description}</Text>}
       </View>
       <Switch
         value={value}
         onValueChange={onToggle}
-        trackColor={{ false: Colors.surfaceLight, true: Colors.primaryDark }}
-        thumbColor={value ? Colors.primary : Colors.textMuted}
+        trackColor={{ false: colors.surfaceLight, true: Colors.primaryDark }}
+        thumbColor={value ? Colors.primary : colors.textMuted}
       />
     </View>
   );
@@ -46,13 +50,14 @@ function SettingSegment<T extends string>({
   value: T;
   onChange: (v: T) => void;
 }) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.row} accessible accessibilityRole="radiogroup" accessibilityLabel={label}>
+    <View style={[styles.row, { backgroundColor: colors.surface }]} accessible accessibilityRole="radiogroup" accessibilityLabel={label}>
       <View style={styles.rowText}>
-        <Text style={styles.rowLabel}>{label}</Text>
-        {description && <Text style={styles.rowDescription}>{description}</Text>}
+        <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>{label}</Text>
+        {description && <Text style={[styles.rowDescription, { color: colors.textMuted }]}>{description}</Text>}
       </View>
-      <View style={styles.segmentContainer}>
+      <View style={[styles.segmentContainer, { backgroundColor: colors.surfaceLight }]}>
         {options.map((opt) => (
           <TouchableOpacity
             key={opt.value}
@@ -63,7 +68,7 @@ function SettingSegment<T extends string>({
             accessibilityLabel={opt.label}
           >
             <Text
-              style={[styles.segmentText, value === opt.value && styles.segmentTextActive]}
+              style={[styles.segmentText, { color: colors.textMuted }, value === opt.value && styles.segmentTextActive]}
             >
               {opt.label}
             </Text>
@@ -75,14 +80,26 @@ function SettingSegment<T extends string>({
 }
 
 function SectionHeader({ title }: { title: string }) {
-  return <Text style={styles.sectionHeader}>{title}</Text>;
+  const { colors } = useTheme();
+  return <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>{title}</Text>;
 }
 
 // --- Main screen ---
 
 export default function PreferencesScreen() {
+  const { colors } = useTheme();
   const { preferences, updatePreference } = usePreferences();
   const router = useRouter();
+  const [streakFreezeOn, setStreakFreezeOn] = useState(false);
+
+  useEffect(() => {
+    isFreezeEnabled().then(setStreakFreezeOn).catch(() => {});
+  }, []);
+
+  const handleStreakFreezeToggle = (value: boolean) => {
+    setStreakFreezeOn(value);
+    setFreezeEnabled(value).catch(() => {});
+  };
 
   const handleReplayTutorial = async () => {
     await resetTutorial();
@@ -90,7 +107,7 @@ export default function PreferencesScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
       <SectionHeader title="APPEARANCE" />
 
       <SettingSegment<ThemeMode>
@@ -178,14 +195,21 @@ export default function PreferencesScreen() {
         onToggle={(v) => updatePreference('weekStartsMonday', v)}
       />
 
+      <SettingToggle
+        label="Streak Freeze"
+        description="1 rest day per week that won't break your streak"
+        value={streakFreezeOn}
+        onToggle={handleStreakFreezeToggle}
+      />
+
       <SectionHeader title="HELP" />
 
-      <TouchableOpacity style={styles.row} onPress={handleReplayTutorial}>
+      <TouchableOpacity style={[styles.row, { backgroundColor: colors.surface }]} onPress={handleReplayTutorial}>
         <View style={styles.rowText}>
-          <Text style={styles.rowLabel}>Replay Tutorial</Text>
-          <Text style={styles.rowDescription}>See the app walkthrough again</Text>
+          <Text style={[styles.rowLabel, { color: colors.textPrimary }]}>Replay Tutorial</Text>
+          <Text style={[styles.rowDescription, { color: colors.textMuted }]}>See the app walkthrough again</Text>
         </View>
-        <Text style={styles.replayArrow}>›</Text>
+        <Text style={[styles.replayArrow, { color: colors.textMuted }]}>›</Text>
       </TouchableOpacity>
     </ScrollView>
   );

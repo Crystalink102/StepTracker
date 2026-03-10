@@ -1,8 +1,13 @@
+import { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useSteps } from '@/src/context/StepContext';
 import { useProfile } from '@/src/hooks/useProfile';
 import { formatNumber } from '@/src/utils/formatters';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import Confetti from '@/src/components/ui/Confetti';
+import { useCelebration } from '@/src/hooks/useCelebration';
+import { usePreferences } from '@/src/context/PreferencesContext';
+import { playGoalHit } from '@/src/utils/sounds';
 
 const RING_SIZE = 180;
 const STROKE_WIDTH = 12;
@@ -10,12 +15,28 @@ const STROKE_WIDTH = 12;
 export default function StepGoalRing() {
   const { todaySteps } = useSteps();
   const { profile } = useProfile();
+  const { preferences } = usePreferences();
+  const { showConfetti, celebrate, onConfettiComplete } = useCelebration();
+  const hasCelebratedRef = useRef(false);
 
   const goal = profile?.daily_step_goal ?? 10000;
   const progress = Math.min(todaySteps / goal, 1);
   const isGoalHit = todaySteps >= goal;
 
   const ringColor = isGoalHit ? Colors.gold : Colors.primary;
+
+  // Celebrate when goal is first hit this session
+  useEffect(() => {
+    if (isGoalHit && !hasCelebratedRef.current) {
+      hasCelebratedRef.current = true;
+      celebrate();
+      playGoalHit(preferences.hapticFeedback);
+    }
+    // Reset if goal is no longer hit (e.g. goal changed)
+    if (!isGoalHit) {
+      hasCelebratedRef.current = false;
+    }
+  }, [isGoalHit]);
 
   return (
     <View
@@ -25,6 +46,7 @@ export default function StepGoalRing() {
       accessibilityLabel={`${formatNumber(todaySteps)} of ${formatNumber(goal)} steps${isGoalHit ? ', goal reached' : ''}`}
       accessibilityValue={{ min: 0, max: goal, now: todaySteps }}
     >
+      <Confetti visible={showConfetti} onComplete={onConfettiComplete} />
       <View style={styles.ringContainer}>
         {/* Background ring */}
         <View style={styles.svgContainer}>

@@ -16,6 +16,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import * as ActivityService from '@/src/services/activity.service';
 import RouteMap from '@/src/components/activity/RouteMap';
+import RouteReplay from '@/src/components/activity/RouteReplay';
+import PaceGraph from '@/src/components/activity/PaceGraph';
+import SplitTimes from '@/src/components/activity/SplitTimes';
 import SplitsTable from '@/src/components/activity/SplitsTable';
 import ElevationProfile from '@/src/components/activity/ElevationProfile';
 import RunPersonalBests from '@/src/components/activity/RunPersonalBests';
@@ -38,6 +41,7 @@ import { haversineDistance } from '@/src/utils/geo';
 import { exportActivity } from '@/src/utils/export';
 import { ageFromDOB, calculateMaxHR } from '@/src/utils/hr-zones';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MAP_HEIGHT = Math.round(SCREEN_HEIGHT * 0.45);
@@ -78,6 +82,7 @@ function getElevationGain(waypoints: ActivityWaypoint[]): number | null {
 }
 
 export default function RunDetailScreen() {
+  const { colors } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [waypoints, setWaypoints] = useState<ActivityWaypoint[]>([]);
@@ -87,6 +92,11 @@ export default function RunDetailScreen() {
   const unit = preferences.distanceUnit;
   const [showExportModal, setShowExportModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isReplaying, setIsReplaying] = useState(false);
+
+  const handleReplayEnd = useCallback(() => {
+    setIsReplaying(false);
+  }, []);
 
   const handleExport = useCallback(
     async (format: 'gpx' | 'csv') => {
@@ -121,6 +131,7 @@ export default function RunDetailScreen() {
   );
 
   const hasRoute = routeCoords.length > 1;
+  const hasEnoughWaypoints = waypoints.length > 5;
   const maxSpeed = useMemo(() => getMaxSpeed(waypoints), [waypoints]);
   const elevGain = useMemo(() => getElevationGain(waypoints), [waypoints]);
 
@@ -158,7 +169,7 @@ export default function RunDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, styles.centered]}>
+      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
@@ -166,8 +177,8 @@ export default function RunDetailScreen() {
 
   if (!activity) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <Text style={styles.errorText}>Activity not found</Text>
+      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
+        <Text style={[styles.errorText, { color: colors.textSecondary }]}>Activity not found</Text>
       </View>
     );
   }
@@ -225,13 +236,13 @@ export default function RunDetailScreen() {
           headerShown: true,
           title: '',
           headerTransparent: hasRoute,
-          headerStyle: hasRoute ? undefined : { backgroundColor: Colors.surface },
-          headerTintColor: Colors.textPrimary,
+          headerStyle: hasRoute ? undefined : { backgroundColor: colors.surface },
+          headerTintColor: colors.textPrimary,
         }}
       />
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]} showsVerticalScrollIndicator={false}>
         {/* Route Map */}
-        {hasRoute ? (
+        {hasRoute && !isReplaying ? (
           <RouteMap
             coordinates={routeCoords}
             height={MAP_HEIGHT}
@@ -241,15 +252,23 @@ export default function RunDetailScreen() {
             strokeWidth={4}
             borderRadius={0}
           />
+        ) : hasRoute && isReplaying ? (
+          <View style={{ paddingHorizontal: Spacing.lg, paddingTop: Spacing.lg }}>
+            <RouteReplay
+              waypoints={waypoints}
+              isReplaying={isReplaying}
+              onReplayEnd={handleReplayEnd}
+            />
+          </View>
         ) : (
-          <View style={styles.noMapPlaceholder}>
-            <Ionicons name="map-outline" size={32} color={Colors.textMuted} />
-            <Text style={styles.noMapText}>No route data</Text>
+          <View style={[styles.noMapPlaceholder, { backgroundColor: colors.surface }]}>
+            <Ionicons name="map-outline" size={32} color={colors.textMuted} />
+            <Text style={[styles.noMapText, { color: colors.textMuted }]}>No route data</Text>
           </View>
         )}
 
         {/* Content card overlapping map bottom */}
-        <View style={[styles.contentCard, !hasRoute && styles.contentCardFlat]}>
+        <View style={[styles.contentCard, { backgroundColor: colors.background }, !hasRoute && styles.contentCardFlat]}>
           {/* Header */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
@@ -258,10 +277,10 @@ export default function RunDetailScreen() {
                 variant={activity.type === 'run' ? 'primary' : 'secondary'}
               />
               <View>
-                <Text style={styles.activityTitle}>
+                <Text style={[styles.activityTitle, { color: colors.textPrimary }]}>
                   {activity.type === 'run' ? 'Run' : 'Walk'}
                 </Text>
-                <Text style={styles.date}>
+                <Text style={[styles.date, { color: colors.textSecondary }]}>
                   {formatRelativeDate(activity.started_at)} at{' '}
                   {formatTime(activity.started_at)}
                 </Text>
@@ -271,7 +290,7 @@ export default function RunDetailScreen() {
               <View style={styles.headerActions}>
                 <TouchableOpacity
                   onPress={() => setShowExportModal(true)}
-                  style={styles.shareButton}
+                  style={[styles.shareButton, { backgroundColor: colors.surface }]}
                   disabled={isExporting}
                 >
                   {isExporting ? (
@@ -280,7 +299,7 @@ export default function RunDetailScreen() {
                     <Ionicons name="download-outline" size={20} color={Colors.primary} />
                   )}
                 </TouchableOpacity>
-                <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
+                <TouchableOpacity onPress={handleShare} style={[styles.shareButton, { backgroundColor: colors.surface }]}>
                   <Ionicons name="share-outline" size={20} color={Colors.primary} />
                 </TouchableOpacity>
               </View>
@@ -289,24 +308,58 @@ export default function RunDetailScreen() {
 
           {/* Big distance display */}
           <View style={styles.distanceSection}>
-            <Text style={styles.distanceValue}>
+            <Text style={[styles.distanceValue, { color: colors.textPrimary }]}>
               {unit === 'm'
                 ? Math.round(metersToDisplayDistance(activity.distance_meters, unit)).toLocaleString()
                 : metersToDisplayDistance(activity.distance_meters, unit).toFixed(2)}
             </Text>
-            <Text style={styles.distanceUnit}>{distanceUnitLabel(unit)}</Text>
+            <Text style={[styles.distanceUnit, { color: colors.textMuted }]}>{distanceUnitLabel(unit)}</Text>
           </View>
 
           {/* Stats Grid */}
-          <View style={styles.statsGrid}>
+          <View style={[styles.statsGrid, { backgroundColor: colors.surface }]}>
             {stats.map((stat) => (
-              <View key={stat.label} style={styles.statCell}>
-                <Ionicons name={stat.icon} size={16} color={Colors.textMuted} style={styles.statIcon} />
-                <Text style={styles.statValue}>{stat.value}</Text>
-                <Text style={styles.statLabel}>{stat.label}</Text>
+              <View key={stat.label} style={[styles.statCell, { borderColor: colors.surfaceLight }]}>
+                <Ionicons name={stat.icon} size={16} color={colors.textMuted} style={styles.statIcon} />
+                <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stat.value}</Text>
+                <Text style={[styles.statLabel, { color: colors.textMuted }]}>{stat.label}</Text>
               </View>
             ))}
           </View>
+
+          {/* Replay Route button */}
+          {hasRoute && hasEnoughWaypoints && (
+            <View style={styles.section}>
+              <TouchableOpacity
+                style={[styles.replayButton, { backgroundColor: colors.surface }]}
+                onPress={() => setIsReplaying((prev) => !prev)}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={isReplaying ? 'stop-circle-outline' : 'play-circle-outline'}
+                  size={20}
+                  color={Colors.primary}
+                />
+                <Text style={styles.replayButtonText}>
+                  {isReplaying ? 'Stop Replay' : 'Replay Route'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Pace Graph */}
+          {hasEnoughWaypoints && (
+            <View style={styles.section}>
+              <PaceGraph waypoints={waypoints} />
+            </View>
+          )}
+
+          {/* Split Times */}
+          {hasEnoughWaypoints && (
+            <View style={styles.section}>
+              <SplitTimes waypoints={waypoints} distanceUnit={unit} />
+            </View>
+          )}
 
           {/* Heart Rate Zones */}
           {activity.avg_heart_rate != null && activity.avg_heart_rate > 0 && (
@@ -346,42 +399,42 @@ export default function RunDetailScreen() {
         onRequestClose={() => setShowExportModal(false)}
       >
         <Pressable style={styles.modalOverlay} onPress={() => setShowExportModal(false)}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Export Activity</Text>
+          <View style={[styles.modalContent, { backgroundColor: colors.surface }]}>
+            <Text style={[styles.modalTitle, { color: colors.textPrimary }]}>Export Activity</Text>
 
             <TouchableOpacity
-              style={styles.exportOption}
+              style={[styles.exportOption, { backgroundColor: colors.surfaceLight }]}
               onPress={() => handleExport('gpx')}
             >
               <Ionicons name="map-outline" size={22} color={Colors.primary} />
               <View style={styles.exportOptionText}>
-                <Text style={styles.exportOptionTitle}>GPX File</Text>
-                <Text style={styles.exportOptionDesc}>
+                <Text style={[styles.exportOptionTitle, { color: colors.textPrimary }]}>GPX File</Text>
+                <Text style={[styles.exportOptionDesc, { color: colors.textSecondary }]}>
                   Standard GPS format — works with Strava, Garmin, etc.
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.exportOption}
+              style={[styles.exportOption, { backgroundColor: colors.surfaceLight }]}
               onPress={() => handleExport('csv')}
             >
               <Ionicons name="document-text-outline" size={22} color={Colors.primary} />
               <View style={styles.exportOptionText}>
-                <Text style={styles.exportOptionTitle}>CSV File</Text>
-                <Text style={styles.exportOptionDesc}>
+                <Text style={[styles.exportOptionTitle, { color: colors.textPrimary }]}>CSV File</Text>
+                <Text style={[styles.exportOptionDesc, { color: colors.textSecondary }]}>
                   Spreadsheet format — open in Excel, Google Sheets, etc.
                 </Text>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={Colors.textMuted} />
+              <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
             </TouchableOpacity>
 
             <TouchableOpacity
               style={styles.cancelButton}
               onPress={() => setShowExportModal(false)}
             >
-              <Text style={styles.cancelText}>Cancel</Text>
+              <Text style={[styles.cancelText, { color: colors.textMuted }]}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </Pressable>
@@ -512,6 +565,23 @@ const styles = StyleSheet.create({
   },
   section: {
     marginTop: Spacing.xl,
+  },
+  replayButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    paddingVertical: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  replayButtonText: {
+    color: Colors.primary,
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
   },
 
   /* Export modal */

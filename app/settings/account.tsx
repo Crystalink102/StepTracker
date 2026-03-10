@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { useAuth } from '@/src/context/AuthContext';
+import { useToast } from '@/src/hooks/useToast';
 import { Button, ConfirmModal } from '@/src/components/ui';
 import { deleteAccount } from '@/src/services/auth.service';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 export default function AccountScreen() {
+  const { colors } = useTheme();
   const { user, logout, hasMFA } = useAuth();
+  const { showToast } = useToast();
 
   const [showLogout, setShowLogout] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
@@ -20,6 +24,7 @@ export default function AccountScreen() {
     setShowLogout(false);
     try {
       await logout();
+      showToast('Logged out', 'info');
     } catch (err: any) {
       setErrorMessage(err.message || 'Failed to log out. Please try again.');
       setShowError(true);
@@ -39,26 +44,27 @@ export default function AccountScreen() {
       await deleteAccount();
       await logout();
     } catch (err: any) {
+      showToast('Failed to delete account', 'error');
       setErrorMessage(err.message);
       setShowError(true);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Email</Text>
-        <Text style={styles.sectionValue}>{user?.email || 'Not set'}</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.section, { borderBottomColor: colors.surface }]}>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Email</Text>
+        <Text style={[styles.sectionValue, { color: colors.textPrimary }]}>{user?.email || 'Not set'}</Text>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Phone</Text>
-        <Text style={styles.sectionValue}>{user?.phone || 'Not set'}</Text>
+      <View style={[styles.section, { borderBottomColor: colors.surface }]}>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>Phone</Text>
+        <Text style={[styles.sectionValue, { color: colors.textPrimary }]}>{user?.phone || 'Not set'}</Text>
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>2FA Status</Text>
-        <Text style={[styles.sectionValue, { color: hasMFA ? Colors.secondary : Colors.textMuted }]}>
+      <View style={[styles.section, { borderBottomColor: colors.surface }]}>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>2FA Status</Text>
+        <Text style={[styles.sectionValue, { color: hasMFA ? Colors.secondary : colors.textMuted }]}>
           {hasMFA ? 'Enabled' : 'Disabled'}
         </Text>
       </View>

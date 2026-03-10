@@ -36,6 +36,8 @@ export default function Input({
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         {...props}
+        accessibilityLabel={props.accessibilityLabel ?? label ?? undefined}
+        accessibilityHint={error ? `Error: ${error}` : props.accessibilityHint}
       />
       {error && <Text style={styles.error}>{error}</Text>}
     </View>

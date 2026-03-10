@@ -1,10 +1,5 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Animated, {
-  withSpring,
-  useSharedValue,
-  useAnimatedReaction,
-} from 'react-native-reanimated';
 import { Card } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 import { formatNumber, distanceUnitShort } from '@/src/utils/formatters';
@@ -17,23 +12,51 @@ import {
   activeMinutesFromSteps,
 } from '@/src/utils/fitness';
 
+const ANIMATION_DURATION = 500; // ms
+const ANIMATION_FRAMES = 20;
+
 export default function StepCounter() {
   const { todaySteps, isTracking } = useSteps();
   const { profile } = useProfile();
   const { preferences } = usePreferences();
   const unit = preferences.distanceUnit;
-  const animatedSteps = useSharedValue(0);
 
-  useAnimatedReaction(
-    () => todaySteps,
-    (current) => {
-      animatedSteps.value = withSpring(current, {
-        damping: 20,
-        stiffness: 100,
-      });
-    },
-    [todaySteps]
-  );
+  // Animated step counter display
+  const [displayedSteps, setDisplayedSteps] = useState(todaySteps);
+  const prevStepsRef = useRef(todaySteps);
+
+  useEffect(() => {
+    const prevSteps = prevStepsRef.current;
+    const targetSteps = todaySteps;
+
+    // Skip animation if going backwards or same value
+    if (targetSteps <= prevSteps) {
+      setDisplayedSteps(targetSteps);
+      prevStepsRef.current = targetSteps;
+      return;
+    }
+
+    const diff = targetSteps - prevSteps;
+    const intervalMs = ANIMATION_DURATION / ANIMATION_FRAMES;
+    let frame = 0;
+
+    const interval = setInterval(() => {
+      frame++;
+      if (frame >= ANIMATION_FRAMES) {
+        setDisplayedSteps(targetSteps);
+        clearInterval(interval);
+      } else {
+        // Ease-out: decelerate near the end
+        const progress = frame / ANIMATION_FRAMES;
+        const eased = 1 - Math.pow(1 - progress, 3);
+        setDisplayedSteps(Math.round(prevSteps + diff * eased));
+      }
+    }, intervalMs);
+
+    prevStepsRef.current = targetSteps;
+
+    return () => clearInterval(interval);
+  }, [todaySteps]);
 
   const { displayDist, cal, min } = useMemo(() => {
     const distM = distanceFromSteps(todaySteps, profile?.height_cm ?? null);
@@ -53,7 +76,7 @@ export default function StepCounter() {
         />
       </View>
 
-      <Text style={styles.steps}>{formatNumber(todaySteps)}</Text>
+      <Text style={styles.steps}>{formatNumber(displayedSteps)}</Text>
 
       <View style={styles.stats}>
         <View style={styles.stat}>

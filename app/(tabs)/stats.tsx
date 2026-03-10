@@ -1,3 +1,5 @@
+export { ErrorBoundary } from '@/src/components/ui/TabErrorBoundary';
+
 import { useState, useEffect, useMemo } from 'react';
 import {
   View,
@@ -30,6 +32,7 @@ import { activeMinutesFromSteps, distanceFromSteps } from '@/src/utils/fitness';
 import { ageFromDOB, calculateMaxHR } from '@/src/utils/hr-zones';
 import HRZonesReference from '@/src/components/stats/HRZonesReference';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type LifetimeStats = {
   totalSteps: number;
@@ -102,6 +105,7 @@ function computeLifetimeStats(
 }
 
 export default function StatsScreen() {
+  const { colors } = useTheme();
   const { user } = useAuth();
   const { profile } = useProfile();
   const { totalXP, level } = useXP();
@@ -173,7 +177,7 @@ export default function StatsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.safe, styles.centered]} edges={['top']}>
+      <SafeAreaView style={[styles.safe, styles.centered, { backgroundColor: colors.background }]} edges={['top']}>
         <ActivityIndicator size="large" color={Colors.primary} />
       </SafeAreaView>
     );
@@ -183,7 +187,7 @@ export default function StatsScreen() {
   const stepDistance = distanceFromSteps(totalSteps, profile?.height_cm ?? null);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
@@ -197,11 +201,11 @@ export default function StatsScreen() {
           />
         }
       >
-        <Text style={styles.screenTitle}>Stats</Text>
+        <Text style={[styles.screenTitle, { color: colors.textPrimary }]}>Stats</Text>
 
         {/* Lifetime Overview */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Lifetime</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Lifetime</Text>
           <View style={styles.overviewGrid}>
             <OverviewCard
               icon="footsteps-outline"
@@ -268,7 +272,7 @@ export default function StatsScreen() {
 
         {/* Weekly Trends */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Weekly Trends</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Weekly Trends</Text>
           <WeeklyTrends
             activities={activities}
             stepHistory={stepHistory}
@@ -279,52 +283,52 @@ export default function StatsScreen() {
 
         {/* Pace Stats */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Pace</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Pace</Text>
           <View style={styles.paceRow}>
-            <View style={styles.paceCard}>
+            <View style={[styles.paceCard, { backgroundColor: colors.surface }]}>
               <Ionicons name="speedometer-outline" size={20} color={Colors.primary} />
-              <Text style={styles.paceValue}>
+              <Text style={[styles.paceValue, { color: colors.textPrimary }]}>
                 {stats.fastestPaceSecPerKm
                   ? `${formatPace(stats.fastestPaceSecPerKm, unit)} ${paceUnitLabel(unit)}`
                   : '--'}
               </Text>
-              <Text style={styles.paceLabel}>Fastest Pace</Text>
+              <Text style={[styles.paceLabel, { color: colors.textMuted }]}>Fastest Pace</Text>
             </View>
-            <View style={styles.paceCard}>
+            <View style={[styles.paceCard, { backgroundColor: colors.surface }]}>
               <Ionicons name="analytics-outline" size={20} color={Colors.primaryLight} />
-              <Text style={styles.paceValue}>
+              <Text style={[styles.paceValue, { color: colors.textPrimary }]}>
                 {stats.avgPaceSecPerKm
                   ? `${formatPace(stats.avgPaceSecPerKm, unit)} ${paceUnitLabel(unit)}`
                   : '--'}
               </Text>
-              <Text style={styles.paceLabel}>Average Pace</Text>
+              <Text style={[styles.paceLabel, { color: colors.textMuted }]}>Average Pace</Text>
             </View>
           </View>
         </View>
 
         {/* Personal Bests - All Distances */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Personal Bests</Text>
-          <View style={styles.pbContainer}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Personal Bests</Text>
+          <View style={[styles.pbContainer, { backgroundColor: colors.surface }]}>
             {allDistances.map(([label, distanceM]) => {
               const pb = pbMap.get(label);
               const hasPB = !!pb;
 
               return (
-                <View key={label} style={styles.pbRow}>
+                <View key={label} style={[styles.pbRow, { borderBottomColor: colors.surfaceLight }]}>
                   <View style={styles.pbLeft}>
-                    <View style={[styles.pbIcon, hasPB && styles.pbIconActive]}>
+                    <View style={[styles.pbIcon, { backgroundColor: colors.surfaceLight }, hasPB && styles.pbIconActive]}>
                       <Ionicons
                         name={hasPB ? 'medal' : 'ellipse-outline'}
                         size={16}
-                        color={hasPB ? Colors.gold : Colors.textMuted}
+                        color={hasPB ? Colors.gold : colors.textMuted}
                       />
                     </View>
                     <View>
-                      <Text style={[styles.pbDistance, !hasPB && styles.pbDistanceMuted]}>
+                      <Text style={[styles.pbDistance, { color: colors.textPrimary }, !hasPB && { color: colors.textSecondary }]}>
                         {label}
                       </Text>
-                      <Text style={styles.pbDistanceMeters}>
+                      <Text style={[styles.pbDistanceMeters, { color: colors.textMuted }]}>
                         {distanceM >= 1000
                           ? `${(distanceM / 1000).toFixed(distanceM % 1000 === 0 ? 0 : 1)} km`
                           : `${distanceM}m`}
@@ -335,7 +339,7 @@ export default function StatsScreen() {
                     {hasPB ? (
                       <>
                         <Text style={styles.pbTime}>{formatDuration(pb.best_time_seconds)}</Text>
-                        <Text style={styles.pbPace}>
+                        <Text style={[styles.pbPace, { color: colors.textMuted }]}>
                           {formatPace(
                             (pb.best_time_seconds / distanceM) * 1000,
                             unit
@@ -344,7 +348,7 @@ export default function StatsScreen() {
                         </Text>
                       </>
                     ) : (
-                      <Text style={styles.pbNone}>--</Text>
+                      <Text style={[styles.pbNone, { color: colors.textMuted }]}>--</Text>
                     )}
                   </View>
                 </View>
@@ -355,8 +359,8 @@ export default function StatsScreen() {
 
         {/* Activity Breakdown */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Activity Breakdown</Text>
-          <View style={styles.breakdownContainer}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Activity Breakdown</Text>
+          <View style={[styles.breakdownContainer, { backgroundColor: colors.surface }]}>
             <BreakdownRow
               label="Total Activities"
               value={String(stats.totalActivities)}
@@ -421,7 +425,7 @@ export default function StatsScreen() {
 
         {/* Heart Rate Zones Reference */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Heart Rate Zones</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Heart Rate Zones</Text>
           <HRZonesReference maxHR={userMaxHR} />
         </View>
       </ScrollView>
@@ -440,13 +444,14 @@ function OverviewCard({
   value: string;
   label: string;
 }) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.overviewCard}>
-      <Ionicons name={icon} size={18} color={Colors.textMuted} />
-      <Text style={styles.overviewValue} numberOfLines={1}>
+    <View style={[styles.overviewCard, { backgroundColor: colors.surface }]}>
+      <Ionicons name={icon} size={18} color={colors.textMuted} />
+      <Text style={[styles.overviewValue, { color: colors.textPrimary }]} numberOfLines={1}>
         {value}
       </Text>
-      <Text style={styles.overviewLabel} numberOfLines={1}>
+      <Text style={[styles.overviewLabel, { color: colors.textMuted }]} numberOfLines={1}>
         {label}
       </Text>
     </View>
@@ -454,10 +459,11 @@ function OverviewCard({
 }
 
 function BreakdownRow({ label, value }: { label: string; value: string }) {
+  const { colors } = useTheme();
   return (
-    <View style={styles.breakdownRow}>
-      <Text style={styles.breakdownLabel}>{label}</Text>
-      <Text style={styles.breakdownValue}>{value}</Text>
+    <View style={[styles.breakdownRow, { borderBottomColor: colors.surfaceLight }]}>
+      <Text style={[styles.breakdownLabel, { color: colors.textSecondary }]}>{label}</Text>
+      <Text style={[styles.breakdownValue, { color: colors.textPrimary }]}>{value}</Text>
     </View>
   );
 }

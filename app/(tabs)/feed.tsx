@@ -1,3 +1,5 @@
+export { ErrorBoundary } from '@/src/components/ui/TabErrorBoundary';
+
 import { useState, useCallback, useEffect } from 'react';
 import {
   View,
@@ -15,11 +17,13 @@ import FeedCard from '@/src/components/feed/FeedCard';
 import CommentSheet from '@/src/components/feed/CommentSheet';
 import { EmptyState } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import type { FeedItem } from '@/src/services/feed.service';
 
 type Coord = { latitude: number; longitude: number };
 
 export default function FeedScreen() {
+  const { colors } = useTheme();
   const router = useRouter();
   const {
     feedItems,
@@ -95,9 +99,9 @@ export default function FeedScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={styles.safe} edges={['top']}>
+      <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
         <View style={styles.headerBar}>
-          <Text style={styles.screenTitle}>Feed</Text>
+          <Text style={[styles.screenTitle, { color: colors.textPrimary }]}>Feed</Text>
         </View>
         <View style={styles.loadingContainer}>
           <SkeletonCard />
@@ -109,9 +113,9 @@ export default function FeedScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
       <View style={styles.headerBar}>
-        <Text style={styles.screenTitle}>Feed</Text>
+        <Text style={[styles.screenTitle, { color: colors.textPrimary }]}>Feed</Text>
       </View>
 
       <FlatList
@@ -153,24 +157,25 @@ export default function FeedScreen() {
  * Loading skeleton placeholder for feed cards.
  */
 function SkeletonCard() {
+  const { colors } = useTheme();
   return (
-    <View style={skeletonStyles.card}>
+    <View style={[skeletonStyles.card, { backgroundColor: colors.surface }]}>
       <View style={skeletonStyles.header}>
-        <View style={skeletonStyles.avatar} />
+        <View style={[skeletonStyles.avatar, { backgroundColor: colors.surfaceLight }]} />
         <View style={skeletonStyles.headerLines}>
-          <View style={[skeletonStyles.line, { width: 120 }]} />
-          <View style={[skeletonStyles.line, { width: 60, height: 10 }]} />
+          <View style={[skeletonStyles.line, { width: 120, backgroundColor: colors.surfaceLight }]} />
+          <View style={[skeletonStyles.line, { width: 60, height: 10, backgroundColor: colors.surfaceLight }]} />
         </View>
       </View>
-      <View style={[skeletonStyles.line, { width: 140, height: 28, marginBottom: 12 }]} />
+      <View style={[skeletonStyles.line, { width: 140, height: 28, marginBottom: 12, backgroundColor: colors.surfaceLight }]} />
       <View style={skeletonStyles.statsRow}>
-        <View style={[skeletonStyles.line, { width: 70 }]} />
-        <View style={[skeletonStyles.line, { width: 80 }]} />
-        <View style={[skeletonStyles.line, { width: 60 }]} />
+        <View style={[skeletonStyles.line, { width: 70, backgroundColor: colors.surfaceLight }]} />
+        <View style={[skeletonStyles.line, { width: 80, backgroundColor: colors.surfaceLight }]} />
+        <View style={[skeletonStyles.line, { width: 60, backgroundColor: colors.surfaceLight }]} />
       </View>
-      <View style={skeletonStyles.actionBar}>
-        <View style={[skeletonStyles.line, { width: 40 }]} />
-        <View style={[skeletonStyles.line, { width: 40 }]} />
+      <View style={[skeletonStyles.actionBar, { borderTopColor: colors.border }]}>
+        <View style={[skeletonStyles.line, { width: 40, backgroundColor: colors.surfaceLight }]} />
+        <View style={[skeletonStyles.line, { width: 40, backgroundColor: colors.surfaceLight }]} />
       </View>
     </View>
   );

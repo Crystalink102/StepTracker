@@ -11,6 +11,8 @@ import ProfileSetupOverlay, {
   completeProfileSetup,
 } from '@/src/components/tutorial/ProfileSetupOverlay';
 import { useProfile } from '@/src/hooks/useProfile';
+import { usePreferences } from '@/src/context/PreferencesContext';
+import { playButtonPress } from '@/src/utils/sounds';
 import { Colors } from '@/src/constants/theme';
 
 type TabIconProps = {
@@ -86,6 +88,7 @@ function ProfileIcon({ color, size, focused }: TabIconProps) {
 export default function TabLayout() {
   const router = useRouter();
   const { profile } = useProfile();
+  const { preferences } = usePreferences();
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
@@ -147,6 +150,11 @@ export default function TabLayout() {
   return (
     <>
       <Tabs
+        screenListeners={{
+          tabPress: () => {
+            playButtonPress(preferences.hapticFeedback);
+          },
+        }}
         screenOptions={{
           headerShown: false,
           tabBarStyle: {

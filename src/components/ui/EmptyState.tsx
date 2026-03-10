@@ -15,8 +15,13 @@ type EmptyStateProps = {
 
 export default function EmptyState({ icon, title, subtitle, action }: EmptyStateProps) {
   return (
-    <View style={styles.container}>
-      <Ionicons name={icon} size={64} color={Colors.textMuted} />
+    <View
+      style={styles.container}
+      accessible
+      accessibilityRole="summary"
+      accessibilityLabel={subtitle ? `${title}. ${subtitle}` : title}
+    >
+      <Ionicons name={icon} size={64} color={Colors.textMuted} accessibilityElementsHidden />
       <Text style={styles.title}>{title}</Text>
       {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
       {action && (

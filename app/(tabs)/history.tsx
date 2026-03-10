@@ -1,3 +1,5 @@
+export { ErrorBoundary } from '@/src/components/ui/TabErrorBoundary';
+
 import { useState, useEffect, useCallback } from 'react';
 import {
   View,
@@ -22,8 +24,10 @@ import * as PBService from '@/src/services/personal-best.service';
 import { Activity, PersonalBest } from '@/src/types/database';
 import { EmptyState } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 export default function HistoryScreen() {
+  const { colors } = useTheme();
   const { user } = useAuth();
   const router = useRouter();
   const { profile } = useProfile();
@@ -67,16 +71,16 @@ export default function HistoryScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
       <FlatList
         data={activities}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={
           <>
-            <Text style={styles.screenTitle}>History</Text>
+            <Text style={[styles.screenTitle, { color: colors.textPrimary }]}>History</Text>
 
             <View style={styles.statsSection}>
-              <Text style={styles.sectionTitle}>STEP STATS</Text>
+              <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>STEP STATS</Text>
               <PeriodSelector period={period} onSelect={setPeriod} />
               <BarChart data={stepData} goal={profile?.daily_step_goal ?? 10000} />
               <StatsSummary average={average} bestDay={bestDay} total={total} />
@@ -84,7 +88,7 @@ export default function HistoryScreen() {
 
             {personalBests.length > 0 && (
               <View style={styles.pbSection}>
-                <Text style={styles.sectionTitle}>PERSONAL BESTS</Text>
+                <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>PERSONAL BESTS</Text>
                 <ScrollView
                   horizontal
                   showsHorizontalScrollIndicator={false}
@@ -97,7 +101,7 @@ export default function HistoryScreen() {
               </View>
             )}
 
-            <Text style={styles.sectionTitle}>RECENT ACTIVITIES</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>RECENT ACTIVITIES</Text>
           </>
         }
         renderItem={({ item }) => (

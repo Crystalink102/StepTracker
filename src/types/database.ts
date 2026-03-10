@@ -434,6 +434,16 @@ export type ActivityComment = {
   created_at: string;
 };
 
+export type AppNotification = {
+  id: string;
+  type: 'achievement' | 'friend_request' | 'challenge' | 'streak' | 'level_up' | 'general';
+  title: string;
+  body: string;
+  read: boolean;
+  created_at: string;
+  data?: Record<string, any>;
+};
+
 export type Challenge = {
   id: string;
   creator_id: string;

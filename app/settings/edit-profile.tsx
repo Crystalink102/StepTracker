@@ -11,16 +11,20 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
 import { useProfile } from '@/src/hooks/useProfile';
+import { useToast } from '@/src/hooks/useToast';
 import { Avatar, Button, Input, ConfirmModal } from '@/src/components/ui';
 import * as ProfileService from '@/src/services/profile.service';
 import * as StorageService from '@/src/services/storage.service';
 import { Profile } from '@/src/types/database';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 export default function EditProfileScreen() {
+  const { colors } = useTheme();
   const { user } = useAuth();
   const router = useRouter();
   const { refresh: refreshProfile } = useProfile();
+  const { showToast } = useToast();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [displayName, setDisplayName] = useState('');
@@ -93,8 +97,10 @@ export default function EditProfileScreen() {
       });
       setProfile(updated);
       await refreshProfile();
+      showToast('Profile updated', 'success');
       router.back();
     } catch (err: any) {
+      showToast('Failed to save profile', 'error');
       showAlert('Save Failed', err.message);
     } finally {
       setIsSaving(false);
@@ -103,14 +109,14 @@ export default function EditProfileScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, styles.centered]}>
+      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
       <TouchableOpacity style={styles.avatarSection} onPress={handlePickImage}>
         <Avatar
           uri={profile?.avatar_url}
@@ -145,7 +151,7 @@ export default function EditProfileScreen() {
             maxLength={150}
             style={styles.bioInput}
           />
-          <Text style={styles.charCount}>{bio.length}/150</Text>
+          <Text style={[styles.charCount, { color: colors.textMuted }]}>{bio.length}/150</Text>
         </View>
         <Input
           label="Daily Step Goal"

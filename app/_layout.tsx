@@ -16,6 +16,7 @@ import { useProfile } from '@/src/hooks/useProfile';
 import { Colors } from '@/src/constants/theme';
 import { ThemeProvider, useTheme } from '@/src/context/ThemeContext';
 import { ToastProvider } from '@/src/context/ToastContext';
+import { NotificationCenterProvider } from '@/src/context/NotificationCenterContext';
 
 import { ErrorScreen } from '@/src/components/ui';
 import DownloadBanner from '@/src/components/DownloadBanner';
@@ -155,6 +156,14 @@ function AuthGate() {
             animation: 'slide_from_right',
           }}
         />
+        <Stack.Screen
+          name="notifications"
+          options={{
+            headerShown: false,
+            presentation: 'card',
+            animation: 'slide_from_right',
+          }}
+        />
       </Stack>
     </>
   );
@@ -199,11 +208,13 @@ export default function RootLayout() {
           <NetworkProvider>
             <ThemeProvider>
               <ToastProvider>
+              <NotificationCenterProvider>
               <StepProvider>
                 <ActivityProvider>
                   <AuthGate />
                 </ActivityProvider>
               </StepProvider>
+              </NotificationCenterProvider>
               </ToastProvider>
             </ThemeProvider>
           </NetworkProvider>

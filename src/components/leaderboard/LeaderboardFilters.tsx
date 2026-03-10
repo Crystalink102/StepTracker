@@ -1,5 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LeaderboardMetric, LeaderboardPeriod, LeaderboardScope } from '@/src/hooks/useLeaderboard';
+import { usePreferences } from '@/src/context/PreferencesContext';
+import { playButtonPress } from '@/src/utils/sounds';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 type LeaderboardFiltersProps = {
@@ -33,10 +35,12 @@ function PillRow<T extends string>({
   items,
   selected,
   onSelect,
+  onTap,
 }: {
   items: { label: string; value: T }[];
   selected: T;
   onSelect: (v: T) => void;
+  onTap?: () => void;
 }) {
   return (
     <View style={styles.row}>
@@ -46,7 +50,10 @@ function PillRow<T extends string>({
           <TouchableOpacity
             key={item.value}
             style={[styles.pill, active && styles.activePill]}
-            onPress={() => onSelect(item.value)}
+            onPress={() => {
+              onTap?.();
+              onSelect(item.value);
+            }}
           >
             <Text style={[styles.pillText, active && styles.activePillText]}>
               {item.label}
@@ -66,12 +73,15 @@ export default function LeaderboardFilters({
   onPeriodChange,
   onScopeChange,
 }: LeaderboardFiltersProps) {
+  const { preferences } = usePreferences();
+  const handleTap = () => playButtonPress(preferences.hapticFeedback);
+
   return (
     <View style={styles.container}>
-      <PillRow items={SCOPES} selected={scope} onSelect={onScopeChange} />
-      <PillRow items={METRICS} selected={metric} onSelect={onMetricChange} />
+      <PillRow items={SCOPES} selected={scope} onSelect={onScopeChange} onTap={handleTap} />
+      <PillRow items={METRICS} selected={metric} onSelect={onMetricChange} onTap={handleTap} />
       {metric !== 'streak' && (
-        <PillRow items={PERIODS} selected={period} onSelect={onPeriodChange} />
+        <PillRow items={PERIODS} selected={period} onSelect={onPeriodChange} onTap={handleTap} />
       )}
     </View>
   );

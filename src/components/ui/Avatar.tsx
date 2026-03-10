@@ -1,3 +1,8 @@
+// TODO: Install expo-image for built-in memory+disk caching:
+//   npx expo install expo-image
+// Then replace the react-native Image import with:
+//   import { Image } from 'expo-image';
+// And add cachePolicy="memory-disk" to the <Image /> component below.
 import { View, Image, Text, StyleSheet } from 'react-native';
 import { Colors, FontSize, FontWeight, BorderRadius } from '@/src/constants/theme';
 
@@ -25,6 +30,7 @@ export default function Avatar({ uri, name, size = 48 }: AvatarProps) {
           styles.image,
           { width: size, height: size, borderRadius: size / 2 },
         ]}
+        accessibilityLabel={name ? `${name}'s avatar` : 'User avatar'}
       />
     );
   }
@@ -39,6 +45,8 @@ export default function Avatar({ uri, name, size = 48 }: AvatarProps) {
           borderRadius: size / 2,
         },
       ]}
+      accessible
+      accessibilityLabel={name ? `${name}'s avatar` : 'User avatar'}
     >
       <Text
         style={[

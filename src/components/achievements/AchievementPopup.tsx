@@ -7,9 +7,12 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 import Button from '@/src/components/ui/Button';
+import Confetti from '@/src/components/ui/Confetti';
 import { AchievementDefinition } from '@/src/types/database';
 import { CATEGORY_CONFIG } from '@/src/constants/achievements';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { usePreferences } from '@/src/context/PreferencesContext';
+import { playAchievement } from '@/src/utils/sounds';
 
 type AchievementPopupProps = {
   achievement: AchievementDefinition | null;
@@ -37,6 +40,7 @@ function getIconEmoji(iconName: string): string {
 
 export default function AchievementPopup({ achievement, onDismiss }: AchievementPopupProps) {
   const scale = useSharedValue(0);
+  const { preferences } = usePreferences();
 
   useEffect(() => {
     if (achievement) {
@@ -45,6 +49,7 @@ export default function AchievementPopup({ achievement, onDismiss }: Achievement
         100,
         withSpring(1, { damping: 8, stiffness: 120 })
       );
+      playAchievement(preferences.hapticFeedback);
     }
   }, [achievement]);
 
@@ -59,6 +64,7 @@ export default function AchievementPopup({ achievement, onDismiss }: Achievement
   return (
     <Modal transparent animationType="fade" visible={!!achievement}>
       <View style={styles.overlay}>
+        <Confetti visible={!!achievement} />
         <Animated.View style={[styles.content, animatedStyle]}>
           <View style={[styles.iconCircle, { backgroundColor: categoryColor }]}>
             <Text style={styles.icon}>{getIconEmoji(achievement.icon_name)}</Text>

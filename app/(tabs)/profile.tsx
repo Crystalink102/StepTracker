@@ -1,5 +1,7 @@
-import { useState, useEffect, useMemo } from 'react';
-import { ScrollView, TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+export { ErrorBoundary } from '@/src/components/ui/TabErrorBoundary';
+
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { ScrollView, TouchableOpacity, Text, StyleSheet, View, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
@@ -14,6 +16,7 @@ import * as StepService from '@/src/services/step.service';
 import * as ActivityService from '@/src/services/activity.service';
 import { Profile } from '@/src/types/database';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 const COMPLETION_FIELDS: (keyof Profile)[] = [
   'display_name',
@@ -39,8 +42,9 @@ function getProfileCompletion(profile: Profile | null): number {
 }
 
 export default function ProfileScreen() {
+  const { colors } = useTheme();
   const { user } = useAuth();
-  const { profile } = useProfile();
+  const { profile, refresh: refreshProfile } = useProfile();
   const { level, totalXP } = useXP();
   const { earnedCount, totalCount } = useAchievements();
   const { pendingCount } = useFriends();
@@ -49,9 +53,11 @@ export default function ProfileScreen() {
   const [totalActivities, setTotalActivities] = useState(0);
   const [totalDistanceKm, setTotalDistanceKm] = useState(0);
 
+  const [refreshing, setRefreshing] = useState(false);
+
   const completionPct = useMemo(() => getProfileCompletion(profile), [profile]);
 
-  useEffect(() => {
+  const loadStats = useCallback(() => {
     if (!user) return;
 
     // Fetch all-time step total
@@ -71,6 +77,20 @@ export default function ProfileScreen() {
       .catch(() => {});
   }, [user]);
 
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try {
+      await refreshProfile();
+      loadStats();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshProfile, loadStats]);
+
   const menuItems = [
     { label: 'Achievements', route: '/achievements' as const, badge: `${earnedCount}/${totalCount}` },
     { label: 'Friends', route: '/friends' as const, badge: pendingCount > 0 ? `${pendingCount}` : undefined },
@@ -85,16 +105,23 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.primary}
+          />
+        }
       >
         <ProfileHeader profile={profile} level={level} />
 
         {/* Profile completion indicator */}
-        <View style={styles.completionContainer}>
+        <View style={[styles.completionContainer, { backgroundColor: colors.surface }]}>
           {completionPct >= 100 ? (
             <View style={styles.completionComplete}>
               <Text style={styles.checkmark}>✓</Text>
@@ -103,10 +130,10 @@ export default function ProfileScreen() {
           ) : (
             <>
               <View style={styles.completionHeader}>
-                <Text style={styles.completionLabel}>Profile completion</Text>
+                <Text style={[styles.completionLabel, { color: colors.textMuted }]}>Profile completion</Text>
                 <Text style={styles.completionPct}>{completionPct}%</Text>
               </View>
-              <View style={styles.completionBarBg}>
+              <View style={[styles.completionBarBg, { backgroundColor: colors.surfaceLight }]}>
                 <View
                   style={[styles.completionBarFill, { width: `${completionPct}%` }]}
                 />
@@ -126,30 +153,30 @@ export default function ProfileScreen() {
           {menuItems.map((item) => (
             <TouchableOpacity
               key={item.route}
-              style={styles.settingsItem}
+              style={[styles.settingsItem, { backgroundColor: colors.surface }]}
               onPress={() => router.push(item.route as any)}
             >
               <View style={styles.menuItemRow}>
-                <Text style={styles.settingsLabel}>{item.label}</Text>
+                <Text style={[styles.settingsLabel, { color: colors.textPrimary }]}>{item.label}</Text>
                 {item.badge && (
                   <Badge label={item.badge} variant="primary" />
                 )}
               </View>
-              <Text style={styles.arrow}>›</Text>
+              <Text style={[styles.arrow, { color: colors.textMuted }]}>›</Text>
             </TouchableOpacity>
           ))}
         </View>
 
         <View style={styles.settingsSection}>
-          <Text style={styles.sectionTitle}>SETTINGS</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>SETTINGS</Text>
           {settingsItems.map((item) => (
             <TouchableOpacity
               key={item.route}
-              style={styles.settingsItem}
+              style={[styles.settingsItem, { backgroundColor: colors.surface }]}
               onPress={() => router.push(item.route)}
             >
-              <Text style={styles.settingsLabel}>{item.label}</Text>
-              <Text style={styles.arrow}>›</Text>
+              <Text style={[styles.settingsLabel, { color: colors.textPrimary }]}>{item.label}</Text>
+              <Text style={[styles.arrow, { color: colors.textMuted }]}>›</Text>
             </TouchableOpacity>
           ))}
         </View>

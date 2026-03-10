@@ -15,6 +15,7 @@ import * as ProfileService from '@/src/services/profile.service';
 import * as NotificationService from '@/src/services/notification.service';
 import { Profile } from '@/src/types/database';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type NotifSetting = {
   key: keyof Pick<Profile, 'notify_daily_reminder' | 'notify_streak_warning' | 'notify_achievements' | 'notify_friend_requests' | 'notify_weekly_summary'>;
@@ -51,6 +52,7 @@ const SETTINGS: NotifSetting[] = [
 ];
 
 export default function NotificationsScreen() {
+  const { colors } = useTheme();
   const { user } = useAuth();
   const { profile, refresh: refreshProfile } = useProfile();
   const [optimistic, setOptimistic] = useState<Partial<Record<NotifSetting['key'], boolean>>>({});
@@ -114,25 +116,25 @@ export default function NotificationsScreen() {
 
   if (!profile) {
     return (
-      <View style={[styles.container, styles.centered]}>
+      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {SETTINGS.map((setting) => (
-        <View key={setting.key} style={styles.row}>
+        <View key={setting.key} style={[styles.row, { borderBottomColor: colors.surface }]}>
           <View style={styles.textSection}>
-            <Text style={styles.label}>{setting.label}</Text>
-            <Text style={styles.description}>{setting.description}</Text>
+            <Text style={[styles.label, { color: colors.textPrimary }]}>{setting.label}</Text>
+            <Text style={[styles.description, { color: colors.textMuted }]}>{setting.description}</Text>
           </View>
           <Switch
             value={getValue(setting.key)}
             onValueChange={(val) => handleToggle(setting.key, val)}
-            trackColor={{ false: Colors.surfaceLight, true: Colors.primaryLight }}
-            thumbColor={getValue(setting.key) ? Colors.primary : Colors.textMuted}
+            trackColor={{ false: colors.surfaceLight, true: Colors.primaryLight }}
+            thumbColor={getValue(setting.key) ? Colors.primary : colors.textMuted}
           />
         </View>
       ))}
@@ -152,7 +154,7 @@ export default function NotificationsScreen() {
       </TouchableOpacity>
 
       {Platform.OS === 'web' && (
-        <Text style={styles.webNote}>
+        <Text style={[styles.webNote, { color: colors.textMuted }]}>
           Push notifications are only available on iOS and Android.
         </Text>
       )}

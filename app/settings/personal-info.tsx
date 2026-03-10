@@ -8,19 +8,23 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
 import { useProfile } from '@/src/hooks/useProfile';
+import { useToast } from '@/src/hooks/useToast';
 import { Button, Input, ConfirmModal } from '@/src/components/ui';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import * as ProfileService from '@/src/services/profile.service';
 import { Profile } from '@/src/types/database';
 import { Colors, Spacing } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 const CM_PER_INCH = 2.54;
 const KG_PER_LB = 0.453592;
 
 export default function PersonalInfoScreen() {
+  const { colors } = useTheme();
   const { user } = useAuth();
   const router = useRouter();
   const { refresh: refreshProfile } = useProfile();
+  const { showToast } = useToast();
   const { preferences } = usePreferences();
 
   const heightUnit = preferences.heightUnit;
@@ -87,8 +91,10 @@ export default function PersonalInfoScreen() {
         date_of_birth: dob || null,
       });
       await refreshProfile();
+      showToast('Personal info saved', 'success');
       router.back();
     } catch (err: any) {
+      showToast('Failed to save info', 'error');
       setAlertModal({ visible: true, title: 'Save Failed', message: err.message });
     } finally {
       setIsSaving(false);
@@ -97,14 +103,14 @@ export default function PersonalInfoScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, styles.centered]}>
+      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
       <View style={styles.form}>
         <Input
           label="Resting Heart Rate (BPM)"

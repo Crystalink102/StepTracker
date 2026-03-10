@@ -1,13 +1,22 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import Card from '@/src/components/ui/Card';
 import FlameIcon from './FlameIcon';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 
 type StreakCardProps = {
   streak: number;
+  freezeAvailable?: boolean;
+  freezeEnabled?: boolean;
+  freezeUsed?: boolean;
 };
 
-export default function StreakCard({ streak }: StreakCardProps) {
+export default function StreakCard({
+  streak,
+  freezeAvailable = false,
+  freezeEnabled = false,
+  freezeUsed = false,
+}: StreakCardProps) {
   return (
     <Card style={styles.card}>
       <View style={styles.row}>
@@ -17,6 +26,28 @@ export default function StreakCard({ streak }: StreakCardProps) {
           <Text style={styles.label}>day streak</Text>
         </View>
       </View>
+
+      {freezeEnabled && (
+        <View style={styles.freezeRow}>
+          <Ionicons
+            name="snow-outline"
+            size={16}
+            color={freezeAvailable ? '#60A5FA' : Colors.textMuted}
+          />
+          <Text
+            style={[
+              styles.freezeText,
+              { color: freezeAvailable ? '#60A5FA' : Colors.textMuted },
+            ]}
+          >
+            {freezeUsed
+              ? 'Streak freeze saved your streak!'
+              : freezeAvailable
+                ? 'Streak freeze available'
+                : 'Freeze used this week'}
+          </Text>
+        </View>
+      )}
     </Card>
   );
 }
@@ -44,6 +75,19 @@ const styles = StyleSheet.create({
   label: {
     color: Colors.textSecondary,
     fontSize: FontSize.md,
+    fontWeight: FontWeight.medium,
+  },
+  freezeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
+    paddingTop: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border,
+  },
+  freezeText: {
+    fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
   },
 });

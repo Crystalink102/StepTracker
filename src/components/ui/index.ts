@@ -10,3 +10,5 @@ export { default as OfflineBanner } from './OfflineBanner';
 export { default as Toast } from './Toast';
 export { default as EmptyState } from './EmptyState';
 export { default as SkeletonLoader } from './SkeletonLoader';
+export { default as Confetti } from './Confetti';
+export { TabErrorBoundary, ErrorBoundary as TabRouteBoundary } from './TabErrorBoundary';

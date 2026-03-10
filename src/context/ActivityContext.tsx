@@ -357,6 +357,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       try {
         completed = await ActivityService.updateActivity(currentActivity.id, activityUpdate);
       } catch (err) {
+        // NOTE: Toast should be shown by the caller (e.g. activity screen) when this fallback triggers
         console.warn('[Activity] Save failed, queuing offline:', err);
         await enqueue({
           table: 'activities',

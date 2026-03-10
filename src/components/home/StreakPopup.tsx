@@ -9,7 +9,10 @@ import Animated, {
 } from 'react-native-reanimated';
 import FlameIcon from './FlameIcon';
 import Button from '@/src/components/ui/Button';
+import Confetti from '@/src/components/ui/Confetti';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { usePreferences } from '@/src/context/PreferencesContext';
+import { playAchievement } from '@/src/utils/sounds';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -73,6 +76,7 @@ function ConfettiParticle({ piece }: { piece: ConfettiPiece }) {
 
 export default function StreakPopup({ visible, streak, onDismiss }: StreakPopupProps) {
   const flameScale = useSharedValue(0);
+  const { preferences } = usePreferences();
 
   const confettiPieces = useMemo<ConfettiPiece[]>(() => {
     return Array.from({ length: CONFETTI_COUNT }, () => ({
@@ -92,6 +96,7 @@ export default function StreakPopup({ visible, streak, onDismiss }: StreakPopupP
         200,
         withSpring(1, { damping: 8, stiffness: 120 })
       );
+      playAchievement(preferences.hapticFeedback);
     }
   }, [visible]);
 
@@ -104,6 +109,9 @@ export default function StreakPopup({ visible, streak, onDismiss }: StreakPopupP
   return (
     <Modal transparent animationType="fade" visible={visible}>
       <View style={styles.overlay}>
+        {/* Full-screen confetti overlay */}
+        <Confetti visible={visible} />
+
         {/* Confetti layer */}
         {confettiPieces.map((piece, i) => (
           <ConfettiParticle key={i} piece={piece} />
