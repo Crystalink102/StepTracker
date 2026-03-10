@@ -1,6 +1,7 @@
 import { View, Text, Modal, StyleSheet } from 'react-native';
 import Button from './Button';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type ConfirmModalProps = {
   visible: boolean;
@@ -23,12 +24,13 @@ export default function ConfirmModal({
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
+  const { colors } = useTheme();
   return (
     <Modal transparent animationType="fade" visible={visible} onRequestClose={onCancel ?? onConfirm}>
       <View style={styles.overlay}>
-        <View style={styles.dialog}>
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.message}>{message}</Text>
+        <View style={[styles.dialog, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+          <Text style={[styles.message, { color: colors.textSecondary }]}>{message}</Text>
           <View style={styles.actions}>
             {onCancel && (
               <Button

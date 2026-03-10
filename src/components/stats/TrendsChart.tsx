@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
@@ -28,17 +28,17 @@ export default function TrendsChart({
   const maxIndex = data.findIndex((d) => d.value === maxValue && d.value > 0);
 
   // Create animated values for each bar — rebuild when data length changes
-  const animatedValues = useRef<Animated.Value[]>([]);
-  if (animatedValues.current.length !== data.length) {
-    animatedValues.current = data.map(() => new Animated.Value(0));
-  }
+  const animatedValues = useMemo(
+    () => data.map(() => new Animated.Value(0)),
+    [data.length],
+  );
 
   useEffect(() => {
     // Reset all values to 0
-    animatedValues.current.forEach((v) => v.setValue(0));
+    animatedValues.forEach((v) => v.setValue(0));
 
     // Stagger animate each bar
-    const animations = animatedValues.current.map((animValue, i) =>
+    const animations = animatedValues.map((animValue, i) =>
       Animated.timing(animValue, {
         toValue: 1,
         duration: 500,
@@ -48,7 +48,7 @@ export default function TrendsChart({
     );
 
     Animated.parallel(animations).start();
-  }, [data]);
+  }, [data, animatedValues]);
 
   const displayValue = (val: number): string => {
     if (formatValue) return formatValue(val);
@@ -71,8 +71,8 @@ export default function TrendsChart({
           const isMax = idx === maxIndex && point.value > 0;
           const barColor = isMax ? Colors.gold : color;
 
-          const animatedHeight = animatedValues.current[idx]
-            ? animatedValues.current[idx].interpolate({
+          const animatedHeight = animatedValues[idx]
+            ? animatedValues[idx].interpolate({
                 inputRange: [0, 1],
                 outputRange: [2, Math.max(ratio * BAR_MAX_HEIGHT, 2)],
               })

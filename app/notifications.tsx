@@ -160,9 +160,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     gap: Spacing.md,
   },
-  rowUnread: {
-    backgroundColor: Colors.surfaceLight,
-  },
   iconCircle: {
     width: 40,
     height: 40,

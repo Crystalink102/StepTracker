@@ -22,6 +22,7 @@ import {
   Spacing,
   BorderRadius,
 } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import type { Profile, Activity } from '@/src/types/database';
 
 type FriendStats = {
@@ -42,6 +43,7 @@ export default function FriendProfileScreen() {
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
   const [friendshipId, setFriendshipId] = useState<string | null>(null);
   const { preferences } = usePreferences();
+  const { colors } = useTheme();
   const [loading, setLoading] = useState(true);
   const [removing, setRemoving] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
@@ -150,7 +152,7 @@ export default function FriendProfileScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
@@ -158,15 +160,15 @@ export default function FriendProfileScreen() {
 
   if (!profile) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text style={styles.errorText}>User not found</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <Text style={[styles.errorText, { color: colors.textMuted }]}>User not found</Text>
       </View>
     );
   }
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
@@ -177,13 +179,13 @@ export default function FriendProfileScreen() {
           name={profile.display_name || profile.username}
           size={96}
         />
-        <Text style={styles.displayName}>
+        <Text style={[styles.displayName, { color: colors.textPrimary }]}>
           {profile.display_name || profile.username || 'Unknown'}
         </Text>
         {profile.username && (
-          <Text style={styles.username}>@{profile.username}</Text>
+          <Text style={[styles.username, { color: colors.textMuted }]}>@{profile.username}</Text>
         )}
-        {profile.bio && <Text style={styles.bio}>{profile.bio}</Text>}
+        {profile.bio && <Text style={[styles.bio, { color: colors.textSecondary }]}>{profile.bio}</Text>}
         <View style={styles.badgeRow}>
           <Badge label={`Level ${stats?.level ?? 1}`} variant="primary" />
           <Badge
@@ -195,61 +197,61 @@ export default function FriendProfileScreen() {
 
       {/* Stats Grid */}
       <Card style={styles.statsCard}>
-        <Text style={styles.sectionTitle}>STATS</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>STATS</Text>
         <View style={styles.statsGrid}>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
               {formatNumber(stats?.totalXP ?? 0)}
             </Text>
-            <Text style={styles.statLabel}>Total XP</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total XP</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
               {formatNumber(stats?.totalSteps ?? 0)}
             </Text>
-            <Text style={styles.statLabel}>Total Steps</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total Steps</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
               {formatNumber(stats?.totalActivities ?? 0)}
             </Text>
-            <Text style={styles.statLabel}>Activities</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Activities</Text>
           </View>
           <View style={styles.statItem}>
-            <Text style={styles.statValue}>
+            <Text style={[styles.statValue, { color: colors.textPrimary }]}>
               {stats?.currentStreak ?? 0}
             </Text>
-            <Text style={styles.statLabel}>Day Streak</Text>
+            <Text style={[styles.statLabel, { color: colors.textMuted }]}>Day Streak</Text>
           </View>
         </View>
       </Card>
 
       {/* Recent Activities */}
       <Card style={styles.activitiesCard}>
-        <Text style={styles.sectionTitle}>RECENT ACTIVITIES</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>RECENT ACTIVITIES</Text>
         {recentActivities.length === 0 ? (
-          <Text style={styles.emptyText}>No recent activities</Text>
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>No recent activities</Text>
         ) : (
           recentActivities.map((activity) => (
-            <View key={activity.id} style={styles.activityRow}>
-              <View style={styles.activityIcon}>
+            <View key={activity.id} style={[styles.activityRow, { borderBottomColor: colors.border }]}>
+              <View style={[styles.activityIcon, { backgroundColor: colors.surfaceLight }]}>
                 <Text style={styles.activityEmoji}>
                   {activity.type === 'run' ? '\u{1F3C3}' : '\u{1F6B6}'}
                 </Text>
               </View>
               <View style={styles.activityInfo}>
-                <Text style={styles.activityType}>
+                <Text style={[styles.activityType, { color: colors.textPrimary }]}>
                   {activity.type === 'run' ? 'Run' : 'Walk'}
                 </Text>
-                <Text style={styles.activityDate}>
+                <Text style={[styles.activityDate, { color: colors.textMuted }]}>
                   {formatRelativeDate(activity.started_at)}
                 </Text>
               </View>
               <View style={styles.activityStats}>
-                <Text style={styles.activityDistance}>
+                <Text style={[styles.activityDistance, { color: colors.textPrimary }]}>
                   {formatDistance(activity.distance_meters, preferences.distanceUnit)}
                 </Text>
-                <Text style={styles.activityDuration}>
+                <Text style={[styles.activityDuration, { color: colors.textMuted }]}>
                   {Math.floor(activity.duration_seconds / 60)} min
                 </Text>
               </View>

@@ -24,8 +24,10 @@ import { useNetwork } from '@/src/context/NetworkContext';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { playLevelUp } from '@/src/utils/sounds';
 import { Colors, Spacing } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 export default function HomeScreen() {
+  const { colors } = useTheme();
   const { streak, showPopup, dismissPopup, freezeUsed, freezeAvailable, freezeEnabled } = useStreak();
   const { pendingPopup, dismissPopup: dismissAchievement } = useAchievements();
   const { isOnline } = useNetwork();
@@ -52,7 +54,7 @@ export default function HomeScreen() {
   }, [level, celebrate, preferences.hapticFeedback]);
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top']}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
       <Confetti visible={showConfetti} onComplete={onConfettiComplete} />
       {!isOnline && <OfflineBanner />}
       <OfflineQueueCard />

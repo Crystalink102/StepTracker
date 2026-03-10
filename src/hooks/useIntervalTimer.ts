@@ -37,10 +37,13 @@ export const DEFAULT_INTERVAL_CONFIG: IntervalConfig = {
 
 /** Calculate total workout duration from config */
 export function getTotalDuration(config: IntervalConfig): number {
+  if (config.intervals <= 0) {
+    return config.warmupDuration + config.cooldownDuration;
+  }
   return (
     config.warmupDuration +
-    config.intervals * (config.runDuration + config.restDuration) -
-    config.restDuration + // last interval has no rest after it
+    config.intervals * config.runDuration +
+    (config.intervals - 1) * config.restDuration +
     config.cooldownDuration
   );
 }

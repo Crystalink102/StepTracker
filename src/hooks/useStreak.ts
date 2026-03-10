@@ -56,7 +56,7 @@ export function useStreak() {
       .catch((err) => {
         console.warn('[useStreak] Failed to check streak:', err);
       });
-  }, [user]);
+  }, [user, addNotification]);
 
   const dismissPopup = () => setShowPopup(false);
 

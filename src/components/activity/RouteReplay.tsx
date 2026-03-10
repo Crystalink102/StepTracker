@@ -70,8 +70,12 @@ export default function RouteReplay({
 
   // Calculate interval to keep total replay between 5-10 seconds
   const totalPoints = coords.length;
-  const targetDurationMs = Math.min(10000, Math.max(5000, totalPoints * 50));
-  const intervalMs = Math.max(16, Math.floor(targetDurationMs / totalPoints));
+  const targetDurationMs = totalPoints > 0
+    ? Math.min(10000, Math.max(5000, totalPoints * 50))
+    : 5000;
+  const intervalMs = totalPoints > 0
+    ? Math.max(16, Math.floor(targetDurationMs / totalPoints))
+    : 100;
 
   const stopReplay = useCallback(() => {
     if (timerRef.current) {
@@ -126,6 +130,9 @@ export default function RouteReplay({
   const progress = totalPoints > 1 ? currentIndex / (totalPoints - 1) : 0;
   const drawnCoords = coords.slice(0, currentIndex + 1);
   const currentPoint = coords[currentIndex];
+
+  // Guard against empty waypoints
+  if (coords.length === 0) return null;
 
   // Web fallback: text-based progress indicator
   if (Platform.OS === 'web' || !MapView) {

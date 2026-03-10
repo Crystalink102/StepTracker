@@ -119,15 +119,6 @@ export default function SplitTimes({ waypoints, distanceUnit }: SplitTimesProps)
   if (splits.length === 0) return null;
 
   // Find fastest and slowest split indices (only full splits, not partial)
-  const fullSplitDistance = unit === 'mi' ? 1609.34 : 1000;
-  const fullSplits = splits.filter((_, i) => {
-    // Last split might be partial
-    if (i === splits.length - 1) {
-      return !splits[i].distanceLabel.includes('.');
-    }
-    return true;
-  });
-
   let fastestIdx = -1;
   let slowestIdx = -1;
   let fastestPace = Infinity;
