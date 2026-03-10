@@ -79,15 +79,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           ? result.data.session
           : null;
 
-        if (!currentSession && result === null) {
+        // Check for auth errors (e.g., invalid/expired refresh token)
+        const authError = result && 'error' in result ? result.error : null;
+        if (authError) {
+          console.warn('[Auth] Session error, signing out:', authError.message);
+          await supabase.auth.signOut().catch(() => {});
+          setSession(null);
+          setUser(null);
+        } else if (!currentSession && result === null) {
           console.warn('[Auth] getSession timed out — starting fresh');
+          setSession(null);
+          setUser(null);
+        } else {
+          setSession(currentSession);
+          setUser(currentSession?.user ?? null);
+          if (currentSession) await checkMFAStatus();
         }
-
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
-        if (currentSession) await checkMFAStatus();
       } catch (err) {
         console.warn('[Auth] Failed to get session:', err);
+        // Clear stale session on any auth init failure
+        await supabase.auth.signOut().catch(() => {});
       } finally {
         setIsLoading(false);
       }
