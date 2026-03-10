@@ -9,19 +9,66 @@ import {
   Share,
   TouchableOpacity,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, Stack } from 'expo-router';
 import * as ActivityService from '@/src/services/activity.service';
 import RouteMap from '@/src/components/activity/RouteMap';
-import StatsGrid from '@/src/components/history/StatsGrid';
+import SplitsTable from '@/src/components/activity/SplitsTable';
+import ElevationProfile from '@/src/components/activity/ElevationProfile';
+import RunPersonalBests from '@/src/components/activity/RunPersonalBests';
 import { Badge } from '@/src/components/ui';
 import { Activity, ActivityWaypoint } from '@/src/types/database';
 import { formatRelativeDate, formatTime } from '@/src/utils/date-helpers';
-import { formatDistance, formatDuration, formatPace, metersToDisplayDistance, distanceUnitLabel } from '@/src/utils/formatters';
+import {
+  formatDistance,
+  formatDuration,
+  formatPace,
+  formatSpeed,
+  paceUnitLabel,
+  metersToDisplayDistance,
+  distanceUnitLabel,
+} from '@/src/utils/formatters';
 import { usePreferences } from '@/src/context/PreferencesContext';
+import { haversineDistance } from '@/src/utils/geo';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const MAP_HEIGHT = Math.round(SCREEN_HEIGHT * 0.45);
+
+/** Calculate max speed from waypoints (m/s) */
+function getMaxSpeed(waypoints: ActivityWaypoint[]): number {
+  let max = 0;
+  for (const wp of waypoints) {
+    if (wp.speed != null && wp.speed > max && wp.speed < 15) { // cap at 15 m/s (~54 km/h) to filter GPS spikes
+      max = wp.speed;
+    }
+  }
+  return max;
+}
+
+/** Calculate elevation gain from waypoints */
+function getElevationGain(waypoints: ActivityWaypoint[]): number | null {
+  const withAlt = waypoints.filter((w) => w.altitude != null);
+  if (withAlt.length < 3) return null;
+
+  // Simple moving average to smooth GPS noise
+  const windowSize = 5;
+  const smoothed: number[] = [];
+  for (let i = 0; i < withAlt.length; i++) {
+    const start = Math.max(0, i - Math.floor(windowSize / 2));
+    const end = Math.min(withAlt.length, i + Math.ceil(windowSize / 2));
+    let sum = 0;
+    for (let j = start; j < end; j++) sum += withAlt[j].altitude!;
+    smoothed.push(sum / (end - start));
+  }
+
+  let gain = 0;
+  for (let i = 1; i < smoothed.length; i++) {
+    const diff = smoothed[i] - smoothed[i - 1];
+    if (diff > 0.5) gain += diff;
+  }
+  return Math.round(gain);
+}
 
 export default function RunDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -42,13 +89,14 @@ export default function RunDetailScreen() {
       .finally(() => setIsLoading(false));
   }, [id]);
 
-  // All hooks must be called before any early returns to avoid React error #310
   const routeCoords = useMemo(
     () => waypoints.map((wp) => ({ latitude: wp.latitude, longitude: wp.longitude })),
     [waypoints]
   );
 
   const hasRoute = routeCoords.length > 1;
+  const maxSpeed = useMemo(() => getMaxSpeed(waypoints), [waypoints]);
+  const elevGain = useMemo(() => getElevationGain(waypoints), [waypoints]);
 
   const handleShare = async () => {
     if (!activity) return;
@@ -56,7 +104,7 @@ export default function RunDetailScreen() {
     const dist = formatDistance(activity.distance_meters, unit);
     const dur = formatDuration(activity.duration_seconds);
     const pace = activity.avg_pace_seconds_per_km
-      ? `${formatPace(activity.avg_pace_seconds_per_km, unit)} ${unit === 'mi' ? '/mi' : '/km'}`
+      ? `${formatPace(activity.avg_pace_seconds_per_km, unit)} ${paceUnitLabel(unit)}`
       : null;
     const cal = activity.calories_estimate
       ? `${activity.calories_estimate} cal`
@@ -68,6 +116,7 @@ export default function RunDetailScreen() {
       `\u{23F1}\u{FE0F} ${dur}`,
       pace ? `\u{26A1} ${pace}` : null,
       cal ? `\u{1F525} ${cal}` : null,
+      elevGain != null ? `\u{26F0}\u{FE0F} ${elevGain}m elevation gain` : null,
       '',
       'Tracked with 5tepTracker',
     ].filter(Boolean);
@@ -90,6 +139,52 @@ export default function RunDetailScreen() {
       </View>
     );
   }
+
+  // Build stats for the grid
+  const stats = [
+    {
+      icon: 'timer-outline' as const,
+      label: 'Duration',
+      value: formatDuration(activity.duration_seconds),
+    },
+    {
+      icon: 'speedometer-outline' as const,
+      label: 'Avg Pace',
+      value: activity.avg_pace_seconds_per_km
+        ? `${formatPace(activity.avg_pace_seconds_per_km, unit)} ${paceUnitLabel(unit)}`
+        : '--',
+    },
+    {
+      icon: 'heart-outline' as const,
+      label: 'Avg HR',
+      value: activity.avg_heart_rate ? `${activity.avg_heart_rate} bpm` : '--',
+    },
+    {
+      icon: 'flash-outline' as const,
+      label: 'Max Speed',
+      value: maxSpeed > 0 ? formatSpeed(maxSpeed, unit) : '--',
+    },
+    {
+      icon: 'flame-outline' as const,
+      label: 'Calories',
+      value: activity.calories_estimate ? `${activity.calories_estimate}` : '--',
+    },
+    {
+      icon: 'trending-up-outline' as const,
+      label: 'Elev Gain',
+      value: elevGain != null ? `${elevGain}m` : '--',
+    },
+    {
+      icon: 'star-outline' as const,
+      label: 'XP Earned',
+      value: `+${activity.xp_earned}`,
+    },
+    {
+      icon: 'pulse-outline' as const,
+      label: 'HR Source',
+      value: activity.hr_source === 'auto' ? 'Auto' : activity.hr_source === 'manual' ? 'Manual' : '--',
+    },
+  ];
 
   return (
     <>
@@ -116,6 +211,7 @@ export default function RunDetailScreen() {
           />
         ) : (
           <View style={styles.noMapPlaceholder}>
+            <Ionicons name="map-outline" size={32} color={Colors.textMuted} />
             <Text style={styles.noMapText}>No route data</Text>
           </View>
         )}
@@ -141,7 +237,7 @@ export default function RunDetailScreen() {
             </View>
             {activity.status === 'completed' && (
               <TouchableOpacity onPress={handleShare} style={styles.shareButton}>
-                <Text style={styles.shareIcon}>{'\u2197'}</Text>
+                <Ionicons name="share-outline" size={20} color={Colors.primary} />
               </TouchableOpacity>
             )}
           </View>
@@ -156,10 +252,37 @@ export default function RunDetailScreen() {
             <Text style={styles.distanceUnit}>{distanceUnitLabel(unit)}</Text>
           </View>
 
-          {/* Stats */}
-          <View style={styles.statsContainer}>
-            <StatsGrid activity={activity} />
+          {/* Stats Grid */}
+          <View style={styles.statsGrid}>
+            {stats.map((stat) => (
+              <View key={stat.label} style={styles.statCell}>
+                <Ionicons name={stat.icon} size={16} color={Colors.textMuted} style={styles.statIcon} />
+                <Text style={styles.statValue}>{stat.value}</Text>
+                <Text style={styles.statLabel}>{stat.label}</Text>
+              </View>
+            ))}
           </View>
+
+          {/* Personal Bests (if any set on this run) */}
+          {id && (
+            <View style={styles.section}>
+              <RunPersonalBests activityId={id} />
+            </View>
+          )}
+
+          {/* Mile/KM Splits */}
+          {waypoints.length > 1 && (
+            <View style={styles.section}>
+              <SplitsTable waypoints={waypoints} />
+            </View>
+          )}
+
+          {/* Elevation Profile */}
+          {waypoints.length > 1 && (
+            <View style={styles.section}>
+              <ElevationProfile waypoints={waypoints} />
+            </View>
+          )}
         </View>
       </ScrollView>
     </>
@@ -184,6 +307,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
+    gap: Spacing.sm,
   },
   noMapText: {
     color: Colors.textMuted,
@@ -196,7 +320,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: BorderRadius.xl,
     paddingTop: Spacing.xxl,
     paddingHorizontal: Spacing.lg,
-    paddingBottom: Spacing.xxxl,
+    paddingBottom: 100,
   },
   contentCardFlat: {
     marginTop: 0,
@@ -221,17 +345,12 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   shareButton: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     borderRadius: BorderRadius.full,
     backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  shareIcon: {
-    color: Colors.primary,
-    fontSize: FontSize.xl,
-    fontWeight: FontWeight.bold,
   },
   date: {
     color: Colors.textSecondary,
@@ -241,7 +360,7 @@ const styles = StyleSheet.create({
   distanceSection: {
     alignItems: 'center',
     marginBottom: Spacing.xxl,
-    paddingVertical: Spacing.lg,
+    paddingVertical: Spacing.md,
   },
   distanceValue: {
     color: Colors.textPrimary,
@@ -256,7 +375,37 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 2,
   },
-  statsContainer: {
-    marginBottom: Spacing.lg,
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+  },
+  statCell: {
+    width: '50%',
+    padding: Spacing.lg,
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderRightWidth: 1,
+    borderColor: Colors.surfaceLight,
+  },
+  statIcon: {
+    marginBottom: 4,
+  },
+  statValue: {
+    color: Colors.textPrimary,
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
+  },
+  statLabel: {
+    color: Colors.textMuted,
+    fontSize: FontSize.xs,
+    marginTop: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  section: {
+    marginTop: Spacing.xl,
   },
 });
