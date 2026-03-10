@@ -142,8 +142,8 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         if (!location?.coords) return;
 
         // Skip low-accuracy GPS readings
-        // Tighter native threshold for better distance accuracy
-        const maxAccuracy = Platform.OS === 'web' ? 100 : 30;
+        // Tighter native threshold — 20m filters out most indoor/urban canyon noise
+        const maxAccuracy = Platform.OS === 'web' ? 100 : 20;
         if (location.coords.accuracy != null && location.coords.accuracy > maxAccuracy) return;
 
         const wp: Waypoint = {
@@ -181,9 +181,9 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
           const velocity = timeDelta > 0 ? dist / timeDelta : 0;
 
           // Max velocity: 12 m/s (43 km/h) for running, reject anything above
-          // Also use speed from GPS sensor for smarter standstill filtering
+          // Pass speed + accuracy for smarter standstill/drift filtering
           if (
-            isPlausibleGPSMove(dist, location.coords.speed) &&
+            isPlausibleGPSMove(dist, location.coords.speed, location.coords.accuracy) &&
             velocity <= 12 &&
             isFinite(dist)
           ) {
