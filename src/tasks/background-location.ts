@@ -119,8 +119,8 @@ export async function startBackgroundLocation() {
 
   await Location.startLocationUpdatesAsync(BACKGROUND_LOCATION_TASK, {
     accuracy: Location.Accuracy.BestForNavigation,
-    timeInterval: 2000,
-    distanceInterval: 3,
+    timeInterval: 1500,
+    distanceInterval: 2,
     showsBackgroundLocationIndicator: true,
     foregroundService: {
       notificationTitle: '5tepTracker',

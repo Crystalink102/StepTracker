@@ -1,5 +1,3 @@
-import { Colors } from './theme';
-
 export const CATEGORY_CONFIG: Record<string, { label: string; color: string }> = {
   steps: { label: 'Steps', color: '#A855F7' },
   streak: { label: 'Streak', color: '#F59E0B' },

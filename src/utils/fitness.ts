@@ -110,13 +110,20 @@ export function activeMinutesFromSteps(steps: number): number {
 export const GPS_MAX_JUMP_M = 50;
 
 /** Minimum distance (meters) to count - filters GPS noise at standstill. */
-export const GPS_MIN_MOVE_M = 1;
+export const GPS_MIN_MOVE_M = 1.5;
 
 /**
  * Check if a GPS distance reading is plausible.
+ * Uses speed context to be smarter about filtering:
+ * - At standstill (speed < 0.5 m/s): require > 3m to filter GPS jitter
+ * - While moving: standard 1.5m minimum
  */
-export function isPlausibleGPSMove(distanceMeters: number): boolean {
-  return distanceMeters >= GPS_MIN_MOVE_M && distanceMeters <= GPS_MAX_JUMP_M;
+export function isPlausibleGPSMove(
+  distanceMeters: number,
+  currentSpeedMs?: number | null
+): boolean {
+  const minMove = currentSpeedMs != null && currentSpeedMs < 0.5 ? 3 : GPS_MIN_MOVE_M;
+  return distanceMeters >= minMove && distanceMeters <= GPS_MAX_JUMP_M;
 }
 
 // --- Pace smoothing ---

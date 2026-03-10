@@ -53,6 +53,16 @@ function RanksIcon({ color, size, focused }: TabIconProps) {
   );
 }
 
+function StatsIcon({ color, size, focused }: TabIconProps) {
+  return (
+    <Ionicons
+      name={focused ? 'analytics' : 'analytics-outline'}
+      size={size}
+      color={color}
+    />
+  );
+}
+
 function ProfileIcon({ color, size, focused }: TabIconProps) {
   return (
     <Ionicons
@@ -172,6 +182,13 @@ export default function TabLayout() {
           options={{
             title: 'Ranks',
             tabBarIcon: (props) => <RanksIcon {...props} />,
+          }}
+        />
+        <Tabs.Screen
+          name="stats"
+          options={{
+            title: 'Stats',
+            tabBarIcon: (props) => <StatsIcon {...props} />,
           }}
         />
         <Tabs.Screen

@@ -22,8 +22,15 @@ export const LOCATION_UPDATE_INTERVAL_MS = 3_000;
 export const LOCATION_DISTANCE_FILTER_M = 5; // Min meters between updates
 
 // Standard distances for personal bests (in meters)
+// Ordered short → long for display
 export const STANDARD_DISTANCES = {
+  '100m': 100,
+  '200m': 200,
+  '400m': 400,
+  '800m': 800,
   '1K': 1_000,
+  '1 Mile': 1_609,
+  '2 Mile': 3_219,
   '5K': 5_000,
   '10K': 10_000,
   'Half Marathon': 21_097,

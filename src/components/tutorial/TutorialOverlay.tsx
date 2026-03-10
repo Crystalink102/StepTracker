@@ -57,6 +57,14 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     route: '/(tabs)/leaderboard',
   },
   {
+    icon: 'analytics',
+    title: 'Your Stats',
+    description:
+      'Dive deep into your lifetime stats, personal bests across all distances, pace trends, and activity breakdowns. Track your progress over time.',
+    tabLabel: 'Stats',
+    route: '/(tabs)/stats',
+  },
+  {
     icon: 'person-circle',
     title: 'Your Profile',
     description:

@@ -1,19 +1,17 @@
 import { searchUsers, getAllUsers, sendFriendRequest } from '../social.service';
 
 // Mock supabase
-const mockRpc = jest.fn();
+const mockNeq = jest.fn();
+const mockOr = jest.fn();
+const mockOrder = jest.fn();
+const mockLimit = jest.fn();
 const mockFrom = jest.fn();
 const mockInsert = jest.fn();
 const mockSelect = jest.fn();
 const mockSingle = jest.fn();
-const mockNot = jest.fn();
-const mockOr = jest.fn();
-const mockOrder = jest.fn();
-const mockLimit = jest.fn();
 
 jest.mock('../supabase', () => ({
   supabase: {
-    rpc: (...args: any[]) => mockRpc(...args),
     from: (...args: any[]) => mockFrom(...args),
   },
 }));
@@ -24,76 +22,80 @@ const mockUsers = [
   { id: 'user-3', username: 'charlie', display_name: null, avatar_url: null },
 ];
 
-beforeEach(() => {
-  jest.clearAllMocks();
-
-  // Default: RPC succeeds
-  mockRpc.mockResolvedValue({ data: mockUsers, error: null });
-
-  // Chain for fallback queries
-  mockLimit.mockResolvedValue({ data: mockUsers, error: null });
+function setupQueryChain(data: any[] | null, error: any = null) {
+  mockLimit.mockResolvedValue({ data, error });
   mockOrder.mockReturnValue({ limit: mockLimit });
-  mockOr.mockReturnValue({ order: mockOrder });
-  mockNot.mockReturnValue({ or: mockOr, order: mockOrder });
+  mockOr.mockReturnValue({ limit: mockLimit });
+  mockNeq.mockReturnValue({ or: mockOr, order: mockOrder });
   mockFrom.mockReturnValue({
-    select: () => ({ not: mockNot }),
+    select: () => ({ neq: mockNeq }),
     insert: mockInsert,
   });
   mockInsert.mockReturnValue({ select: mockSelect });
   mockSelect.mockReturnValue({ single: mockSingle });
+}
+
+beforeEach(() => {
+  jest.clearAllMocks();
+  setupQueryChain(mockUsers);
 });
 
 describe('searchUsers', () => {
-  it('calls RPC with search query', async () => {
-    const results = await searchUsers('alice');
-    expect(mockRpc).toHaveBeenCalledWith('search_users', { search_query: 'alice' });
-    expect(results).toEqual(mockUsers);
+  it('queries profiles with ilike filter', async () => {
+    const results = await searchUsers('alice', 'current-user');
+    expect(mockFrom).toHaveBeenCalledWith('profiles');
+    expect(mockOr).toHaveBeenCalled();
+    const orArg = mockOr.mock.calls[0][0];
+    expect(orArg).toContain('alice');
+    // Should filter out users without username or display_name
+    expect(results.length).toBeGreaterThan(0);
   });
 
-  it('returns empty array when RPC returns null data', async () => {
-    mockRpc.mockResolvedValue({ data: null, error: null });
-    const results = await searchUsers('test');
+  it('falls back to getAllUsers for empty query', async () => {
+    const results = await searchUsers('', 'current-user');
+    expect(mockFrom).toHaveBeenCalledWith('profiles');
+    expect(results).toBeDefined();
+  });
+
+  it('returns empty array on error', async () => {
+    setupQueryChain(null, { message: 'test error' });
+    const results = await searchUsers('test', 'current-user');
     expect(results).toEqual([]);
   });
 
-  it('falls back to client-side search when RPC fails', async () => {
-    mockRpc.mockResolvedValue({ data: null, error: { message: 'function not found' } });
-    const results = await searchUsers('alice', 'current-user-id');
-    expect(mockFrom).toHaveBeenCalledWith('profiles');
-    expect(results).toEqual(mockUsers);
-  });
-
-  it('filters out current user in fallback mode', async () => {
-    mockRpc.mockResolvedValue({ data: null, error: { message: 'fail' } });
-    mockLimit.mockResolvedValue({ data: mockUsers, error: null });
-    const results = await searchUsers('alice', 'user-1');
-    expect(results).toEqual(mockUsers.filter(u => u.id !== 'user-1'));
-  });
-
-  it('sanitizes special characters in fallback query', async () => {
-    mockRpc.mockResolvedValue({ data: null, error: { message: 'fail' } });
-    mockLimit.mockResolvedValue({ data: [], error: null });
-    await searchUsers('test,injection.()', 'me');
-    // Should have called or() with sanitized query
+  it('sanitizes special characters including underscore', async () => {
+    await searchUsers('test_injection.()', 'me');
     expect(mockOr).toHaveBeenCalled();
     const orArg = mockOr.mock.calls[0][0];
-    expect(orArg).not.toContain(',injection');
+    expect(orArg).not.toContain('_');
+    expect(orArg).not.toContain('(');
     expect(orArg).toContain('testinjection');
+  });
+
+  it('filters out users without username or display_name', async () => {
+    setupQueryChain([
+      { id: 'u1', username: null, display_name: null, avatar_url: null },
+      { id: 'u2', username: 'valid', display_name: null, avatar_url: null },
+    ]);
+    const results = await searchUsers('v', 'me');
+    expect(results.length).toBe(1);
+    expect(results[0].username).toBe('valid');
   });
 });
 
 describe('getAllUsers', () => {
-  it('calls RPC with empty query', async () => {
+  it('queries profiles excluding current user', async () => {
     const results = await getAllUsers('current-user');
-    expect(mockRpc).toHaveBeenCalledWith('search_users', { search_query: '' });
-    expect(results).toEqual(mockUsers);
+    expect(mockFrom).toHaveBeenCalledWith('profiles');
+    expect(mockNeq).toHaveBeenCalledWith('id', 'current-user');
+    // Filters out charlie (no display_name but has username)
+    expect(results.length).toBe(3);
   });
 
-  it('falls back when RPC fails', async () => {
-    mockRpc.mockResolvedValue({ data: null, error: { message: 'fail' } });
-    mockLimit.mockResolvedValue({ data: mockUsers, error: null });
+  it('returns empty array on error', async () => {
+    setupQueryChain(null, { message: 'fail' });
     const results = await getAllUsers('user-1');
-    expect(results).toEqual(mockUsers.filter(u => u.id !== 'user-1'));
+    expect(results).toEqual([]);
   });
 });
 

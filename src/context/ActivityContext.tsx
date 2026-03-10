@@ -108,9 +108,8 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         if (!location?.coords) return;
 
         // Skip low-accuracy GPS readings
-        // Relaxed thresholds: GPS accuracy varies widely by device, environment, and runtime
-        // (Expo Go is less precise than standalone builds, indoors worse than outdoors)
-        const maxAccuracy = Platform.OS === 'web' ? 100 : 50;
+        // Tighter native threshold for better distance accuracy
+        const maxAccuracy = Platform.OS === 'web' ? 100 : 30;
         if (location.coords.accuracy != null && location.coords.accuracy > maxAccuracy) return;
 
         const wp: Waypoint = {
@@ -140,14 +139,20 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
             wp.longitude
           );
 
-          // Velocity check: reject teleport-like jumps (>12 m/s = 43 km/h)
+          // Velocity check: reject teleport-like jumps
           const timeDelta =
             (new Date(wp.timestamp).getTime() -
               new Date(last.timestamp).getTime()) /
             1000;
           const velocity = timeDelta > 0 ? dist / timeDelta : 0;
 
-          if (isPlausibleGPSMove(dist) && velocity <= 12 && isFinite(dist)) {
+          // Max velocity: 12 m/s (43 km/h) for running, reject anything above
+          // Also use speed from GPS sensor for smarter standstill filtering
+          if (
+            isPlausibleGPSMove(dist, location.coords.speed) &&
+            velocity <= 12 &&
+            isFinite(dist)
+          ) {
             setDistanceMeters((d) => d + dist);
           }
         }

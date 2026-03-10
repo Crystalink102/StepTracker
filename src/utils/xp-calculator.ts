@@ -9,7 +9,7 @@ import {
 
 /**
  * XP required to reach a given level.
- * Formula: XP = 100 * level^1.68
+ * Formula: XP = 50 * level^1.68
  */
 export function xpForLevel(level: number): number {
   return Math.round(XP_BASE * Math.pow(level, XP_POWER));

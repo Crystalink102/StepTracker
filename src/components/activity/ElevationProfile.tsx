@@ -1,6 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { ActivityWaypoint } from '@/src/types/database';
-import { haversineDistance } from '@/src/utils/geo';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 type ElevationStats = {

@@ -34,7 +34,7 @@ export async function getAllUsers(currentUserId?: string): Promise<UserSearchRes
 export async function searchUsers(query: string, currentUserId?: string): Promise<UserSearchResult[]> {
   if (!query.trim()) return getAllUsers(currentUserId);
 
-  const sanitized = query.trim().replace(/[,.()"'\\%]/g, '');
+  const sanitized = query.trim().replace(/[,.()"'\\%_]/g, '');
   if (!sanitized) return getAllUsers(currentUserId);
 
   const { data, error } = await supabase
