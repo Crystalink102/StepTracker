@@ -1,10 +1,11 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import Card from '@/src/components/ui/Card';
 import { useAuth } from '@/src/context/AuthContext';
 import { getStepHistory } from '@/src/services/step.service';
 import { getActivityHistory } from '@/src/services/activity.service';
-import { formatNumber } from '@/src/utils/formatters';
+import { formatNumber, formatDistanceShort } from '@/src/utils/formatters';
+import { usePreferences } from '@/src/context/PreferencesContext';
 import {
   Colors,
   FontSize,
@@ -52,6 +53,7 @@ function calcPercentChange(current: number, previous: number): number | null {
 
 export default function WeeklySummaryCard() {
   const { user } = useAuth();
+  const { preferences } = usePreferences();
   const [thisWeek, setThisWeek] = useState<WeekData | null>(null);
   const [lastWeek, setLastWeek] = useState<WeekData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -149,7 +151,7 @@ export default function WeeklySummaryCard() {
     },
     {
       label: 'Distance',
-      current: `${(thisWeek.distance / 1000).toFixed(1)} km`,
+      current: formatDistanceShort(thisWeek.distance, preferences.distanceUnit),
       pct: calcPercentChange(thisWeek.distance, lastWeek.distance),
     },
     {

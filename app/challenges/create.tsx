@@ -13,6 +13,9 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useChallenges } from '@/src/hooks/useChallenges';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
+import { usePreferences } from '@/src/context/PreferencesContext';
+import { formatDistance } from '@/src/utils/formatters';
 import type { Challenge } from '@/src/types/database';
 
 // ─── Options ────────────────────────────────────────────────────────
@@ -36,12 +39,12 @@ const DEFAULT_TARGETS: Record<string, number> = {
   activities: 5,
 };
 
-function formatTargetPreview(type: string, value: number): string {
+function formatTargetPreview(type: string, value: number, distanceFmt: (m: number) => string): string {
   switch (type) {
     case 'steps':
       return `${value.toLocaleString()} steps`;
     case 'distance':
-      return `${(value / 1000).toFixed(1)} km`;
+      return distanceFmt(value);
     case 'duration': {
       const hrs = Math.floor(value / 3600);
       const mins = Math.round((value % 3600) / 60);
@@ -67,6 +70,9 @@ function getTargetPlaceholder(type: string): string {
 export default function CreateChallengeScreen() {
   const router = useRouter();
   const { create } = useChallenges();
+  const { colors } = useTheme();
+  const { preferences } = usePreferences();
+  const distanceFmt = (m: number) => formatDistance(m, preferences.distanceUnit);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -112,41 +118,41 @@ export default function CreateChallengeScreen() {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
     >
       {/* Title */}
-      <Text style={styles.label}>Title</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>Title</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border }]}
         value={title}
         onChangeText={setTitle}
         placeholder="Walk 50k steps this week"
-        placeholderTextColor={Colors.textMuted}
+        placeholderTextColor={colors.textMuted}
         maxLength={60}
       />
 
       {/* Description */}
-      <Text style={styles.label}>Description (optional)</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>Description (optional)</Text>
       <TextInput
-        style={[styles.input, styles.multilineInput]}
+        style={[styles.input, styles.multilineInput, { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border }]}
         value={description}
         onChangeText={setDescription}
         placeholder="Any extra details about the challenge..."
-        placeholderTextColor={Colors.textMuted}
+        placeholderTextColor={colors.textMuted}
         multiline
         maxLength={200}
       />
 
       {/* Type picker */}
-      <Text style={styles.label}>Type</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>Type</Text>
       <View style={styles.row}>
         {CHALLENGE_TYPES.map((t) => (
           <TouchableOpacity
             key={t.value}
-            style={[styles.chip, type === t.value && styles.chipActive]}
+            style={[styles.chip, { backgroundColor: colors.surface, borderColor: colors.border }, type === t.value && styles.chipActive]}
             onPress={() => {
               setType(t.value);
               setTargetStr(DEFAULT_TARGETS[t.value].toString());
@@ -155,11 +161,12 @@ export default function CreateChallengeScreen() {
             <Ionicons
               name={t.icon as any}
               size={16}
-              color={type === t.value ? Colors.white : Colors.textSecondary}
+              color={type === t.value ? Colors.white : colors.textSecondary}
             />
             <Text
               style={[
                 styles.chipText,
+                { color: colors.textSecondary },
                 type === t.value && styles.chipTextActive,
               ]}
             >
@@ -170,28 +177,29 @@ export default function CreateChallengeScreen() {
       </View>
 
       {/* Target */}
-      <Text style={styles.label}>Target</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>Target</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border }]}
         value={targetStr}
         onChangeText={setTargetStr}
         placeholder={getTargetPlaceholder(type)}
-        placeholderTextColor={Colors.textMuted}
+        placeholderTextColor={colors.textMuted}
         keyboardType="number-pad"
       />
 
       {/* Duration */}
-      <Text style={styles.label}>Duration</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>Duration</Text>
       <View style={styles.row}>
         {DURATIONS.map((d) => (
           <TouchableOpacity
             key={d.days}
-            style={[styles.chip, durationDays === d.days && styles.chipActive]}
+            style={[styles.chip, { backgroundColor: colors.surface, borderColor: colors.border }, durationDays === d.days && styles.chipActive]}
             onPress={() => setDurationDays(d.days)}
           >
             <Text
               style={[
                 styles.chipText,
+                { color: colors.textSecondary },
                 durationDays === d.days && styles.chipTextActive,
               ]}
             >
@@ -202,10 +210,10 @@ export default function CreateChallengeScreen() {
       </View>
 
       {/* Preview card */}
-      <Text style={[styles.label, { marginTop: Spacing.xl }]}>Preview</Text>
-      <View style={styles.previewCard}>
+      <Text style={[styles.label, { color: colors.textSecondary, marginTop: Spacing.xl }]}>Preview</Text>
+      <View style={[styles.previewCard, { backgroundColor: colors.surface, borderColor: colors.border }]}>
         <View style={styles.previewHeader}>
-          <View style={styles.previewTypeTag}>
+          <View style={[styles.previewTypeTag, { backgroundColor: colors.surfaceLight }]}>
             <Ionicons
               name={CHALLENGE_TYPES.find((t) => t.value === type)?.icon as any ?? 'help-circle'}
               size={14}
@@ -215,14 +223,14 @@ export default function CreateChallengeScreen() {
               {CHALLENGE_TYPES.find((t) => t.value === type)?.label}
             </Text>
           </View>
-          <Text style={styles.previewDays}>{durationDays}d</Text>
+          <Text style={[styles.previewDays, { color: colors.textMuted }]}>{durationDays}d</Text>
         </View>
-        <Text style={styles.previewTitle}>{title || 'Your Challenge Title'}</Text>
-        <Text style={styles.previewTarget}>
-          Goal: {formatTargetPreview(type, targetValue)}
+        <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>{title || 'Your Challenge Title'}</Text>
+        <Text style={[styles.previewTarget, { color: colors.textSecondary }]}>
+          Goal: {formatTargetPreview(type, targetValue, distanceFmt)}
         </Text>
         {description ? (
-          <Text style={styles.previewDesc} numberOfLines={2}>
+          <Text style={[styles.previewDesc, { color: colors.textMuted }]} numberOfLines={2}>
             {description}
           </Text>
         ) : null}

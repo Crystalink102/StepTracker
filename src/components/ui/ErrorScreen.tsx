@@ -2,6 +2,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import Button from './Button';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type ErrorScreenProps = {
   error: Error;
@@ -10,12 +11,13 @@ type ErrorScreenProps = {
 
 export default function ErrorScreen({ error, retry }: ErrorScreenProps) {
   const router = useRouter();
+  const { colors } = useTheme();
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.icon}>!</Text>
-      <Text style={styles.title}>Something went wrong</Text>
-      <Text style={styles.message}>{error.message}</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.icon, { backgroundColor: colors.surface }]}>!</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>Something went wrong</Text>
+      <Text style={[styles.message, { color: colors.textSecondary }]}>{error.message}</Text>
       <View style={styles.actions}>
         <Button title="Try Again" onPress={retry} />
         <Button

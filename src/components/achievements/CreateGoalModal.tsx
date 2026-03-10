@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 import { Button, Input } from '@/src/components/ui';
+import DateScrollPicker from '@/src/components/ui/DateScrollPicker';
 import type { CustomGoal } from '@/src/services/custom-goals.service';
 
 type GoalType = CustomGoal['type'];
@@ -51,7 +52,7 @@ export default function CreateGoalModal({ visible, onClose, onSave }: CreateGoal
       newErrors.target = 'Enter a valid positive number';
     }
     if (deadline && !/^\d{4}-\d{2}-\d{2}$/.test(deadline)) {
-      newErrors.deadline = 'Use YYYY-MM-DD format';
+      newErrors.deadline = 'Invalid date';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -129,12 +130,15 @@ export default function CreateGoalModal({ visible, onClose, onSave }: CreateGoal
               containerStyle={styles.field}
             />
 
-            <Input
-              label="DEADLINE (OPTIONAL)"
-              placeholder="YYYY-MM-DD"
+            <DateScrollPicker
+              label="Deadline (Optional)"
               value={deadline}
-              onChangeText={setDeadline}
+              onValueChange={setDeadline}
+              minYear={new Date().getFullYear()}
+              maxYear={new Date().getFullYear() + 10}
+              placeholder="Select a deadline"
               error={errors.deadline}
+              clearable
               containerStyle={styles.field}
             />
 

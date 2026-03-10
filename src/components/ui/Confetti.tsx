@@ -78,7 +78,7 @@ export default function Confetti({ visible, onComplete }: ConfettiProps) {
     Animated.stagger(30, animations).start(() => {
       onComplete?.();
     });
-  }, [visible]);
+  }, [visible, onComplete]);
 
   if (!visible) return null;
 

@@ -1,10 +1,12 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 export default function OfflineBanner() {
+  const { colors } = useTheme();
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>
+    <View style={[styles.container, { backgroundColor: Colors.warning }]}>
+      <Text style={[styles.text, { color: colors.black }]}>
         You're offline. Changes will sync when you reconnect.
       </Text>
     </View>

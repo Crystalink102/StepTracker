@@ -51,7 +51,7 @@ export default function AchievementPopup({ achievement, onDismiss }: Achievement
       );
       playAchievement(preferences.hapticFeedback);
     }
-  }, [achievement]);
+  }, [achievement, scale, preferences.hapticFeedback]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],

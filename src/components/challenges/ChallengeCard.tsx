@@ -2,6 +2,8 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { usePreferences } from '@/src/context/PreferencesContext';
+import { formatDistance } from '@/src/utils/formatters';
 import type { ChallengeWithParticipants } from '@/src/services/challenge.service';
 
 type Props = {
@@ -31,12 +33,12 @@ function getDaysRemaining(endDate: string): number {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
-function formatTarget(type: string, value: number): string {
+function formatTarget(type: string, value: number, distanceFmt: (m: number) => string): string {
   switch (type) {
     case 'steps':
       return `${value.toLocaleString()} steps`;
     case 'distance':
-      return `${(value / 1000).toFixed(1)} km`;
+      return distanceFmt(value);
     case 'duration':
       return `${Math.round(value / 60)} min`;
     case 'activities':
@@ -48,6 +50,8 @@ function formatTarget(type: string, value: number): string {
 
 export default function ChallengeCard({ challenge, variant = 'active', onJoin }: Props) {
   const router = useRouter();
+  const { preferences } = usePreferences();
+  const distanceFmt = (m: number) => formatDistance(m, preferences.distanceUnit);
   const daysLeft = getDaysRemaining(challenge.end_date);
   const progress = variant === 'active' && challenge.my_progress != null
     ? Math.min(challenge.my_progress / challenge.target_value, 1)
@@ -82,7 +86,7 @@ export default function ChallengeCard({ challenge, variant = 'active', onJoin }:
 
       {/* Target */}
       <Text style={styles.target}>
-        Goal: {formatTarget(challenge.type, challenge.target_value)}
+        Goal: {formatTarget(challenge.type, challenge.target_value, distanceFmt)}
       </Text>
 
       {/* Progress bar (active only) */}

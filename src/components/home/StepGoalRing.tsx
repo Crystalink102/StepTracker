@@ -36,7 +36,7 @@ export default function StepGoalRing() {
     if (!isGoalHit) {
       hasCelebratedRef.current = false;
     }
-  }, [isGoalHit]);
+  }, [isGoalHit, celebrate, preferences.hapticFeedback]);
 
   return (
     <View

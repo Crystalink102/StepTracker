@@ -1,6 +1,8 @@
 import { useRef, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, Platform, Animated, Easing } from 'react-native';
 import { Colors, BorderRadius, Spacing, FontSize, FontWeight } from '@/src/constants/theme';
+import { usePreferences } from '@/src/context/PreferencesContext';
+import { formatDistance as fmtDist, formatPace as fmtPace, paceUnitLabel } from '@/src/utils/formatters';
 
 // react-native-maps doesn't support web
 let MapView: any = null;
@@ -58,18 +60,10 @@ const DARK_MAP_STYLE = [
   },
 ];
 
-/** Format distance for display */
-function formatDistance(meters: number): string {
-  if (meters < 1000) return `${Math.round(meters)}m`;
-  return `${(meters / 1000).toFixed(2)} km`;
-}
-
-/** Format pace (sec/km) for display */
-function formatPace(secPerKm: number): string {
+/** Local pace formatting that handles invalid values */
+function safePace(secPerKm: number, unit: 'km' | 'mi' | 'm'): string {
   if (secPerKm <= 0 || !isFinite(secPerKm)) return '--:--';
-  const mins = Math.floor(secPerKm / 60);
-  const secs = Math.round(secPerKm % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
+  return fmtPace(secPerKm, unit);
 }
 
 /** Pulsing blue dot for current position (native only) */
@@ -113,6 +107,8 @@ function PulsingDot() {
 /** Web fallback: show a simple coordinate list + stats */
 function WebFallback({ waypoints, distanceMeters, currentPaceSecPerKm }: Omit<LiveRouteMapProps, 'isActive'>) {
   const lastCoord = waypoints.length > 0 ? waypoints[waypoints.length - 1] : null;
+  const { preferences } = usePreferences();
+  const unit = preferences.distanceUnit;
 
   return (
     <View style={styles.container}>
@@ -122,13 +118,13 @@ function WebFallback({ waypoints, distanceMeters, currentPaceSecPerKm }: Omit<Li
 
         <View style={styles.webStatsRow}>
           <View style={styles.webStat}>
-            <Text style={styles.webStatValue}>{formatDistance(distanceMeters)}</Text>
+            <Text style={styles.webStatValue}>{fmtDist(distanceMeters, unit)}</Text>
             <Text style={styles.webStatLabel}>Distance</Text>
           </View>
           <View style={styles.webStatDivider} />
           <View style={styles.webStat}>
-            <Text style={styles.webStatValue}>{formatPace(currentPaceSecPerKm)}</Text>
-            <Text style={styles.webStatLabel}>Pace /km</Text>
+            <Text style={styles.webStatValue}>{safePace(currentPaceSecPerKm, unit)}</Text>
+            <Text style={styles.webStatLabel}>Pace {paceUnitLabel(unit)}</Text>
           </View>
         </View>
 
@@ -149,6 +145,8 @@ export default function LiveRouteMap({
   distanceMeters,
   currentPaceSecPerKm,
 }: LiveRouteMapProps) {
+  const { preferences } = usePreferences();
+  const unit = preferences.distanceUnit;
   const mapRef = useRef<any>(null);
   const lastAnimateRef = useRef(0);
 
@@ -265,13 +263,13 @@ export default function LiveRouteMap({
       {/* Distance & pace overlay */}
       <View style={styles.overlay}>
         <View style={styles.overlayStat}>
-          <Text style={styles.overlayValue}>{formatDistance(distanceMeters)}</Text>
+          <Text style={styles.overlayValue}>{fmtDist(distanceMeters, unit)}</Text>
           <Text style={styles.overlayLabel}>dist</Text>
         </View>
         <View style={styles.overlayDivider} />
         <View style={styles.overlayStat}>
-          <Text style={styles.overlayValue}>{formatPace(currentPaceSecPerKm)}</Text>
-          <Text style={styles.overlayLabel}>/km</Text>
+          <Text style={styles.overlayValue}>{safePace(currentPaceSecPerKm, unit)}</Text>
+          <Text style={styles.overlayLabel}>{paceUnitLabel(unit)}</Text>
         </View>
       </View>
     </View>

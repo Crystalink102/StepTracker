@@ -4,9 +4,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useChallenges } from '@/src/hooks/useChallenges';
 import ChallengeCard from '@/src/components/challenges/ChallengeCard';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 export default function ChallengesScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { activeChallenges, availableChallenges, isLoading, join, refresh } = useChallenges();
 
   const handleJoin = async (challengeId: string) => {
@@ -14,7 +16,7 @@ export default function ChallengesScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
@@ -29,12 +31,12 @@ export default function ChallengesScreen() {
       >
         {/* Your Challenges */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your Challenges</Text>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Your Challenges</Text>
           {!isLoading && activeChallenges.length === 0 && (
             <View style={styles.empty}>
-              <Ionicons name="flag-outline" size={40} color={Colors.textMuted} />
-              <Text style={styles.emptyText}>No active challenges</Text>
-              <Text style={styles.emptySubtext}>
+              <Ionicons name="flag-outline" size={40} color={colors.textMuted} />
+              <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No active challenges</Text>
+              <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>
                 Create one or join a friend's challenge
               </Text>
             </View>
@@ -47,7 +49,7 @@ export default function ChallengesScreen() {
         {/* Available Challenges */}
         {availableChallenges.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Available from Friends</Text>
+            <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Available from Friends</Text>
             {availableChallenges.map((c) => (
               <ChallengeCard
                 key={c.id}

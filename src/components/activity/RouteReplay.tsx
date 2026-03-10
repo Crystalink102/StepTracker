@@ -121,7 +121,7 @@ export default function RouteReplay({
         intervalMs * 0.8
       );
     }
-  }, [currentIndex, isReplaying]);
+  }, [currentIndex, isReplaying, coords, intervalMs]);
 
   const progress = totalPoints > 1 ? currentIndex / (totalPoints - 1) : 0;
   const drawnCoords = coords.slice(0, currentIndex + 1);

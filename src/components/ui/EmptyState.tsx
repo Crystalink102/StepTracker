@@ -2,6 +2,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type EmptyStateProps = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -14,6 +15,7 @@ type EmptyStateProps = {
 };
 
 export default function EmptyState({ icon, title, subtitle, action }: EmptyStateProps) {
+  const { colors } = useTheme();
   return (
     <View
       style={styles.container}
@@ -21,9 +23,9 @@ export default function EmptyState({ icon, title, subtitle, action }: EmptyState
       accessibilityRole="summary"
       accessibilityLabel={subtitle ? `${title}. ${subtitle}` : title}
     >
-      <Ionicons name={icon} size={64} color={Colors.textMuted} accessibilityElementsHidden />
-      <Text style={styles.title}>{title}</Text>
-      {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+      <Ionicons name={icon} size={64} color={colors.textMuted} accessibilityElementsHidden />
+      <Text style={[styles.title, { color: colors.textSecondary }]}>{title}</Text>
+      {subtitle && <Text style={[styles.subtitle, { color: colors.textMuted }]}>{subtitle}</Text>}
       {action && (
         <Button
           title={action.label}

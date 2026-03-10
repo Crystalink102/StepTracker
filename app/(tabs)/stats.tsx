@@ -329,9 +329,7 @@ export default function StatsScreen() {
                         {label}
                       </Text>
                       <Text style={[styles.pbDistanceMeters, { color: colors.textMuted }]}>
-                        {distanceM >= 1000
-                          ? `${(distanceM / 1000).toFixed(distanceM % 1000 === 0 ? 0 : 1)} km`
-                          : `${distanceM}m`}
+                        {formatDistance(distanceM, unit)}
                       </Text>
                     </View>
                   </View>

@@ -1,10 +1,10 @@
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
 import { useNotificationCenter } from '@/src/hooks/useNotificationCenter';
 import { AppNotification } from '@/src/types/database';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 const NOTIFICATION_ICONS: Record<AppNotification['type'], keyof typeof Ionicons.glyphMap> = {
   achievement: 'star',
@@ -64,12 +64,13 @@ function NotificationRow({
   item: AppNotification;
   onPress: () => void;
 }) {
+  const { colors } = useTheme();
   const iconName = NOTIFICATION_ICONS[item.type] || 'notifications';
-  const iconColor = NOTIFICATION_COLORS[item.type] || Colors.textSecondary;
+  const iconColor = NOTIFICATION_COLORS[item.type] || colors.textSecondary;
 
   return (
     <TouchableOpacity
-      style={[styles.row, !item.read && styles.rowUnread]}
+      style={[styles.row, !item.read && { backgroundColor: colors.surfaceLight }]}
       onPress={onPress}
       activeOpacity={0.7}
     >
@@ -77,13 +78,13 @@ function NotificationRow({
         <Ionicons name={iconName} size={20} color={iconColor} />
       </View>
       <View style={styles.rowContent}>
-        <Text style={styles.rowTitle} numberOfLines={1}>
+        <Text style={[styles.rowTitle, { color: colors.textPrimary }]} numberOfLines={1}>
           {item.title}
         </Text>
-        <Text style={styles.rowBody} numberOfLines={2}>
+        <Text style={[styles.rowBody, { color: colors.textSecondary }]} numberOfLines={2}>
           {item.body}
         </Text>
-        <Text style={styles.rowTime}>{formatTimeAgo(item.created_at)}</Text>
+        <Text style={[styles.rowTime, { color: colors.textMuted }]}>{formatTimeAgo(item.created_at)}</Text>
       </View>
       {!item.read && <View style={styles.unreadDot} />}
     </TouchableOpacity>
@@ -93,6 +94,7 @@ function NotificationRow({
 export default function NotificationsScreen() {
   const { notifications, markRead, markAllRead, unreadCount } = useNotificationCenter();
   const router = useRouter();
+  const { colors } = useTheme();
 
   const handlePress = (item: AppNotification) => {
     markRead(item.id);
@@ -108,8 +110,8 @@ export default function NotificationsScreen() {
         options={{
           headerShown: true,
           title: 'Notifications',
-          headerStyle: { backgroundColor: Colors.background },
-          headerTintColor: Colors.textPrimary,
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.textPrimary,
           headerRight: () =>
             unreadCount > 0 ? (
               <TouchableOpacity onPress={markAllRead} style={styles.headerButton}>
@@ -118,12 +120,12 @@ export default function NotificationsScreen() {
             ) : null,
         }}
       />
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         {notifications.length === 0 ? (
           <View style={styles.emptyState}>
-            <Ionicons name="notifications-off-outline" size={48} color={Colors.textMuted} />
-            <Text style={styles.emptyTitle}>No notifications</Text>
-            <Text style={styles.emptyBody}>
+            <Ionicons name="notifications-off-outline" size={48} color={colors.textMuted} />
+            <Text style={[styles.emptyTitle, { color: colors.textPrimary }]}>No notifications</Text>
+            <Text style={[styles.emptyBody, { color: colors.textMuted }]}>
               You're all caught up! Notifications for achievements, streaks, and more will appear here.
             </Text>
           </View>

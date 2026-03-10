@@ -16,6 +16,9 @@ import * as ChallengeService from '@/src/services/challenge.service';
 import type { ChallengeDetailParticipant } from '@/src/services/challenge.service';
 import type { Challenge } from '@/src/types/database';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
+import { usePreferences } from '@/src/context/PreferencesContext';
+import { formatDistance } from '@/src/utils/formatters';
 
 const TYPE_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   steps: 'footsteps',
@@ -38,12 +41,12 @@ function getDaysRemaining(endDate: string): number {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
-function formatTarget(type: string, value: number): string {
+function formatTarget(type: string, value: number, distanceFmt: (m: number) => string): string {
   switch (type) {
     case 'steps':
       return `${value.toLocaleString()} steps`;
     case 'distance':
-      return `${(value / 1000).toFixed(1)} km`;
+      return distanceFmt(value);
     case 'duration': {
       const hrs = Math.floor(value / 3600);
       const mins = Math.round((value % 3600) / 60);
@@ -56,12 +59,12 @@ function formatTarget(type: string, value: number): string {
   }
 }
 
-function formatProgress(type: string, value: number): string {
+function formatProgress(type: string, value: number, distanceFmt: (m: number) => string): string {
   switch (type) {
     case 'steps':
       return value.toLocaleString();
     case 'distance':
-      return `${(value / 1000).toFixed(1)} km`;
+      return distanceFmt(value);
     case 'duration': {
       const hrs = Math.floor(value / 3600);
       const mins = Math.round((value % 3600) / 60);
@@ -78,6 +81,9 @@ export default function ChallengeDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { user } = useAuth();
   const router = useRouter();
+  const { colors } = useTheme();
+  const { preferences } = usePreferences();
+  const distanceFmt = (m: number) => formatDistance(m, preferences.distanceUnit);
 
   const [challenge, setChallenge] = useState<Challenge | null>(null);
   const [participants, setParticipants] = useState<ChallengeDetailParticipant[]>([]);
@@ -123,7 +129,7 @@ export default function ChallengeDetailScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.container, styles.center]}>
+      <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
@@ -131,9 +137,9 @@ export default function ChallengeDetailScreen() {
 
   if (!challenge) {
     return (
-      <View style={[styles.container, styles.center]}>
-        <Ionicons name="alert-circle-outline" size={48} color={Colors.textMuted} />
-        <Text style={styles.errorText}>Challenge not found</Text>
+      <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
+        <Ionicons name="alert-circle-outline" size={48} color={colors.textMuted} />
+        <Text style={[styles.errorText, { color: colors.textSecondary }]}>Challenge not found</Text>
       </View>
     );
   }
@@ -151,7 +157,7 @@ export default function ChallengeDetailScreen() {
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
       refreshControl={
@@ -163,9 +169,9 @@ export default function ChallengeDetailScreen() {
       }
     >
       {/* Challenge info header */}
-      <View style={styles.infoCard}>
+      <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
         <View style={styles.infoHeader}>
-          <View style={styles.typeTag}>
+          <View style={[styles.typeTag, { backgroundColor: colors.surfaceLight }]}>
             <Ionicons
               name={TYPE_ICONS[challenge.type] ?? 'help-circle'}
               size={16}
@@ -179,41 +185,41 @@ export default function ChallengeDetailScreen() {
             <View
               style={[
                 styles.statusDot,
-                { backgroundColor: daysLeft > 0 ? '#22C55E' : Colors.textMuted },
+                { backgroundColor: daysLeft > 0 ? '#22C55E' : colors.textMuted },
               ]}
             />
-            <Text style={styles.statusText}>
+            <Text style={[styles.statusText, { color: colors.textSecondary }]}>
               {daysLeft > 0 ? `${daysLeft} days left` : 'Ended'}
             </Text>
           </View>
         </View>
 
-        <Text style={styles.challengeTitle}>{challenge.title}</Text>
+        <Text style={[styles.challengeTitle, { color: colors.textPrimary }]}>{challenge.title}</Text>
         {challenge.description ? (
-          <Text style={styles.description}>{challenge.description}</Text>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>{challenge.description}</Text>
         ) : null}
 
         <View style={styles.targetRow}>
           <Ionicons name="flag" size={16} color={Colors.primary} />
-          <Text style={styles.targetText}>
-            Target: {formatTarget(challenge.type, challenge.target_value)}
+          <Text style={[styles.targetText, { color: colors.textSecondary }]}>
+            Target: {formatTarget(challenge.type, challenge.target_value, distanceFmt)}
           </Text>
         </View>
       </View>
 
       {/* Your Progress */}
       {myParticipation && (
-        <View style={styles.myProgressCard}>
-          <Text style={styles.sectionTitle}>Your Progress</Text>
+        <View style={[styles.myProgressCard, { backgroundColor: colors.surface }]}>
+          <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Your Progress</Text>
           <View style={styles.myProgressRow}>
-            <Text style={styles.myProgressValue}>
-              {formatProgress(challenge.type, myProgress)}
+            <Text style={[styles.myProgressValue, { color: colors.textPrimary }]}>
+              {formatProgress(challenge.type, myProgress, distanceFmt)}
             </Text>
-            <Text style={styles.myProgressOf}>
-              / {formatTarget(challenge.type, challenge.target_value)}
+            <Text style={[styles.myProgressOf, { color: colors.textMuted }]}>
+              / {formatTarget(challenge.type, challenge.target_value, distanceFmt)}
             </Text>
           </View>
-          <View style={styles.bigProgressBar}>
+          <View style={[styles.bigProgressBar, { backgroundColor: colors.surfaceLight }]}>
             <View
               style={[
                 styles.bigProgressFill,
@@ -226,7 +232,7 @@ export default function ChallengeDetailScreen() {
               ]}
             />
           </View>
-          <Text style={styles.myProgressPct}>{myPct}% complete</Text>
+          <Text style={[styles.myProgressPct, { color: colors.textSecondary }]}>{myPct}% complete</Text>
           {myParticipation.completed && (
             <View style={styles.completedRow}>
               <Ionicons name="checkmark-circle" size={20} color={Colors.gold} />
@@ -237,8 +243,8 @@ export default function ChallengeDetailScreen() {
       )}
 
       {/* Leaderboard */}
-      <View style={styles.leaderboardSection}>
-        <Text style={styles.sectionTitle}>Leaderboard</Text>
+      <View style={[styles.leaderboardSection, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Leaderboard</Text>
         {sortedParticipants.map((p, idx) => {
           const pct = Math.min(
             Math.round((p.current_progress / challenge.target_value) * 100),
@@ -251,14 +257,15 @@ export default function ChallengeDetailScreen() {
           return (
             <View
               key={p.id}
-              style={[styles.leaderRow, isMe && styles.leaderRowMe]}
+              style={[styles.leaderRow, { borderBottomColor: colors.surfaceLight }, isMe && { backgroundColor: colors.surfaceLight }]}
             >
-              <Text style={styles.rank}>#{idx + 1}</Text>
+              <Text style={[styles.rank, { color: colors.textMuted }]}>#{idx + 1}</Text>
               <View style={styles.leaderInfo}>
                 <View style={styles.leaderNameRow}>
                   <Text
                     style={[
                       styles.leaderName,
+                      { color: colors.textPrimary },
                       isMe && styles.leaderNameMe,
                     ]}
                     numberOfLines={1}
@@ -274,7 +281,7 @@ export default function ChallengeDetailScreen() {
                     />
                   )}
                 </View>
-                <View style={styles.leaderProgressBar}>
+                <View style={[styles.leaderProgressBar, { backgroundColor: colors.background }]}>
                   <View
                     style={[
                       styles.leaderProgressFill,
@@ -288,15 +295,15 @@ export default function ChallengeDetailScreen() {
                   />
                 </View>
               </View>
-              <Text style={styles.leaderValue}>
-                {formatProgress(challenge.type, p.current_progress)}
+              <Text style={[styles.leaderValue, { color: colors.textSecondary }]}>
+                {formatProgress(challenge.type, p.current_progress, distanceFmt)}
               </Text>
             </View>
           );
         })}
 
         {sortedParticipants.length === 0 && (
-          <Text style={styles.emptyLeaderboard}>No participants yet</Text>
+          <Text style={[styles.emptyLeaderboard, { color: colors.textMuted }]}>No participants yet</Text>
         )}
       </View>
 

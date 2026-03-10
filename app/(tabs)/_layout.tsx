@@ -12,6 +12,7 @@ import ProfileSetupOverlay, {
 } from '@/src/components/tutorial/ProfileSetupOverlay';
 import { useProfile } from '@/src/hooks/useProfile';
 import { usePreferences } from '@/src/context/PreferencesContext';
+import { useTheme } from '@/src/context/ThemeContext';
 import { playButtonPress } from '@/src/utils/sounds';
 import { Colors } from '@/src/constants/theme';
 
@@ -89,6 +90,7 @@ export default function TabLayout() {
   const router = useRouter();
   const { profile } = useProfile();
   const { preferences } = usePreferences();
+  const { colors } = useTheme();
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
@@ -158,15 +160,15 @@ export default function TabLayout() {
         screenOptions={{
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: Colors.surface,
-            borderTopColor: Colors.border,
+            backgroundColor: colors.surface,
+            borderTopColor: colors.border,
             borderTopWidth: 0.5,
             height: 85,
             paddingBottom: 25,
             paddingTop: 8,
           },
           tabBarActiveTintColor: Colors.primary,
-          tabBarInactiveTintColor: Colors.textMuted,
+          tabBarInactiveTintColor: colors.textMuted,
           tabBarLabelStyle: {
             fontSize: 11,
             fontWeight: '600',

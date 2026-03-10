@@ -10,6 +10,7 @@ import { useAuth } from '@/src/context/AuthContext';
 import { useProfile } from '@/src/hooks/useProfile';
 import { useToast } from '@/src/hooks/useToast';
 import { Button, Input, ConfirmModal } from '@/src/components/ui';
+import DateScrollPicker from '@/src/components/ui/DateScrollPicker';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import * as ProfileService from '@/src/services/profile.service';
 import { Profile } from '@/src/types/database';
@@ -133,11 +134,14 @@ export default function PersonalInfoScreen() {
           placeholder={weightUnit === 'lb' ? '155' : '70'}
           keyboardType="decimal-pad"
         />
-        <Input
-          label="Date of Birth (YYYY-MM-DD)"
+        <DateScrollPicker
+          label="Date of Birth"
           value={dob}
-          onChangeText={setDob}
-          placeholder="2000-01-15"
+          onValueChange={setDob}
+          maxYear={new Date().getFullYear()}
+          minYear={1920}
+          placeholder="Select your birthday"
+          clearable
         />
       </View>
 

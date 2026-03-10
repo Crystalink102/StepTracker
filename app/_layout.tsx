@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Linking from 'expo-linking';
 import { AuthProvider, useAuth } from '@/src/context/AuthContext';
@@ -18,11 +18,23 @@ import { ThemeProvider, useTheme } from '@/src/context/ThemeContext';
 import { ToastProvider } from '@/src/context/ToastContext';
 import { NotificationCenterProvider } from '@/src/context/NotificationCenterContext';
 
-import { ErrorScreen } from '@/src/components/ui';
 import DownloadBanner from '@/src/components/DownloadBanner';
 
+// Root ErrorBoundary must NOT use useTheme() — it renders outside providers.
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
-  return <ErrorScreen error={error} retry={retry} />;
+  return (
+    <View style={{ flex: 1, backgroundColor: Colors.background, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <Text style={{ color: Colors.textPrimary, fontSize: 20, fontWeight: '700', marginBottom: 8 }}>
+        Something went wrong
+      </Text>
+      <Text style={{ color: Colors.textSecondary, fontSize: 14, textAlign: 'center', marginBottom: 24 }}>
+        {error.message}
+      </Text>
+      <View style={{ backgroundColor: Colors.primary, borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12 }}>
+        <Text onPress={retry} style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>Try Again</Text>
+      </View>
+    </View>
+  );
 }
 
 export const unstable_settings = {

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, DimensionValue, StyleSheet, ViewStyle } from 'react-native';
 import { Colors } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type SkeletonLoaderProps = {
   width: DimensionValue;
@@ -15,6 +16,7 @@ export default function SkeletonLoader({
   borderRadius = 8,
   style,
 }: SkeletonLoaderProps) {
+  const { colors } = useTheme();
   const opacity = useRef(new Animated.Value(0.4)).current;
 
   useEffect(() => {
@@ -45,6 +47,7 @@ export default function SkeletonLoader({
           height,
           borderRadius,
           opacity,
+          backgroundColor: colors.surfaceLight,
         },
         style,
       ]}

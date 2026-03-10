@@ -12,7 +12,8 @@ import { supabase } from '@/src/services/supabase';
 import { removeFriend } from '@/src/services/social.service';
 import { useAuth } from '@/src/context/AuthContext';
 import { Avatar, Badge, Button, Card, ConfirmModal } from '@/src/components/ui';
-import { formatNumber } from '@/src/utils/formatters';
+import { formatNumber, formatDistance } from '@/src/utils/formatters';
+import { usePreferences } from '@/src/context/PreferencesContext';
 import { formatDate, formatRelativeDate } from '@/src/utils/date-helpers';
 import {
   Colors,
@@ -40,6 +41,7 @@ export default function FriendProfileScreen() {
   const [stats, setStats] = useState<FriendStats | null>(null);
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
   const [friendshipId, setFriendshipId] = useState<string | null>(null);
+  const { preferences } = usePreferences();
   const [loading, setLoading] = useState(true);
   const [removing, setRemoving] = useState(false);
   const [confirmVisible, setConfirmVisible] = useState(false);
@@ -245,7 +247,7 @@ export default function FriendProfileScreen() {
               </View>
               <View style={styles.activityStats}>
                 <Text style={styles.activityDistance}>
-                  {(activity.distance_meters / 1000).toFixed(2)} km
+                  {formatDistance(activity.distance_meters, preferences.distanceUnit)}
                 </Text>
                 <Text style={styles.activityDuration}>
                   {Math.floor(activity.duration_seconds / 60)} min

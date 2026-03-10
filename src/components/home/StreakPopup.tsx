@@ -98,7 +98,7 @@ export default function StreakPopup({ visible, streak, onDismiss }: StreakPopupP
       );
       playAchievement(preferences.hapticFeedback);
     }
-  }, [visible]);
+  }, [visible, flameScale, preferences.hapticFeedback]);
 
   const flameAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: flameScale.value }],
