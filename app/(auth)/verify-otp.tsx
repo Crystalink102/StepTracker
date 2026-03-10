@@ -12,12 +12,14 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
 import { ConfirmModal } from '@/src/components/ui';
+import * as ProfileService from '@/src/services/profile.service';
+import { supabase } from '@/src/services/supabase';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 export default function VerifyOTPScreen() {
   const router = useRouter();
-  const { verifyOTP, resendConfirmation } = useAuth();
-  const params = useLocalSearchParams<{ type: 'sms' | 'email'; identifier: string }>();
+  const { verifyOTP, resendConfirmation, user } = useAuth();
+  const params = useLocalSearchParams<{ type: 'sms' | 'email'; identifier: string; username?: string }>();
 
   const [code, setCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -36,6 +38,17 @@ export default function VerifyOTPScreen() {
     setIsLoading(true);
     try {
       await verifyOTP(code, params.type, params.identifier);
+      // Save username if provided during signup
+      if (params.username) {
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            await ProfileService.updateProfile(session.user.id, { username: params.username });
+          }
+        } catch {
+          // Non-critical — user can set username later in profile setup
+        }
+      }
       // After OTP verification, send to MFA setup (required for all accounts)
       router.replace('/(auth)/setup-mfa');
     } catch (err: any) {

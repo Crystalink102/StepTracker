@@ -6,6 +6,9 @@ import TutorialOverlay, {
   hasTutorialCompleted,
   completeTutorial,
 } from '@/src/components/tutorial/TutorialOverlay';
+import ProfileSetupOverlay, {
+  hasProfileSetupCompleted,
+} from '@/src/components/tutorial/ProfileSetupOverlay';
 import { Colors } from '@/src/constants/theme';
 
 type TabIconProps = {
@@ -62,10 +65,18 @@ export default function TabLayout() {
   const router = useRouter();
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
+  const [showProfileSetup, setShowProfileSetup] = useState(false);
 
   useEffect(() => {
     hasTutorialCompleted().then((done) => {
-      if (!done) setShowTutorial(true);
+      if (!done) {
+        setShowTutorial(true);
+      } else {
+        // Tutorial already done — check if profile setup still needed
+        hasProfileSetupCompleted().then((setupDone) => {
+          if (!setupDone) setShowProfileSetup(true);
+        });
+      }
     });
   }, []);
 
@@ -78,22 +89,27 @@ export default function TabLayout() {
     }
   }, [showTutorial, tutorialStep, router]);
 
-  const handleNext = useCallback(() => {
-    if (tutorialStep >= TUTORIAL_STEPS.length - 1) {
-      completeTutorial().catch(() => {});
-      setShowTutorial(false);
-      // Navigate back to home after tutorial
-      router.replace('/(tabs)');
-    } else {
-      setTutorialStep((s) => s + 1);
-    }
-  }, [tutorialStep, router]);
-
-  const handleSkip = useCallback(() => {
+  const finishTutorialAndStartSetup = useCallback(() => {
     completeTutorial().catch(() => {});
     setShowTutorial(false);
     router.replace('/(tabs)');
+    // Check if profile setup is needed
+    hasProfileSetupCompleted().then((done) => {
+      if (!done) setShowProfileSetup(true);
+    });
   }, [router]);
+
+  const handleNext = useCallback(() => {
+    if (tutorialStep >= TUTORIAL_STEPS.length - 1) {
+      finishTutorialAndStartSetup();
+    } else {
+      setTutorialStep((s) => s + 1);
+    }
+  }, [tutorialStep, finishTutorialAndStartSetup]);
+
+  const handleSkip = useCallback(() => {
+    finishTutorialAndStartSetup();
+  }, [finishTutorialAndStartSetup]);
 
   return (
     <>
@@ -159,6 +175,12 @@ export default function TabLayout() {
           step={tutorialStep}
           onNext={handleNext}
           onSkip={handleSkip}
+        />
+      )}
+
+      {showProfileSetup && (
+        <ProfileSetupOverlay
+          onComplete={() => setShowProfileSetup(false)}
         />
       )}
     </>

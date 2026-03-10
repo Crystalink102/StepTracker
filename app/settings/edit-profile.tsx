@@ -127,7 +127,7 @@ export default function EditProfileScreen() {
         <Input
           label="Username"
           value={username}
-          onChangeText={setUsername}
+          onChangeText={(t) => setUsername(t.replace(/[^a-zA-Z0-9_]/g, ''))}
           placeholder="username"
           autoCapitalize="none"
         />

@@ -22,6 +22,7 @@ export default function SignUpScreen() {
   const [method, setMethod] = useState<'email' | 'phone'>('email');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -50,18 +51,19 @@ export default function SignUpScreen() {
 
     setIsLoading(true);
     try {
+      const usernameParam = username.trim().toLowerCase() || '';
       if (method === 'email') {
         await signUpEmail(email.trim(), password);
         router.replace({
           pathname: '/(auth)/verify-otp',
-          params: { type: 'email', identifier: email.trim() },
+          params: { type: 'email', identifier: email.trim(), username: usernameParam },
         });
       } else {
         const cleaned = phone.replace(/[\s-()]/g, '');
         await signUpPhone(cleaned, password);
         router.replace({
           pathname: '/(auth)/verify-otp',
-          params: { type: 'sms', identifier: cleaned },
+          params: { type: 'sms', identifier: cleaned, username: usernameParam },
         });
       }
     } catch (err: any) {
@@ -144,6 +146,19 @@ export default function SignUpScreen() {
               />
             </View>
           )}
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Username <Text style={styles.optionalLabel}>(optional)</Text></Text>
+            <TextInput
+              style={styles.input}
+              value={username}
+              onChangeText={(t) => setUsername(t.replace(/[^a-zA-Z0-9_]/g, ''))}
+              placeholder="e.g. calvinruns"
+              placeholderTextColor={Colors.textMuted}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Password</Text>
@@ -269,6 +284,12 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.medium,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  optionalLabel: {
+    color: Colors.textMuted,
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.regular,
+    textTransform: 'lowercase',
   },
   input: {
     backgroundColor: Colors.surface,
