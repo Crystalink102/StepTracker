@@ -221,7 +221,11 @@ export default function ProfileSetupOverlay({ onComplete }: Props) {
   };
 
   const finishSetup = async () => {
-    await completeProfileSetup();
+    try {
+      await completeProfileSetup();
+    } catch {
+      // Don't block the user if AsyncStorage fails
+    }
     onComplete();
   };
 

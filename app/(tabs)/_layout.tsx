@@ -8,7 +8,9 @@ import TutorialOverlay, {
 } from '@/src/components/tutorial/TutorialOverlay';
 import ProfileSetupOverlay, {
   hasProfileSetupCompleted,
+  completeProfileSetup,
 } from '@/src/components/tutorial/ProfileSetupOverlay';
+import { useProfile } from '@/src/hooks/useProfile';
 import { Colors } from '@/src/constants/theme';
 
 type TabIconProps = {
@@ -63,6 +65,7 @@ function ProfileIcon({ color, size, focused }: TabIconProps) {
 
 export default function TabLayout() {
   const router = useRouter();
+  const { profile } = useProfile();
   const [showTutorial, setShowTutorial] = useState(false);
   const [tutorialStep, setTutorialStep] = useState(0);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
@@ -74,11 +77,21 @@ export default function TabLayout() {
       } else {
         // Tutorial already done — check if profile setup still needed
         hasProfileSetupCompleted().then((setupDone) => {
-          if (!setupDone) setShowProfileSetup(true);
+          if (!setupDone) {
+            // If user already has their profile filled in (existing user),
+            // silently mark setup as complete and don't show the overlay
+            if (profile && (profile.username || profile.display_name || profile.avatar_url)) {
+              completeProfileSetup().catch(() => {});
+            } else if (profile) {
+              setShowProfileSetup(true);
+            }
+            // If profile is still null/loading, do nothing — the effect
+            // will re-run when profile loads thanks to the dependency
+          }
         });
       }
     });
-  }, []);
+  }, [profile]);
 
   // Navigate to the matching tab when tutorial step changes
   useEffect(() => {
