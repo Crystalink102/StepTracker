@@ -1,12 +1,14 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { LeaderboardMetric, LeaderboardPeriod } from '@/src/hooks/useLeaderboard';
+import { LeaderboardMetric, LeaderboardPeriod, LeaderboardScope } from '@/src/hooks/useLeaderboard';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 type LeaderboardFiltersProps = {
   metric: LeaderboardMetric;
   period: LeaderboardPeriod;
+  scope: LeaderboardScope;
   onMetricChange: (m: LeaderboardMetric) => void;
   onPeriodChange: (p: LeaderboardPeriod) => void;
+  onScopeChange: (s: LeaderboardScope) => void;
 };
 
 const METRICS: { label: string; value: LeaderboardMetric }[] = [
@@ -20,6 +22,11 @@ const PERIODS: { label: string; value: LeaderboardPeriod }[] = [
   { label: 'Week', value: 'weekly' },
   { label: 'Month', value: 'monthly' },
   { label: 'All Time', value: 'all_time' },
+];
+
+const SCOPES: { label: string; value: LeaderboardScope }[] = [
+  { label: 'Global', value: 'global' },
+  { label: 'Friends', value: 'friends' },
 ];
 
 function PillRow<T extends string>({
@@ -54,11 +61,14 @@ function PillRow<T extends string>({
 export default function LeaderboardFilters({
   metric,
   period,
+  scope,
   onMetricChange,
   onPeriodChange,
+  onScopeChange,
 }: LeaderboardFiltersProps) {
   return (
     <View style={styles.container}>
+      <PillRow items={SCOPES} selected={scope} onSelect={onScopeChange} />
       <PillRow items={METRICS} selected={metric} onSelect={onMetricChange} />
       {metric !== 'streak' && (
         <PillRow items={PERIODS} selected={period} onSelect={onPeriodChange} />

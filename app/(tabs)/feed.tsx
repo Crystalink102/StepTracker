@@ -8,17 +8,19 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useFeed } from '@/src/hooks/useFeed';
 import { getRoutesForActivities } from '@/src/services/activity.service';
 import FeedCard from '@/src/components/feed/FeedCard';
 import CommentSheet from '@/src/components/feed/CommentSheet';
+import { EmptyState } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 import type { FeedItem } from '@/src/services/feed.service';
 
 type Coord = { latitude: number; longitude: number };
 
 export default function FeedScreen() {
+  const router = useRouter();
   const {
     feedItems,
     isLoading,
@@ -79,15 +81,17 @@ export default function FeedScreen() {
   const renderEmpty = useCallback(() => {
     if (isLoading) return null;
     return (
-      <View style={styles.emptyContainer}>
-        <Ionicons name="people-outline" size={64} color={Colors.textMuted} />
-        <Text style={styles.emptyTitle}>No activity yet</Text>
-        <Text style={styles.emptySubtitle}>
-          Add friends to see their workouts!
-        </Text>
-      </View>
+      <EmptyState
+        icon="people-outline"
+        title="Your Feed is Empty"
+        subtitle="Add friends to see their activities here"
+        action={{
+          label: 'Find Friends',
+          onPress: () => router.push('/friends' as any),
+        }}
+      />
     );
-  }, [isLoading]);
+  }, [isLoading, router]);
 
   if (isLoading) {
     return (
@@ -237,24 +241,6 @@ const styles = StyleSheet.create({
   },
   listContentEmpty: {
     flex: 1,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: Spacing.xxxl,
-    gap: Spacing.sm,
-  },
-  emptyTitle: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.xl,
-    fontWeight: FontWeight.semibold,
-    marginTop: Spacing.md,
-  },
-  emptySubtitle: {
-    color: Colors.textMuted,
-    fontSize: FontSize.md,
-    textAlign: 'center',
   },
   footer: {
     paddingVertical: Spacing.xl,

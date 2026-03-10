@@ -66,9 +66,16 @@ describe('searchUsers', () => {
   it('sanitizes special characters including underscore', async () => {
     await searchUsers('test_injection.()', 'me');
     expect(mockOr).toHaveBeenCalled();
-    const orArg = mockOr.mock.calls[0][0];
-    expect(orArg).not.toContain('_');
-    expect(orArg).not.toContain('(');
+    const orArg: string = mockOr.mock.calls[0][0];
+    // Extract the sanitized query values from the ilike patterns
+    const matches = orArg.match(/%([^%]+)%/g) ?? [];
+    const sanitizedValues = matches.map((m: string) => m.replace(/%/g, ''));
+    // Each extracted value should be the sanitized input without special chars
+    for (const val of sanitizedValues) {
+      expect(val).toBe('testinjection');
+      expect(val).not.toContain('_');
+      expect(val).not.toContain('(');
+    }
     expect(orArg).toContain('testinjection');
   });
 

@@ -20,6 +20,7 @@ import StatsSummary from '@/src/components/stats/StatsSummary';
 import * as ActivityService from '@/src/services/activity.service';
 import * as PBService from '@/src/services/personal-best.service';
 import { Activity, PersonalBest } from '@/src/types/database';
+import { EmptyState } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 
 export default function HistoryScreen() {
@@ -107,12 +108,11 @@ export default function HistoryScreen() {
           />
         )}
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>No activities yet</Text>
-            <Text style={styles.emptySubtext}>
-              Start a run or walk to see your history here
-            </Text>
-          </View>
+          <EmptyState
+            icon="time-outline"
+            title="No Activities Yet"
+            subtitle="Start a run or walk to see your history here"
+          />
         }
         refreshControl={
           <RefreshControl
@@ -161,19 +161,5 @@ const styles = StyleSheet.create({
   pbList: {
     paddingHorizontal: Spacing.lg,
     gap: Spacing.md,
-  },
-  empty: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xxxl * 2,
-  },
-  emptyText: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.xl,
-    fontWeight: FontWeight.semibold,
-  },
-  emptySubtext: {
-    color: Colors.textMuted,
-    fontSize: FontSize.md,
-    marginTop: Spacing.sm,
   },
 });

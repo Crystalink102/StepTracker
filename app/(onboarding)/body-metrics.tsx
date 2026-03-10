@@ -98,7 +98,7 @@ export default function BodyMetricsScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
         <View style={styles.top}>
-          <Text style={styles.step}>Step 1 of 2</Text>
+          <Text style={styles.step}>Step 2 of 3</Text>
           <Text style={styles.title}>About You</Text>
           <Text style={styles.subtitle}>
             This helps us calculate calories and stride length more accurately.

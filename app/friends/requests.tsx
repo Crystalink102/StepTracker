@@ -1,8 +1,9 @@
 import { useState, useCallback } from 'react';
-import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
+import { View, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { useFriends } from '@/src/hooks/useFriends';
 import FriendRequestCard from '@/src/components/social/FriendRequestCard';
-import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { EmptyState } from '@/src/components/ui';
+import { Colors, Spacing } from '@/src/constants/theme';
 
 export default function FriendRequestsScreen() {
   const { pendingRequests, isLoading, acceptRequest, declineRequest, refresh } =
@@ -49,9 +50,11 @@ export default function FriendRequestsScreen() {
           />
         )}
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>No pending requests</Text>
-          </View>
+          <EmptyState
+            icon="mail-outline"
+            title="No Pending Requests"
+            subtitle="Friend requests will appear here"
+          />
         }
         contentContainerStyle={styles.listContent}
         refreshControl={
@@ -75,13 +78,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
     paddingBottom: Spacing.xxxl,
-  },
-  empty: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xxxl * 2,
-  },
-  emptyText: {
-    color: Colors.textMuted,
-    fontSize: FontSize.md,
   },
 });

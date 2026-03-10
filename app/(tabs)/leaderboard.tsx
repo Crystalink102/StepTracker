@@ -15,6 +15,8 @@ export default function LeaderboardScreen() {
     setMetric,
     period,
     setPeriod,
+    scope,
+    setScope,
     entries,
     myRank,
     isLoading,
@@ -31,8 +33,10 @@ export default function LeaderboardScreen() {
       <LeaderboardFilters
         metric={metric}
         period={period}
+        scope={scope}
         onMetricChange={setMetric}
         onPeriodChange={setPeriod}
+        onScopeChange={setScope}
       />
 
       <FlatList

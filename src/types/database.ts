@@ -21,6 +21,7 @@ export interface Database {
           weight_kg: number | null;
           current_streak: number;
           last_streak_date: string | null;
+          bio: string | null;
           daily_step_goal: number;
           push_token: string | null;
           notify_daily_reminder: boolean;
@@ -42,6 +43,7 @@ export interface Database {
           weight_kg?: number | null;
           current_streak?: number;
           last_streak_date?: string | null;
+          bio?: string | null;
           daily_step_goal?: number;
           push_token?: string | null;
           notify_daily_reminder?: boolean;
@@ -58,6 +60,7 @@ export interface Database {
           date_of_birth?: string | null;
           height_cm?: number | null;
           weight_kg?: number | null;
+          bio?: string | null;
           current_streak?: number;
           last_streak_date?: string | null;
           daily_step_goal?: number;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ScrollView, TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -12,7 +12,31 @@ import StatsOverview from '@/src/components/profile/StatsOverview';
 import { Badge } from '@/src/components/ui';
 import * as StepService from '@/src/services/step.service';
 import * as ActivityService from '@/src/services/activity.service';
+import { Profile } from '@/src/types/database';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+
+const COMPLETION_FIELDS: (keyof Profile)[] = [
+  'display_name',
+  'username',
+  'avatar_url',
+  'height_cm',
+  'weight_kg',
+  'date_of_birth',
+  'bio',
+  'daily_step_goal',
+];
+
+function getProfileCompletion(profile: Profile | null): number {
+  if (!profile) return 0;
+  let filled = 0;
+  for (const field of COMPLETION_FIELDS) {
+    const value = profile[field];
+    if (value !== null && value !== undefined && value !== '') {
+      filled++;
+    }
+  }
+  return Math.round((filled / COMPLETION_FIELDS.length) * 100);
+}
 
 export default function ProfileScreen() {
   const { user } = useAuth();
@@ -24,6 +48,8 @@ export default function ProfileScreen() {
   const [totalSteps, setTotalSteps] = useState(0);
   const [totalActivities, setTotalActivities] = useState(0);
   const [totalDistanceKm, setTotalDistanceKm] = useState(0);
+
+  const completionPct = useMemo(() => getProfileCompletion(profile), [profile]);
 
   useEffect(() => {
     if (!user) return;
@@ -66,6 +92,28 @@ export default function ProfileScreen() {
         showsVerticalScrollIndicator={false}
       >
         <ProfileHeader profile={profile} level={level} />
+
+        {/* Profile completion indicator */}
+        <View style={styles.completionContainer}>
+          {completionPct >= 100 ? (
+            <View style={styles.completionComplete}>
+              <Text style={styles.checkmark}>✓</Text>
+              <Text style={styles.completionCompleteText}>Profile complete</Text>
+            </View>
+          ) : (
+            <>
+              <View style={styles.completionHeader}>
+                <Text style={styles.completionLabel}>Profile completion</Text>
+                <Text style={styles.completionPct}>{completionPct}%</Text>
+              </View>
+              <View style={styles.completionBarBg}>
+                <View
+                  style={[styles.completionBarFill, { width: `${completionPct}%` }]}
+                />
+              </View>
+            </>
+          )}
+        </View>
 
         <StatsOverview
           totalXP={totalXP}
@@ -121,6 +169,54 @@ const styles = StyleSheet.create({
   content: {
     paddingBottom: Spacing.xxxl,
     gap: Spacing.lg,
+  },
+  completionContainer: {
+    marginHorizontal: Spacing.lg,
+    backgroundColor: Colors.surface,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+  },
+  completionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
+  },
+  completionLabel: {
+    color: Colors.textMuted,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.medium,
+  },
+  completionPct: {
+    color: Colors.primary,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.bold,
+  },
+  completionBarBg: {
+    height: 6,
+    backgroundColor: Colors.surfaceLight,
+    borderRadius: BorderRadius.full,
+    overflow: 'hidden',
+  },
+  completionBarFill: {
+    height: 6,
+    backgroundColor: Colors.primary,
+    borderRadius: BorderRadius.full,
+  },
+  completionComplete: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+  },
+  checkmark: {
+    color: Colors.primary,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+  },
+  completionCompleteText: {
+    color: Colors.primary,
+    fontSize: FontSize.sm,
+    fontWeight: FontWeight.semibold,
   },
   settingsSection: {
     marginHorizontal: Spacing.lg,

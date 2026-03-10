@@ -15,6 +15,7 @@ import { useNotifications } from '@/src/hooks/useNotifications';
 import { useProfile } from '@/src/hooks/useProfile';
 import { Colors } from '@/src/constants/theme';
 import { ThemeProvider, useTheme } from '@/src/context/ThemeContext';
+import { ToastProvider } from '@/src/context/ToastContext';
 
 import { ErrorScreen } from '@/src/components/ui';
 import DownloadBanner from '@/src/components/DownloadBanner';
@@ -197,11 +198,13 @@ export default function RootLayout() {
         <PreferencesProvider>
           <NetworkProvider>
             <ThemeProvider>
+              <ToastProvider>
               <StepProvider>
                 <ActivityProvider>
                   <AuthGate />
                 </ActivityProvider>
               </StepProvider>
+              </ToastProvider>
             </ThemeProvider>
           </NetworkProvider>
         </PreferencesProvider>

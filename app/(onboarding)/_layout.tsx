@@ -9,6 +9,11 @@ export default function OnboardingLayout() {
         contentStyle: { backgroundColor: Colors.background },
         animation: 'slide_from_right',
       }}
-    />
+    >
+      <Stack.Screen name="welcome" />
+      <Stack.Screen name="setup-profile" />
+      <Stack.Screen name="body-metrics" />
+      <Stack.Screen name="daily-goal" />
+    </Stack>
   );
 }

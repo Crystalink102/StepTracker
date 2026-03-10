@@ -9,42 +9,63 @@ type ProfileHeaderProps = {
   level: number;
 };
 
+function formatMemberSince(dateStr: string): string {
+  const date = new Date(dateStr);
+  const month = date.toLocaleString('en-US', { month: 'long' });
+  const year = date.getFullYear();
+  return `Member since ${month} ${year}`;
+}
+
 export default function ProfileHeader({ profile, level }: ProfileHeaderProps) {
   const router = useRouter();
 
   return (
     <View style={styles.container}>
-      <Avatar
-        uri={profile?.avatar_url}
-        name={profile?.display_name || profile?.username}
-        size={80}
-      />
+      <View style={styles.topRow}>
+        <Avatar
+          uri={profile?.avatar_url}
+          name={profile?.display_name || profile?.username}
+          size={80}
+        />
 
-      <View style={styles.info}>
-        <Text style={styles.name}>
-          {profile?.display_name || profile?.username || 'New Runner'}
-        </Text>
-        {profile?.username && (
-          <Text style={styles.username}>@{profile.username}</Text>
-        )}
-        <Badge label={`Level ${level}`} variant="secondary" style={styles.badge} />
+        <View style={styles.info}>
+          <Text style={styles.name}>
+            {profile?.display_name || profile?.username || 'New Runner'}
+          </Text>
+          {profile?.username && (
+            <Text style={styles.username}>@{profile.username}</Text>
+          )}
+          <Badge label={`Level ${level}`} variant="secondary" style={styles.badge} />
+        </View>
+
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => router.push('/settings/edit-profile')}
+        >
+          <Text style={styles.editText}>Edit</Text>
+        </TouchableOpacity>
       </View>
 
-      <TouchableOpacity
-        style={styles.editButton}
-        onPress={() => router.push('/settings/edit-profile')}
-      >
-        <Text style={styles.editText}>Edit</Text>
-      </TouchableOpacity>
+      {profile?.bio ? (
+        <Text style={styles.bio}>{profile.bio}</Text>
+      ) : null}
+
+      {profile?.created_at ? (
+        <Text style={styles.memberSince}>
+          {formatMemberSince(profile.created_at)}
+        </Text>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    padding: Spacing.lg,
+  },
+  topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Spacing.lg,
     gap: Spacing.lg,
   },
   info: {
@@ -62,6 +83,17 @@ const styles = StyleSheet.create({
   },
   badge: {
     marginTop: Spacing.sm,
+  },
+  bio: {
+    color: Colors.textSecondary,
+    fontSize: FontSize.md,
+    marginTop: Spacing.md,
+    lineHeight: 20,
+  },
+  memberSince: {
+    color: Colors.textMuted,
+    fontSize: FontSize.sm,
+    marginTop: Spacing.xs,
   },
   editButton: {
     paddingHorizontal: Spacing.lg,

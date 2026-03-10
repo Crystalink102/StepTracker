@@ -25,6 +25,7 @@ export default function EditProfileScreen() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [displayName, setDisplayName] = useState('');
   const [username, setUsername] = useState('');
+  const [bio, setBio] = useState('');
   const [stepGoal, setStepGoal] = useState('10000');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -43,6 +44,7 @@ export default function EditProfileScreen() {
         setProfile(p);
         setDisplayName(p.display_name || '');
         setUsername(p.username || '');
+        setBio(p.bio || '');
         setStepGoal(String(p.daily_step_goal ?? 10000));
       })
       .catch(() => {})
@@ -86,6 +88,7 @@ export default function EditProfileScreen() {
       const updated = await ProfileService.updateProfile(user.id, {
         display_name: displayName || null,
         username: username || null,
+        bio: bio.trim() || null,
         daily_step_goal: isNaN(goalNum) || goalNum < 100 ? 10000 : goalNum,
       });
       setProfile(updated);
@@ -131,6 +134,19 @@ export default function EditProfileScreen() {
           placeholder="username"
           autoCapitalize="none"
         />
+        <View>
+          <Input
+            label="Bio"
+            value={bio}
+            onChangeText={(t) => setBio(t.slice(0, 150))}
+            placeholder="Tell us about yourself"
+            multiline
+            numberOfLines={3}
+            maxLength={150}
+            style={styles.bioInput}
+          />
+          <Text style={styles.charCount}>{bio.length}/150</Text>
+        </View>
         <Input
           label="Daily Step Goal"
           value={stepGoal}
@@ -181,6 +197,16 @@ const styles = StyleSheet.create({
   },
   form: {
     gap: Spacing.xl,
+  },
+  bioInput: {
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  charCount: {
+    color: Colors.textMuted,
+    fontSize: FontSize.xs,
+    textAlign: 'right',
+    marginTop: Spacing.xs,
   },
   saveButton: {
     marginTop: Spacing.xxxl,

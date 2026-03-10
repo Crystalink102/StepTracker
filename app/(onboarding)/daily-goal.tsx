@@ -68,7 +68,7 @@ export default function DailyGoalScreen() {
     <SafeAreaView style={styles.safe}>
       <View style={styles.container}>
         <View style={styles.top}>
-          <Text style={styles.step}>Step 2 of 2</Text>
+          <Text style={styles.step}>Step 3 of 3</Text>
           <Text style={styles.title}>Daily Step Goal</Text>
           <Text style={styles.subtitle}>
             Pick a target that feels right. You can always change it later in settings.

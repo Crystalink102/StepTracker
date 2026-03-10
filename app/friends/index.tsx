@@ -2,7 +2,7 @@ import { View, Text, FlatList, StyleSheet, TouchableOpacity, RefreshControl } fr
 import { useRouter } from 'expo-router';
 import { useFriends } from '@/src/hooks/useFriends';
 import FriendCard from '@/src/components/social/FriendCard';
-import { Badge } from '@/src/components/ui';
+import { Badge, EmptyState } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 
 export default function FriendsScreen() {
@@ -44,12 +44,15 @@ export default function FriendsScreen() {
           />
         )}
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>No friends yet</Text>
-            <Text style={styles.emptySubtext}>
-              Search for users to add them as friends
-            </Text>
-          </View>
+          <EmptyState
+            icon="person-add-outline"
+            title="No Friends Yet"
+            subtitle="Search for people to connect with"
+            action={{
+              label: 'Search Users',
+              onPress: () => router.push('/friends/search' as any),
+            }}
+          />
         }
         contentContainerStyle={styles.listContent}
         refreshControl={
@@ -96,19 +99,5 @@ const styles = StyleSheet.create({
   listContent: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xxxl,
-  },
-  empty: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xxxl * 2,
-  },
-  emptyText: {
-    color: Colors.textSecondary,
-    fontSize: FontSize.xl,
-    fontWeight: FontWeight.semibold,
-  },
-  emptySubtext: {
-    color: Colors.textMuted,
-    fontSize: FontSize.md,
-    marginTop: Spacing.sm,
   },
 });

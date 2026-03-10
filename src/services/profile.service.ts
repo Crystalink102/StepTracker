@@ -34,6 +34,7 @@ export async function getProfile(userId: string) {
         date_of_birth: null,
         height_cm: null,
         weight_kg: null,
+        bio: null,
         current_streak: 0,
         last_streak_date: null,
         daily_step_goal: 10000,
@@ -67,6 +68,7 @@ export async function updateProfile(
     | 'date_of_birth'
     | 'height_cm'
     | 'weight_kg'
+    | 'bio'
     | 'daily_step_goal'
     | 'push_token'
     | 'notify_daily_reminder'
