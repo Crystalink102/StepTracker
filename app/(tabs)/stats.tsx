@@ -165,6 +165,12 @@ export default function StatsScreen() {
   // All trackable distances (including ones without PBs yet)
   const allDistances = Object.entries(STANDARD_DISTANCES);
 
+  // Compute max HR from user's date of birth, or default to 190
+  const userMaxHR = useMemo(() => {
+    const age = ageFromDOB(profile?.date_of_birth);
+    return age ? calculateMaxHR(age) : 190;
+  }, [profile?.date_of_birth]);
+
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.safe, styles.centered]} edges={['top']}>
@@ -175,12 +181,6 @@ export default function StatsScreen() {
 
   const activeMinutes = activeMinutesFromSteps(totalSteps);
   const stepDistance = distanceFromSteps(totalSteps, profile?.height_cm ?? null);
-
-  // Compute max HR from user's date of birth, or default to 190
-  const userMaxHR = useMemo(() => {
-    const age = ageFromDOB(profile?.date_of_birth);
-    return age ? calculateMaxHR(age) : 190;
-  }, [profile?.date_of_birth]);
 
   return (
     <SafeAreaView style={styles.safe} edges={['top']}>
