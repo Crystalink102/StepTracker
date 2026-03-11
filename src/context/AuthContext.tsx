@@ -113,12 +113,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(newSession?.user ?? null);
         if (newSession) {
           await checkMFAStatus();
-          // Track login location on sign-in (best-effort, non-blocking)
+          // Track login location — if new location, force MFA re-verification
           if (event === 'SIGNED_IN' && newSession.user) {
-            trackLoginLocation(
-              newSession.user.id,
-              newSession.user.email ?? null
-            ).catch(() => {});
+            try {
+              const { isNewLocation } = await trackLoginLocation(
+                newSession.user.id,
+                newSession.user.email ?? null
+              );
+              if (isNewLocation) {
+                setMfaVerified(false);
+              }
+            } catch {
+              // Location tracking is best-effort
+            }
           }
         } else {
           setHasMFA(false);

@@ -43,10 +43,13 @@ async function getIPLocation(): Promise<GeoLocation | null> {
  * Record a login location and check if it's from a new/different location.
  * If the location is new, flags it so a database trigger can send an alert email.
  */
-export async function trackLoginLocation(userId: string, email: string | null): Promise<void> {
+export async function trackLoginLocation(
+  userId: string,
+  email: string | null
+): Promise<{ isNewLocation: boolean }> {
   try {
     const geo = await getIPLocation();
-    if (!geo) return; // Can't determine location — skip silently
+    if (!geo) return { isNewLocation: false };
 
     // Check previous logins for this user
     const { data: prevLogins } = await supabase
@@ -78,9 +81,9 @@ export async function trackLoginLocation(userId: string, email: string | null): 
       email,
     });
 
-    // If flagged, the database trigger handles sending the email alert
+    return { isNewLocation: flagAsNew };
   } catch (err) {
-    // Login location tracking is best-effort — never block auth flow
     console.warn('[LoginLocation] Failed to track:', err);
+    return { isNewLocation: false };
   }
 }
