@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator, Platform } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Linking from 'expo-linking';
 import { AuthProvider, useAuth } from '@/src/context/AuthContext';
@@ -66,11 +66,12 @@ function AuthGate() {
     if (profile) setProfileGaveUp(false);
   }, [isAuthenticated, profile, profileGaveUp]);
 
-  // Ready when auth is done loading AND either:
-  // - not authenticated (show login), OR
-  // - profile loaded successfully, OR
-  // - profile timed out (gave up waiting — proceed with null profile)
-  const authReady = !isLoading && (!isAuthenticated || !!profile || profileGaveUp);
+  // On web, skip waiting for profile — proceed as soon as auth is done.
+  // Profile loading on web has timing issues with session detection.
+  // On native, wait for profile to load (or timeout) before proceeding.
+  const authReady = Platform.OS === 'web'
+    ? !isLoading
+    : !isLoading && (!isAuthenticated || !!profile || profileGaveUp);
 
   useEffect(() => {
     if (!stackMounted) return;
