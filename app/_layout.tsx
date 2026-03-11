@@ -71,7 +71,7 @@ function AuthGate() {
     const inOnboarding = segments[0] === '(onboarding)';
     const needsMFAVerification = isAuthenticated && hasMFA && !mfaVerified;
     const onMFAScreen = inAuthGroup && segments[1] === 'verify-mfa';
-    const needsOnboarding = isAuthenticated && (!profile || profile.height_cm === null);
+    const needsOnboarding = isAuthenticated && profile && profile.height_cm === null;
 
     let target: string | null = null;
 
