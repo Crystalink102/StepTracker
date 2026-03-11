@@ -8,7 +8,9 @@ import {
   StyleSheet,
   ActivityIndicator,
   RefreshControl,
+  TouchableOpacity,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/context/AuthContext';
@@ -31,6 +33,12 @@ import {
 import { activeMinutesFromSteps, distanceFromSteps } from '@/src/utils/fitness';
 import { ageFromDOB, calculateMaxHR } from '@/src/utils/hr-zones';
 import HRZonesReference from '@/src/components/stats/HRZonesReference';
+import VO2maxCard from '@/src/components/stats/VO2maxCard';
+import {
+  estimateThresholdPace,
+  estimateVO2max,
+  getVO2maxRating,
+} from '@/src/utils/running-metrics';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
@@ -106,6 +114,7 @@ function computeLifetimeStats(
 
 export default function StatsScreen() {
   const { colors } = useTheme();
+  const router = useRouter();
   const { user } = useAuth();
   const { profile } = useProfile();
   const { totalXP, level } = useXP();
@@ -174,6 +183,16 @@ export default function StatsScreen() {
     const age = ageFromDOB(profile?.date_of_birth);
     return age ? calculateMaxHR(age) : 190;
   }, [profile?.date_of_birth]);
+
+  // Compute VO2max from recent activities
+  const vo2maxData = useMemo(() => {
+    const thresholdPace = estimateThresholdPace(activities);
+    if (!thresholdPace) return { vo2max: null, rating: null };
+    const vo2max = estimateVO2max(thresholdPace);
+    const age = ageFromDOB(profile?.date_of_birth);
+    const rating = getVO2maxRating(vo2max, age);
+    return { vo2max, rating };
+  }, [activities, profile?.date_of_birth]);
 
   if (isLoading) {
     return (
@@ -353,6 +372,35 @@ export default function StatsScreen() {
               );
             })}
           </View>
+        </View>
+
+        {/* VO2max Estimate */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>VO2max</Text>
+          <VO2maxCard vo2max={vo2maxData.vo2max} rating={vo2maxData.rating} />
+        </View>
+
+        {/* Race Predictions Link */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>Tools</Text>
+          <TouchableOpacity
+            style={[styles.toolCard, { backgroundColor: colors.surface }]}
+            onPress={() => router.push('/settings/race-predictor')}
+            activeOpacity={0.7}
+          >
+            <View style={styles.toolCardLeft}>
+              <View style={[styles.toolIconWrap, { backgroundColor: Colors.primary + '20' }]}>
+                <Ionicons name="trophy-outline" size={22} color={Colors.primary} />
+              </View>
+              <View>
+                <Text style={[styles.toolTitle, { color: colors.textPrimary }]}>Race Predictions</Text>
+                <Text style={[styles.toolSubtitle, { color: colors.textMuted }]}>
+                  Predict your 5K, 10K, half & marathon times
+                </Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+          </TouchableOpacity>
         </View>
 
         {/* Activity Breakdown */}
@@ -593,6 +641,36 @@ const styles = StyleSheet.create({
   },
   pbNone: {
     fontSize: FontSize.lg,
+  },
+
+  // Tool cards
+  toolCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+  },
+  toolCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    flex: 1,
+  },
+  toolIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  toolTitle: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
+    marginBottom: 2,
+  },
+  toolSubtitle: {
+    fontSize: FontSize.sm,
   },
 
   // Breakdown

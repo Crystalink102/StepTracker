@@ -290,3 +290,98 @@ export function estimateThresholdPace(
   // Adjust slightly slower since race pace ≈ threshold but not exactly
   return Math.round(bestPace * 1.03);
 }
+
+// ── VO2max Estimation ──────────────────────────────────────────────────
+
+/**
+ * Estimate VO2max from threshold (tempo) pace using the Jack Daniels formula.
+ * thresholdPaceSecPerKm = pace sustainable for ~60 minutes
+ */
+export function estimateVO2max(thresholdPaceSecPerKm: number): number {
+  // Convert to velocity in meters per minute
+  const velocityMPerMin = 1000 / (thresholdPaceSecPerKm / 60);
+
+  // Daniels/Gilbert formula for VO2 at given velocity:
+  // VO2 = -4.60 + 0.182258 * v + 0.000104 * v^2
+  // where v = velocity in m/min
+  // At threshold pace, runner is at ~88% of VO2max
+  const vo2AtThreshold = -4.60 + 0.182258 * velocityMPerMin + 0.000104 * velocityMPerMin * velocityMPerMin;
+
+  return Math.round(vo2AtThreshold / 0.88 * 10) / 10; // Round to 1 decimal
+}
+
+/**
+ * Estimate VO2max from a race result (more accurate than threshold estimation).
+ * Uses the Daniels/Gilbert formula.
+ */
+export function vo2maxFromRaceResult(distanceMeters: number, timeSeconds: number): number {
+  const timeMin = timeSeconds / 60;
+  const velocityMPerMin = distanceMeters / timeMin;
+
+  // Percent VO2max sustained depends on duration
+  // Approximation: shorter races = higher % VO2max
+  const pctVO2max = 0.8 + 0.1894393 * Math.exp(-0.012778 * timeMin)
+                   + 0.2989558 * Math.exp(-0.1932605 * timeMin);
+
+  const vo2 = -4.60 + 0.182258 * velocityMPerMin + 0.000104 * velocityMPerMin * velocityMPerMin;
+
+  return Math.round(vo2 / pctVO2max * 10) / 10;
+}
+
+/**
+ * Get a VO2max fitness rating based on age and value.
+ * Uses general population norms.
+ */
+export function getVO2maxRating(vo2max: number, ageYears?: number | null): {
+  label: string;
+  color: string;
+  description: string;
+} {
+  // Simplified rating (adjusts slightly by age)
+  const ageAdjust = ageYears && ageYears > 30 ? (ageYears - 30) * 0.3 : 0;
+  const adjusted = vo2max + ageAdjust;
+
+  if (adjusted >= 60) return { label: 'Elite', color: '#A855F7', description: 'Top 1% fitness level' };
+  if (adjusted >= 52) return { label: 'Excellent', color: '#22C55E', description: 'Well above average' };
+  if (adjusted >= 44) return { label: 'Good', color: '#3B82F6', description: 'Above average fitness' };
+  if (adjusted >= 36) return { label: 'Fair', color: '#F59E0B', description: 'Average fitness level' };
+  return { label: 'Below Average', color: '#EF4444', description: 'Room for improvement' };
+}
+
+// ── Race Time Prediction ───────────────────────────────────────────────
+
+/**
+ * Predict race time using the Riegel formula.
+ * T2 = T1 * (D2/D1)^1.06
+ */
+export function predictRaceTime(
+  knownDistanceM: number,
+  knownTimeS: number,
+  targetDistanceM: number
+): number {
+  return knownTimeS * Math.pow(targetDistanceM / knownDistanceM, 1.06);
+}
+
+/**
+ * Predict times for all standard race distances from a known result.
+ */
+export function predictAllRaceTimes(
+  knownDistanceM: number,
+  knownTimeS: number
+): { label: string; distanceM: number; predictedTimeS: number; predictedPaceSecPerKm: number }[] {
+  const distances = [
+    { label: '5K', distanceM: 5000 },
+    { label: '10K', distanceM: 10000 },
+    { label: 'Half Marathon', distanceM: 21097.5 },
+    { label: 'Marathon', distanceM: 42195 },
+  ];
+
+  return distances.map(d => {
+    const time = predictRaceTime(knownDistanceM, knownTimeS, d.distanceM);
+    return {
+      ...d,
+      predictedTimeS: Math.round(time),
+      predictedPaceSecPerKm: Math.round((time / d.distanceM) * 1000),
+    };
+  });
+}
