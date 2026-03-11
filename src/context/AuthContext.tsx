@@ -9,6 +9,7 @@ import {
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/src/services/supabase';
 import * as AuthService from '@/src/services/auth.service';
+import { trackLoginLocation } from '@/src/services/login-location.service';
 import { clearQueue } from '@/src/services/offline-queue';
 
 type AuthState = {
@@ -107,11 +108,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, newSession) => {
+      async (event, newSession) => {
         setSession(newSession);
         setUser(newSession?.user ?? null);
-        if (newSession) await checkMFAStatus();
-        else {
+        if (newSession) {
+          await checkMFAStatus();
+          // Track login location on sign-in (best-effort, non-blocking)
+          if (event === 'SIGNED_IN' && newSession.user) {
+            trackLoginLocation(
+              newSession.user.id,
+              newSession.user.email ?? null
+            ).catch(() => {});
+          }
+        } else {
           setHasMFA(false);
           setMfaVerified(false);
           // Clear offline queue on logout to prevent cross-user data leaks

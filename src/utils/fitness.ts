@@ -115,7 +115,7 @@ export const GPS_MIN_MOVE_M = 1.5;
 /**
  * Check if a GPS distance reading is plausible.
  * Uses GPS speed to distinguish real movement from standstill jitter:
- * - Truly standing still (speed < 0.2 m/s): require 5m — filters 3-8m GPS jitter
+ * - Standing still or speed unknown (null / < 0.2 m/s): require 8m — filters 5-10m GPS jitter
  * - Uncertain (speed 0.2–0.5 m/s): require 2m — allows slow walking
  * - Moving (speed >= 0.5 m/s): standard 1.5m — trust the movement
  * Accuracy floor only applies at standstill to avoid blocking real walks.
@@ -126,14 +126,15 @@ export function isPlausibleGPSMove(
   accuracyMeters?: number | null
 ): boolean {
   let minMove: number;
-  if (currentSpeedMs != null && currentSpeedMs < 0.2) {
-    // Truly standing still — GPS jitter can be 3-8m
-    minMove = 5;
+  if (currentSpeedMs == null || currentSpeedMs < 0.2) {
+    // Standing still OR speed unknown (null) — treat as standstill
+    // GPS jitter at standstill can easily be 5-10m
+    minMove = 8;
     // At standstill, also factor in accuracy (poor signal = bigger jitter)
     if (accuracyMeters != null && accuracyMeters > 10) {
       minMove = Math.max(minMove, accuracyMeters * 0.5);
     }
-  } else if (currentSpeedMs != null && currentSpeedMs < 0.5) {
+  } else if (currentSpeedMs < 0.5) {
     minMove = 2; // Might be drift, might be slow walking — modest filter
   } else {
     minMove = GPS_MIN_MOVE_M; // Actually moving — trust it

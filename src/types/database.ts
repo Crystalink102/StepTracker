@@ -401,6 +401,36 @@ export interface Database {
         };
         Relationships: [];
       };
+      login_locations: {
+        Row: {
+          id: string;
+          user_id: string;
+          ip_address: string | null;
+          city: string | null;
+          region: string | null;
+          country: string | null;
+          latitude: number | null;
+          longitude: number | null;
+          is_new_location: boolean;
+          email: string | null;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          ip_address?: string | null;
+          city?: string | null;
+          region?: string | null;
+          country?: string | null;
+          latitude?: number | null;
+          longitude?: number | null;
+          is_new_location?: boolean;
+          email?: string | null;
+        };
+        Update: {
+          is_new_location?: boolean;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       [_ in never]: never;

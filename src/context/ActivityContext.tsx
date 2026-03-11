@@ -174,21 +174,29 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
             wp.longitude
           );
 
-          // Velocity check: reject teleport-like jumps
-          const timeDelta =
-            (new Date(wp.timestamp).getTime() -
-              new Date(last.timestamp).getTime()) /
-            1000;
-          const velocity = timeDelta > 0 ? dist / timeDelta : 0;
+          // Skip distance update entirely when stationary with poor GPS signal
+          // (speed null or very low + accuracy > 15m = almost certainly drift)
+          const speed = location.coords.speed;
+          const accuracy = location.coords.accuracy;
+          if ((speed == null || speed < 0.3) && accuracy != null && accuracy > 15) {
+            // Poor signal while stationary — skip this reading
+          } else {
+            // Velocity check: reject teleport-like jumps
+            const timeDelta =
+              (new Date(wp.timestamp).getTime() -
+                new Date(last.timestamp).getTime()) /
+              1000;
+            const velocity = timeDelta > 0 ? dist / timeDelta : 0;
 
-          // Max velocity: 12 m/s (43 km/h) for running, reject anything above
-          // Pass speed + accuracy for smarter standstill/drift filtering
-          if (
-            isPlausibleGPSMove(dist, location.coords.speed, location.coords.accuracy) &&
-            velocity <= 12 &&
-            isFinite(dist)
-          ) {
-            setDistanceMeters((d) => d + dist);
+            // Max velocity: 12 m/s (43 km/h) for running, reject anything above
+            // Pass speed + accuracy for smarter standstill/drift filtering
+            if (
+              isPlausibleGPSMove(dist, speed, accuracy) &&
+              velocity <= 12 &&
+              isFinite(dist)
+            ) {
+              setDistanceMeters((d) => d + dist);
+            }
           }
         }
         lastWaypointRef.current = wp;

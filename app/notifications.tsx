@@ -20,7 +20,7 @@ function getNotificationColor(type: AppNotification['type'], themeColors: { warn
     case 'achievement': return Colors.gold;
     case 'friend_request': return Colors.primary;
     case 'challenge': return themeColors.warning;
-    case 'streak': return '#FF6B35';
+    case 'streak': return themeColors.warning;
     case 'level_up': return Colors.primary;
     case 'general': return themeColors.textSecondary;
     default: return themeColors.textSecondary;

@@ -151,7 +151,7 @@ export default function DateScrollPicker({
   clearable = false,
   containerStyle,
 }: DateScrollPickerProps) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const currentYear = new Date().getFullYear();
   const effectiveMaxYear = maxYear ?? currentYear;
 
@@ -160,67 +160,51 @@ export default function DateScrollPicker({
     const minDate = `${minYear}-01-01`;
     const maxDate = `${effectiveMaxYear}-12-31`;
 
-    // Format display value as "Month Day, Year"
-    const displayValue = value
-      ? (() => {
-          if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
-          const [y, m, d] = value.split('-').map(Number);
-          if (m < 1 || m > 12) return value;
-          return `${MONTHS[m - 1]} ${d}, ${y}`;
-        })()
-      : '';
-
     return (
       <View style={containerStyle}>
         {label && <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>}
         <View
           style={[
             styles.field,
-            { backgroundColor: colors.surface, borderColor: colors.border },
+            { backgroundColor: colors.surface, borderColor: colors.border, position: 'relative' as const },
             error && { borderColor: colors.danger },
           ]}
         >
-          <Text
-            style={[
-              styles.fieldText,
-              { color: colors.textPrimary, flex: 1 },
-              !displayValue && { color: colors.textMuted },
-            ]}
-          >
-            {displayValue || placeholder}
-          </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {/* Visible native date input that fills the entire field */}
+          {/* @ts-ignore - web-only HTML input */}
+          <input
+            type="date"
+            value={value || ''}
+            min={minDate}
+            max={maxDate}
+            onChange={(e: any) => {
+              const val = e.target.value;
+              onValueChange(val || '');
+            }}
+            style={{
+              flex: 1,
+              width: '100%',
+              height: '100%',
+              border: 'none',
+              outline: 'none',
+              background: 'transparent',
+              color: value ? colors.textPrimary : colors.textMuted,
+              fontSize: 18,
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+              padding: 0,
+              margin: 0,
+              // @ts-ignore
+              colorScheme: isDark ? 'dark' : 'light',
+            }}
+          />
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginLeft: 8 }}>
             {clearable && value ? (
               <TouchableOpacity onPress={() => onValueChange('')} hitSlop={8}>
                 <Ionicons name="close-circle" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             ) : null}
-            {/* Hidden native date input overlaying the icon */}
-            <View style={{ position: 'relative' }}>
-              <Ionicons name="calendar-outline" size={20} color={colors.textMuted} />
-              {/* @ts-ignore - web-only HTML input */}
-              <input
-                type="date"
-                value={value || ''}
-                min={minDate}
-                max={maxDate}
-                onChange={(e: any) => {
-                  const val = e.target.value;
-                  if (val) onValueChange(val);
-                }}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  opacity: 0,
-                  cursor: 'pointer',
-                  // @ts-ignore
-                  WebkitAppearance: 'none',
-                }}
-              />
-            </View>
+            <Ionicons name="calendar-outline" size={20} color={colors.textMuted} />
           </View>
         </View>
         {error && <Text style={[styles.error, { color: colors.danger }]}>{error}</Text>}

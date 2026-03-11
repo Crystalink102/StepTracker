@@ -84,6 +84,9 @@ function AuthGate() {
     const inOnboarding = segments[0] === '(onboarding)';
     const needsMFAVerification = isAuthenticated && hasMFA && !mfaVerified;
     const onMFAScreen = inAuthGroup && segments[1] === 'verify-mfa';
+    // On native, force MFA setup for users who haven't enrolled (except "cxshfo")
+    const needsMFASetup = Platform.OS !== 'web' && isAuthenticated && !hasMFA && profile?.username !== 'cxshfo';
+    const onMFASetupScreen = inAuthGroup && segments[1] === 'setup-mfa';
     const needsOnboarding = isAuthenticated && profile && profile.height_cm === null;
 
     let target: string | null = null;
@@ -92,11 +95,13 @@ function AuthGate() {
       target = '/(auth)/login';
     } else if (needsMFAVerification && !onMFAScreen) {
       target = '/(auth)/verify-mfa';
-    } else if (isAuthenticated && !needsMFAVerification && inAuthGroup) {
+    } else if (needsMFASetup && !onMFASetupScreen) {
+      target = '/(auth)/setup-mfa';
+    } else if (isAuthenticated && !needsMFAVerification && !needsMFASetup && inAuthGroup) {
       target = needsOnboarding ? '/(onboarding)/welcome' : '/(tabs)';
-    } else if (needsOnboarding && !inOnboarding && !needsMFAVerification) {
+    } else if (needsOnboarding && !inOnboarding && !needsMFAVerification && !needsMFASetup) {
       target = '/(onboarding)/welcome';
-    } else if (isAuthenticated && inOnboarding && !needsOnboarding && !needsMFAVerification) {
+    } else if (isAuthenticated && inOnboarding && !needsOnboarding && !needsMFAVerification && !needsMFASetup) {
       target = '/(tabs)';
     }
 
