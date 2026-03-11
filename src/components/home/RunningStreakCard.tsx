@@ -41,7 +41,7 @@ export default function RunningStreakCard({ streak }: RunningStreakCardProps) {
   });
 
   return (
-    <Animated.View style={{ borderRadius: 14, overflow: 'hidden', shadowColor: glowColor as any }}>
+    <Animated.View style={{ borderRadius: 14, overflow: 'hidden', backgroundColor: glowColor as any }}>
       <Card
         style={styles.card}
         accessible

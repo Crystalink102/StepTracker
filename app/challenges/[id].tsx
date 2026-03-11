@@ -12,6 +12,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/context/AuthContext';
+import { useChallenges } from '@/src/hooks/useChallenges';
 import * as ChallengeService from '@/src/services/challenge.service';
 import type { ChallengeDetailParticipant } from '@/src/services/challenge.service';
 import type { Challenge } from '@/src/types/database';
@@ -89,6 +90,8 @@ export default function ChallengeDetailScreen() {
   const [participants, setParticipants] = useState<ChallengeDetailParticipant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const { remove } = useChallenges();
 
   const loadDetails = useCallback(async () => {
     if (!id) return;
@@ -334,6 +337,44 @@ export default function ChallengeDetailScreen() {
           )}
         </TouchableOpacity>
       )}
+
+      {/* Delete button (creator only) */}
+      {isCreator && (
+        <TouchableOpacity
+          style={[styles.deleteBtn, { borderColor: colors.danger }]}
+          onPress={() => {
+            Alert.alert(
+              'Delete Challenge',
+              'This will permanently delete this challenge and remove all participants. This cannot be undone.',
+              [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                  text: 'Delete',
+                  style: 'destructive',
+                  onPress: async () => {
+                    setIsDeleting(true);
+                    const ok = await remove(challenge.id);
+                    setIsDeleting(false);
+                    if (ok) router.back();
+                    else Alert.alert('Error', 'Failed to delete challenge.');
+                  },
+                },
+              ]
+            );
+          }}
+          disabled={isDeleting}
+          activeOpacity={0.7}
+        >
+          {isDeleting ? (
+            <ActivityIndicator color={colors.danger} size="small" />
+          ) : (
+            <>
+              <Ionicons name="trash-outline" size={16} color={colors.danger} />
+              <Text style={[styles.leaveBtnText, { color: colors.danger }]}>Delete Challenge</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      )}
     </ScrollView>
   );
 }
@@ -548,5 +589,15 @@ const styles = StyleSheet.create({
   leaveBtnText: {
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
+  },
+  deleteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginTop: Spacing.md,
   },
 });

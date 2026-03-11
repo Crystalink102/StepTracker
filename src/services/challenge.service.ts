@@ -349,6 +349,24 @@ export async function updateChallenge(
   }
 }
 
+// ─── Delete ─────────────────────────────────────────────────────────
+export async function deleteChallenge(challengeId: string): Promise<boolean> {
+  try {
+    // Delete participants first (no FK cascade on untyped tables)
+    await participants().delete().eq('challenge_id', challengeId);
+
+    const { error } = await challenges().delete().eq('id', challengeId);
+    if (error) {
+      console.warn('[Challenge] deleteChallenge failed:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('[Challenge] deleteChallenge error:', err);
+    return false;
+  }
+}
+
 // ─── Check completion (past end date) ───────────────────────────────
 export async function checkChallengeCompletion(
   challengeId: string

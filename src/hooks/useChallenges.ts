@@ -79,6 +79,15 @@ export function useChallenges() {
     [refresh]
   );
 
+  const remove = useCallback(
+    async (challengeId: string) => {
+      const ok = await ChallengeService.deleteChallenge(challengeId);
+      if (ok) await refresh();
+      return ok;
+    },
+    [refresh]
+  );
+
   return {
     activeChallenges,
     availableChallenges,
@@ -87,6 +96,7 @@ export function useChallenges() {
     join,
     leave,
     update,
+    remove,
     refresh,
   };
 }
