@@ -51,14 +51,26 @@ function AuthGate() {
   const router = useRouter();
   const [stackMounted, setStackMounted] = useState(false);
   const navTimeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [profileGaveUp, setProfileGaveUp] = useState(false);
 
   // Register notifications when authenticated
   useNotifications();
 
+  // Safety timeout: if authenticated but profile is still null after 8s, proceed anyway.
+  // This prevents getting stuck forever if the profile fetch fails on web.
+  useEffect(() => {
+    if (isAuthenticated && !profile && !profileGaveUp) {
+      const timer = setTimeout(() => setProfileGaveUp(true), 8000);
+      return () => clearTimeout(timer);
+    }
+    if (profile) setProfileGaveUp(false);
+  }, [isAuthenticated, profile, profileGaveUp]);
+
   // Ready when auth is done loading AND either:
   // - not authenticated (show login), OR
-  // - profile loading is finished (even if profile is null — handle that in routing)
-  const authReady = !isLoading && (!isAuthenticated || !profileLoading);
+  // - profile loaded successfully, OR
+  // - profile timed out (gave up waiting — proceed with null profile)
+  const authReady = !isLoading && (!isAuthenticated || !!profile || profileGaveUp);
 
   useEffect(() => {
     if (!stackMounted) return;
@@ -96,7 +108,7 @@ function AuthGate() {
     }
 
     return () => { if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current); };
-  }, [isAuthenticated, isLoading, authReady, profile, profileLoading, hasMFA, mfaVerified, segments, router, stackMounted]);
+  }, [isAuthenticated, isLoading, authReady, profile, profileGaveUp, hasMFA, mfaVerified, segments, router, stackMounted]);
 
   if (!authReady) {
     return (

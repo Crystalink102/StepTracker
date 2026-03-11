@@ -31,23 +31,41 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       return;
     }
-    try {
-      const profilePromise = ProfileService.getProfile(userId);
-      const timeoutPromise = new Promise<null>((resolve) =>
-        setTimeout(() => resolve(null), 5000)
-      );
-      const data = await Promise.race([profilePromise, timeoutPromise]);
 
-      // Only update if we're still looking at the same user
-      if (userIdRef.current === userId && data) {
-        setProfile(data);
+    // Try up to 2 times (initial + 1 retry) in case the first attempt
+    // races with auth session setup on web
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        const profilePromise = ProfileService.getProfile(userId);
+        const timeoutPromise = new Promise<null>((resolve) =>
+          setTimeout(() => resolve(null), 6000)
+        );
+        const data = await Promise.race([profilePromise, timeoutPromise]);
+
+        // Only update if we're still looking at the same user
+        if (userIdRef.current === userId && data) {
+          setProfile(data);
+          setIsLoading(false);
+          return;
+        }
+
+        // First attempt returned null (timeout) — retry after a short delay
+        if (attempt === 0 && userIdRef.current === userId) {
+          await new Promise((r) => setTimeout(r, 1000));
+          continue;
+        }
+      } catch (err) {
+        console.warn('[ProfileContext] Failed to load profile:', err);
+        // Retry on first failure
+        if (attempt === 0 && userIdRef.current === userId) {
+          await new Promise((r) => setTimeout(r, 1000));
+          continue;
+        }
       }
-    } catch (err) {
-      console.warn('[ProfileContext] Failed to load profile:', err);
-    } finally {
-      // ALWAYS set loading to false — never leave the app stuck on a loading screen
-      setIsLoading(false);
     }
+
+    // ALWAYS set loading to false — never leave the app stuck on a loading screen
+    setIsLoading(false);
   }, []); // No dependencies — uses ref for userId
 
   useEffect(() => {
