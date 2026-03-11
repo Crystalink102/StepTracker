@@ -18,6 +18,7 @@ import { Activity, Gear } from '@/src/types/database';
 import { generateActivityName, ACTIVITY_SUBTYPES, PRIVACY_OPTIONS, getSubtypeLabel } from '@/src/utils/activity-name';
 import { formatDistance, formatDuration, formatPace, paceUnitLabel } from '@/src/utils/formatters';
 import { usePreferences } from '@/src/context/PreferencesContext';
+import { recommendShoe } from '@/src/utils/gear-rotation';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
@@ -318,38 +319,51 @@ export default function SaveActivityScreen() {
         </View>
 
         {/* Gear Selection */}
-        {gearList.length > 0 && (
-          <View style={styles.field}>
-            <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>GEAR</Text>
-            {gearList.map((g) => (
-              <TouchableOpacity
-                key={g.id}
-                style={[
-                  styles.gearItem,
-                  { backgroundColor: colors.surface },
-                  gearId === g.id && { borderColor: Colors.primary, borderWidth: 2 },
-                ]}
-                onPress={() => setGearId(gearId === g.id ? null : g.id)}
-              >
-                <Ionicons
-                  name={g.type === 'shoes' ? 'footsteps-outline' : g.type === 'watch' ? 'watch-outline' : 'fitness-outline'}
-                  size={20}
-                  color={gearId === g.id ? Colors.primary : colors.textMuted}
-                />
-                <View style={styles.gearInfo}>
-                  <Text style={[styles.gearName, { color: colors.textPrimary }]}>{g.name}</Text>
-                  {g.brand && <Text style={[styles.gearBrand, { color: colors.textMuted }]}>{g.brand}</Text>}
-                </View>
-                <Text style={[styles.gearDist, { color: colors.textMuted }]}>
-                  {(g.distance_meters / 1000).toFixed(0)} km
-                </Text>
-                {gearId === g.id && (
-                  <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
+        {gearList.length > 0 && (() => {
+          const shoeRec = recommendShoe(gearList);
+          return (
+            <View style={styles.field}>
+              <Text style={[styles.fieldLabel, { color: colors.textMuted }]}>GEAR</Text>
+              {gearList.map((g) => {
+                const isRecommended = shoeRec && shoeRec.recommended.id === g.id;
+                return (
+                  <TouchableOpacity
+                    key={g.id}
+                    style={[
+                      styles.gearItem,
+                      { backgroundColor: colors.surface },
+                      gearId === g.id && { borderColor: Colors.primary, borderWidth: 2 },
+                    ]}
+                    onPress={() => setGearId(gearId === g.id ? null : g.id)}
+                  >
+                    <Ionicons
+                      name={g.type === 'shoes' ? 'footsteps-outline' : g.type === 'watch' ? 'watch-outline' : 'fitness-outline'}
+                      size={20}
+                      color={gearId === g.id ? Colors.primary : colors.textMuted}
+                    />
+                    <View style={styles.gearInfo}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+                        <Text style={[styles.gearName, { color: colors.textPrimary }]}>{g.name}</Text>
+                        {isRecommended && (
+                          <View style={styles.recommendedBadge}>
+                            <Text style={styles.recommendedBadgeText}>Recommended</Text>
+                          </View>
+                        )}
+                      </View>
+                      {g.brand && <Text style={[styles.gearBrand, { color: colors.textMuted }]}>{g.brand}</Text>}
+                    </View>
+                    <Text style={[styles.gearDist, { color: colors.textMuted }]}>
+                      {(g.distance_meters / 1000).toFixed(0)} km
+                    </Text>
+                    {gearId === g.id && (
+                      <Ionicons name="checkmark-circle" size={20} color={Colors.primary} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          );
+        })()}
 
         {/* Bottom padding */}
         <View style={{ height: 60 }} />
@@ -520,5 +534,16 @@ const styles = StyleSheet.create({
   },
   gearDist: {
     fontSize: FontSize.sm,
+  },
+  recommendedBadge: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.sm,
+  },
+  recommendedBadgeText: {
+    color: '#FFF',
+    fontSize: 10,
+    fontWeight: FontWeight.bold,
   },
 });

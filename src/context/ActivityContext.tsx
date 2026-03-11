@@ -18,6 +18,9 @@ import {
   announcePause,
   announceResume,
   checkMilestone,
+  checkHalfMilestone,
+  checkTimeMilestone,
+  announceLap,
 } from '@/src/utils/audio-cues';
 import * as ActivityService from '@/src/services/activity.service';
 import * as PBService from '@/src/services/personal-best.service';
@@ -33,6 +36,7 @@ import { xpFromActivity } from '@/src/utils/xp-calculator';
 import { isPlausibleGPSMove, smoothedPace, caloriesFromActivity } from '@/src/utils/fitness';
 import { enqueue } from '@/src/services/offline-queue';
 import * as ProfileService from '@/src/services/profile.service';
+import { checkAndUpdateRunningStreak } from '@/src/services/streak.service';
 import { Activity } from '@/src/types/database';
 import { generateActivityName } from '@/src/utils/activity-name';
 
@@ -44,6 +48,13 @@ type Waypoint = {
   timestamp: string;
 };
 
+export type Lap = {
+  lapNumber: number;
+  distanceM: number;
+  durationSec: number;
+  paceSecPerKm: number;
+};
+
 type ActivityState = {
   currentActivity: Activity | null;
   isActive: boolean;
@@ -53,6 +64,8 @@ type ActivityState = {
   currentPaceSecPerKm: number;
   waypoints: Waypoint[];
   currentSpeed: number;
+  laps: Lap[];
+  latestLap: Lap | null;
 };
 
 type ActivityActions = {
@@ -78,6 +91,8 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   const [currentPaceSecPerKm, setCurrentPaceSecPerKm] = useState(0);
   const [waypoints, setWaypoints] = useState<Waypoint[]>([]);
   const [currentSpeed, setCurrentSpeed] = useState(0);
+  const [laps, setLaps] = useState<Lap[]>([]);
+  const [latestLap, setLatestLap] = useState<Lap | null>(null);
 
   const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const isStoppingRef = useRef(false);
@@ -92,11 +107,35 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   isPausedRef.current = isPaused;
   isActiveRef.current = isActive;
 
-  // Timer for elapsed time
+  // Distance ref for lap calculations (avoids stale closure in handleLocation)
+  const distanceRef = useRef(0);
+  const currentLapStartDistanceRef = useRef(0);
+  const currentLapStartTimeRef = useRef(0);
+  const lapCountRef = useRef(0);
+
+  // Preferences ref so handleLocation (stable callback) reads fresh values
+  const prefsRef = useRef(preferences);
+  prefsRef.current = preferences;
+
+  // Timer for elapsed time + time-based audio cues
   useEffect(() => {
     if (isActive && !isPaused) {
       timerRef.current = setInterval(() => {
-        setElapsedSeconds((prev) => prev + 1);
+        setElapsedSeconds((prev) => {
+          const next = prev + 1;
+          // Time-based audio cue check
+          const freq = preferences.audioCueFrequency;
+          if (freq === 'every_5min' || freq === 'every_10min') {
+            checkTimeMilestone(
+              next,
+              distanceRef.current,
+              paceRef.current,
+              preferences.distanceUnit,
+              freq
+            );
+          }
+          return next;
+        });
       }, 1000);
     } else {
       if (timerRef.current) {
@@ -108,7 +147,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isActive, isPaused]);
+  }, [isActive, isPaused, preferences.audioCueFrequency, preferences.distanceUnit]);
 
   // --- Audio cues ---
 
@@ -126,13 +165,25 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   // Check for distance milestones whenever distanceMeters changes
   useEffect(() => {
     if (!isActive || isPaused || distanceMeters === 0) return;
-    checkMilestone(
-      distanceMeters,
-      elapsedSecondsRef.current,
-      paceRef.current,
-      preferences.distanceUnit
-    );
-  }, [distanceMeters, isActive, isPaused, preferences.distanceUnit]);
+    const freq = preferences.audioCueFrequency;
+    if (freq === 'every_km') {
+      checkMilestone(
+        distanceMeters,
+        elapsedSecondsRef.current,
+        paceRef.current,
+        preferences.distanceUnit
+      );
+    } else if (freq === 'every_half_km') {
+      checkHalfMilestone(
+        distanceMeters,
+        elapsedSecondsRef.current,
+        paceRef.current,
+        preferences.distanceUnit
+      );
+    }
+    // For time-based frequencies (every_5min, every_10min), distance milestones are skipped
+    // — those are handled in the timer effect above
+  }, [distanceMeters, isActive, isPaused, preferences.distanceUnit, preferences.audioCueFrequency]);
 
   // Location callback handler - uses refs for isPaused/isActive to avoid
   // recreating the callback (which would reset the GPS subscription).
@@ -195,7 +246,38 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
               velocity <= 12 &&
               isFinite(dist)
             ) {
-              setDistanceMeters((d) => d + dist);
+              const prevDist = distanceRef.current;
+              const newDist = prevDist + dist;
+              distanceRef.current = newDist;
+              setDistanceMeters(newDist);
+
+              // Auto-lap check (read from ref to avoid stale closure)
+              const prefs = prefsRef.current;
+              if (prefs.autoLap) {
+                const lapDistance = prefs.autoLapDistance === 'mi' ? 1609.34 : 1000;
+                const lapsPassed = Math.floor(newDist / lapDistance) - Math.floor(prevDist / lapDistance);
+                if (lapsPassed > 0) {
+                  const lapStartDist = currentLapStartDistanceRef.current;
+                  const lapStartTime = currentLapStartTimeRef.current;
+                  const elapsed = elapsedSecondsRef.current;
+                  const lapDist = newDist - lapStartDist;
+                  const lapDuration = elapsed - lapStartTime;
+                  const lapPace = lapDist > 0 ? (lapDuration / lapDist) * 1000 : 0;
+                  const newLapNumber = lapCountRef.current + 1;
+                  const newLap: Lap = {
+                    lapNumber: newLapNumber,
+                    distanceM: lapDist,
+                    durationSec: lapDuration,
+                    paceSecPerKm: lapPace,
+                  };
+                  lapCountRef.current = newLapNumber;
+                  currentLapStartDistanceRef.current = newDist;
+                  currentLapStartTimeRef.current = elapsed;
+                  setLaps((prev) => [...prev, newLap]);
+                  setLatestLap(newLap);
+                  announceLap(newLapNumber, lapPace, prefs.distanceUnit);
+                }
+              }
             }
           }
         }
@@ -239,8 +321,14 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       setWaypoints([]);
       setCurrentSpeed(0);
       setIsPaused(false);
+      setLaps([]);
+      setLatestLap(null);
       lastWaypointRef.current = null;
       isStoppingRef.current = false;
+      distanceRef.current = 0;
+      currentLapStartDistanceRef.current = 0;
+      currentLapStartTimeRef.current = 0;
+      lapCountRef.current = 0;
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = undefined;
@@ -277,8 +365,14 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       setWaypoints([]);
       setCurrentSpeed(0);
       setIsPaused(false);
+      setLaps([]);
+      setLatestLap(null);
       lastWaypointRef.current = null;
       isStoppingRef.current = false;
+      distanceRef.current = 0;
+      currentLapStartDistanceRef.current = 0;
+      currentLapStartTimeRef.current = 0;
+      lapCountRef.current = 0;
       announceStart(type);
     },
     [user]
@@ -460,6 +554,11 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
           }),
       ]).catch(() => {});
 
+      // Update running streak if this was a run
+      if (currentActivity.type === 'run') {
+        checkAndUpdateRunningStreak(userId).catch(() => {});
+      }
+
       // Reset state
       setCurrentActivity(null);
       setElapsedSeconds(0);
@@ -468,8 +567,14 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       setWaypoints([]);
       setCurrentSpeed(0);
       setIsPaused(false);
+      setLaps([]);
+      setLatestLap(null);
       lastWaypointRef.current = null;
       isStoppingRef.current = false;
+      distanceRef.current = 0;
+      currentLapStartDistanceRef.current = 0;
+      currentLapStartTimeRef.current = 0;
+      lapCountRef.current = 0;
 
       return completed;
       } catch (err) {
@@ -499,6 +604,8 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         currentPaceSecPerKm,
         waypoints,
         currentSpeed,
+        laps,
+        latestLap,
         startActivity,
         pauseActivity,
         resumeActivity,

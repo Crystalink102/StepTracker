@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/context/AuthContext';
 import * as ActivityService from '@/src/services/activity.service';
 import { Gear } from '@/src/types/database';
+import { recommendShoe } from '@/src/utils/gear-rotation';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
@@ -247,6 +248,26 @@ export default function GearScreen() {
           <Text style={styles.addButtonText}>Add Gear</Text>
         </TouchableOpacity>
       )}
+
+      {/* Rotation Tip */}
+      {(() => {
+        const rec = recommendShoe(gear);
+        if (!rec) return null;
+        return (
+          <View style={[styles.rotationTipCard, { backgroundColor: colors.surface }]}>
+            <View style={styles.rotationTipHeader}>
+              <Ionicons name="swap-horizontal" size={18} color={Colors.primary} />
+              <Text style={[styles.rotationTipTitle, { color: colors.textPrimary }]}>Rotation Tip</Text>
+            </View>
+            <Text style={[styles.rotationTipShoe, { color: colors.textPrimary }]}>
+              {rec.recommended.name}
+            </Text>
+            <Text style={[styles.rotationTipReason, { color: colors.textMuted }]}>
+              {rec.reason}
+            </Text>
+          </View>
+        );
+      })()}
 
       {/* Gear List */}
       {gear.map((item) => {
@@ -515,6 +536,31 @@ const styles = StyleSheet.create({
   },
   gearActionText: {
     fontSize: FontSize.xs,
+  },
+  rotationTipCard: {
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing.xl,
+    borderWidth: 1,
+    borderColor: Colors.primary,
+  },
+  rotationTipHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.sm,
+  },
+  rotationTipTitle: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
+  },
+  rotationTipShoe: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold,
+    marginBottom: 2,
+  },
+  rotationTipReason: {
+    fontSize: FontSize.sm,
   },
   emptyState: {
     alignItems: 'center',

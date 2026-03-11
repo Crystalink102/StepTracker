@@ -14,11 +14,13 @@ import DateScrollPicker from '@/src/components/ui/DateScrollPicker';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import * as ProfileService from '@/src/services/profile.service';
 import { Profile } from '@/src/types/database';
+import { distanceUnitShort, metersToDisplayDistance } from '@/src/utils/formatters';
 import { Colors, Spacing } from '@/src/constants/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
 const CM_PER_INCH = 2.54;
 const KG_PER_LB = 0.453592;
+const KM_TO_MI = 0.621371;
 
 export default function PersonalInfoScreen() {
   const { colors } = useTheme();
@@ -36,9 +38,12 @@ export default function PersonalInfoScreen() {
   const [heightValue, setHeightValue] = useState('');
   const [weightValue, setWeightValue] = useState('');
   const [dob, setDob] = useState('');
+  const [weeklyGoalValue, setWeeklyGoalValue] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '' });
+
+  const distUnit = preferences.distanceUnit;
 
   useEffect(() => {
     if (!user) {
@@ -64,10 +69,14 @@ export default function PersonalInfoScreen() {
           );
         }
         setDob(p.date_of_birth || '');
+        if (p.weekly_distance_goal_meters && p.weekly_distance_goal_meters > 0) {
+          const displayVal = metersToDisplayDistance(p.weekly_distance_goal_meters, distUnit);
+          setWeeklyGoalValue(displayVal.toFixed(1));
+        }
       })
       .catch(() => {})
       .finally(() => setIsLoading(false));
-  }, [user, heightUnit, weightUnit]);
+  }, [user, heightUnit, weightUnit, distUnit]);
 
   const handleSave = async () => {
     if (!user) return;
@@ -85,11 +94,27 @@ export default function PersonalInfoScreen() {
         weightKg = weightUnit === 'lb' ? Math.round(val * KG_PER_LB * 10) / 10 : val;
       }
 
+      let weeklyGoalMeters: number = 0;
+      if (weeklyGoalValue) {
+        const val = parseFloat(weeklyGoalValue);
+        if (!isNaN(val) && val > 0) {
+          // Convert from display unit to meters
+          if (distUnit === 'mi') {
+            weeklyGoalMeters = Math.round((val / KM_TO_MI) * 1000);
+          } else if (distUnit === 'm') {
+            weeklyGoalMeters = Math.round(val);
+          } else {
+            weeklyGoalMeters = Math.round(val * 1000);
+          }
+        }
+      }
+
       await ProfileService.updateProfile(user.id, {
         resting_hr: restingHR ? parseInt(restingHR, 10) : 70,
         height_cm: heightCm,
         weight_kg: weightKg,
         date_of_birth: dob || null,
+        weekly_distance_goal_meters: weeklyGoalMeters,
       });
       await refreshProfile();
       showToast('Personal info saved', 'success');
@@ -132,6 +157,13 @@ export default function PersonalInfoScreen() {
           value={weightValue}
           onChangeText={setWeightValue}
           placeholder={weightUnit === 'lb' ? '155' : '70'}
+          keyboardType="decimal-pad"
+        />
+        <Input
+          label={`Weekly Distance Goal (${distanceUnitShort(distUnit)})`}
+          value={weeklyGoalValue}
+          onChangeText={setWeeklyGoalValue}
+          placeholder="0"
           keyboardType="decimal-pad"
         />
         <DateScrollPicker

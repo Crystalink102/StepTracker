@@ -182,3 +182,56 @@ export async function checkAndUpdateStreak(userId: string): Promise<StreakResult
 
   return { streak: newStreak, showPopup: true, freezeUsed };
 }
+
+/**
+ * Check and update the running streak for a user.
+ * Called when a run activity is completed.
+ */
+export async function checkAndUpdateRunningStreak(
+  userId: string
+): Promise<{ streak: number; isNew: boolean }> {
+  const { data: profile, error: profileErr } = await supabase
+    .from('profiles')
+    .select('running_streak, last_run_streak_date')
+    .eq('id', userId)
+    .single();
+
+  if (profileErr) throw profileErr;
+
+  const todayStr = getDateString(new Date());
+  const lastDate = (profile as any)?.last_run_streak_date ?? null;
+  const currentStreak = (profile as any)?.running_streak ?? 0;
+
+  // Already counted today
+  if (lastDate === todayStr) {
+    return { streak: currentStreak, isNew: false };
+  }
+
+  let newStreak: number;
+
+  if (lastDate) {
+    const yesterdayStr = getYesterday();
+    if (lastDate === yesterdayStr) {
+      // Consecutive day - increment
+      newStreak = currentStreak + 1;
+    } else {
+      // Streak broken - reset to 1
+      newStreak = 1;
+    }
+  } else {
+    // First run ever
+    newStreak = 1;
+  }
+
+  const { error: updateErr } = await supabase
+    .from('profiles')
+    .update({
+      running_streak: newStreak,
+      last_run_streak_date: todayStr,
+    } as any)
+    .eq('id', userId);
+
+  if (updateErr) throw updateErr;
+
+  return { streak: newStreak, isNew: newStreak > currentStreak };
+}

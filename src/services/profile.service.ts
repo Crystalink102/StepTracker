@@ -38,6 +38,9 @@ export async function getProfile(userId: string) {
         current_streak: 0,
         last_streak_date: null,
         daily_step_goal: 10000,
+        weekly_distance_goal_meters: 0,
+        running_streak: 0,
+        last_run_streak_date: null,
         push_token: null,
         notify_daily_reminder: true,
         notify_streak_warning: true,
@@ -70,6 +73,9 @@ export async function updateProfile(
     | 'weight_kg'
     | 'bio'
     | 'daily_step_goal'
+    | 'weekly_distance_goal_meters'
+    | 'running_streak'
+    | 'last_run_streak_date'
     | 'push_token'
     | 'notify_daily_reminder'
     | 'notify_streak_warning'

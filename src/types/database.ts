@@ -23,6 +23,9 @@ export interface Database {
           last_streak_date: string | null;
           bio: string | null;
           daily_step_goal: number;
+          weekly_distance_goal_meters: number;
+          running_streak: number;
+          last_run_streak_date: string | null;
           push_token: string | null;
           notify_daily_reminder: boolean;
           notify_streak_warning: boolean;
@@ -45,6 +48,9 @@ export interface Database {
           last_streak_date?: string | null;
           bio?: string | null;
           daily_step_goal?: number;
+          weekly_distance_goal_meters?: number;
+          running_streak?: number;
+          last_run_streak_date?: string | null;
           push_token?: string | null;
           notify_daily_reminder?: boolean;
           notify_streak_warning?: boolean;
@@ -64,6 +70,9 @@ export interface Database {
           current_streak?: number;
           last_streak_date?: string | null;
           daily_step_goal?: number;
+          weekly_distance_goal_meters?: number;
+          running_streak?: number;
+          last_run_streak_date?: string | null;
           push_token?: string | null;
           notify_daily_reminder?: boolean;
           notify_streak_warning?: boolean;
