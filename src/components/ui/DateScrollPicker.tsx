@@ -7,8 +7,6 @@ import {
   TouchableOpacity,
   Modal,
   Platform,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
   ViewStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -33,7 +31,7 @@ function pad(n: number): string {
   return n < 10 ? `0${n}` : String(n);
 }
 
-// ─── Scroll Wheel ───────────────────────────────────────────────
+// ─── Scroll Wheel (mobile only) ────────────────────────────────
 
 type WheelProps = {
   items: string[];
@@ -156,6 +154,81 @@ export default function DateScrollPicker({
   const { colors } = useTheme();
   const currentYear = new Date().getFullYear();
   const effectiveMaxYear = maxYear ?? currentYear;
+
+  // ─── Web: use native HTML date input ─────────────────────────
+  if (Platform.OS === 'web') {
+    const minDate = `${minYear}-01-01`;
+    const maxDate = `${effectiveMaxYear}-12-31`;
+
+    // Format display value as "Month Day, Year"
+    const displayValue = value
+      ? (() => {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+          const [y, m, d] = value.split('-').map(Number);
+          if (m < 1 || m > 12) return value;
+          return `${MONTHS[m - 1]} ${d}, ${y}`;
+        })()
+      : '';
+
+    return (
+      <View style={containerStyle}>
+        {label && <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>}
+        <View
+          style={[
+            styles.field,
+            { backgroundColor: colors.surface, borderColor: colors.border },
+            error && { borderColor: colors.danger },
+          ]}
+        >
+          <Text
+            style={[
+              styles.fieldText,
+              { color: colors.textPrimary, flex: 1 },
+              !displayValue && { color: colors.textMuted },
+            ]}
+          >
+            {displayValue || placeholder}
+          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            {clearable && value ? (
+              <TouchableOpacity onPress={() => onValueChange('')} hitSlop={8}>
+                <Ionicons name="close-circle" size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            ) : null}
+            {/* Hidden native date input overlaying the icon */}
+            <View style={{ position: 'relative' }}>
+              <Ionicons name="calendar-outline" size={20} color={colors.textMuted} />
+              {/* @ts-ignore - web-only HTML input */}
+              <input
+                type="date"
+                value={value || ''}
+                min={minDate}
+                max={maxDate}
+                onChange={(e: any) => {
+                  const val = e.target.value;
+                  if (val) onValueChange(val);
+                }}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  opacity: 0,
+                  cursor: 'pointer',
+                  // @ts-ignore
+                  WebkitAppearance: 'none',
+                }}
+              />
+            </View>
+          </View>
+        </View>
+        {error && <Text style={[styles.error, { color: colors.danger }]}>{error}</Text>}
+      </View>
+    );
+  }
+
+  // ─── Mobile: scroll wheel picker ─────────────────────────────
 
   const [modalVisible, setModalVisible] = useState(false);
   const [tempMonth, setTempMonth] = useState(0);
