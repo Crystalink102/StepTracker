@@ -20,6 +20,7 @@ export default function Input({
   label,
   error,
   containerStyle,
+  style,
   ...props
 }: InputProps) {
   const { colors } = useTheme();
@@ -34,6 +35,7 @@ export default function Input({
           { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border },
           isFocused && styles.inputFocused,
           error && styles.inputError,
+          style,
         ]}
         placeholderTextColor={colors.textMuted}
         onFocus={() => setIsFocused(true)}

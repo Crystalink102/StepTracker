@@ -154,6 +154,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.md,
+    flex: 1,
+    marginRight: Spacing.sm,
   },
   activityName: {
     fontSize: FontSize.md,
