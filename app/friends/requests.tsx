@@ -78,7 +78,6 @@ export default function FriendRequestsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   listContent: {
     paddingHorizontal: Spacing.lg,

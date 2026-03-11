@@ -77,7 +77,6 @@ export default function FriendsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   headerActions: {
     flexDirection: 'row',
@@ -88,7 +87,6 @@ const styles = StyleSheet.create({
   },
   actionBtn: {
     flex: 1,
-    backgroundColor: Colors.surface,
     padding: Spacing.md,
     borderRadius: 10,
     alignItems: 'center',

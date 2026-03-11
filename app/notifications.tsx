@@ -15,14 +15,17 @@ const NOTIFICATION_ICONS: Record<AppNotification['type'], keyof typeof Ionicons.
   general: 'notifications',
 };
 
-const NOTIFICATION_COLORS: Record<AppNotification['type'], string> = {
-  achievement: Colors.gold,
-  friend_request: Colors.primary,
-  challenge: Colors.warning,
-  streak: '#FF6B35',
-  level_up: Colors.primary,
-  general: Colors.textSecondary,
-};
+function getNotificationColor(type: AppNotification['type'], themeColors: { warning: string; textSecondary: string }): string {
+  switch (type) {
+    case 'achievement': return Colors.gold;
+    case 'friend_request': return Colors.primary;
+    case 'challenge': return themeColors.warning;
+    case 'streak': return '#FF6B35';
+    case 'level_up': return Colors.primary;
+    case 'general': return themeColors.textSecondary;
+    default: return themeColors.textSecondary;
+  }
+}
 
 /** Map notification type to a route for navigation */
 function getRouteForType(type: AppNotification['type']): string | null {
@@ -66,7 +69,7 @@ function NotificationRow({
 }) {
   const { colors } = useTheme();
   const iconName = NOTIFICATION_ICONS[item.type] || 'notifications';
-  const iconColor = NOTIFICATION_COLORS[item.type] || colors.textSecondary;
+  const iconColor = getNotificationColor(item.type, colors);
 
   return (
     <TouchableOpacity
@@ -148,7 +151,6 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   listContent: {
     paddingVertical: Spacing.sm,
@@ -171,18 +173,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   rowTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
   },
   rowBody: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     marginTop: 2,
     lineHeight: 18,
   },
   rowTime: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: 4,
   },
@@ -200,12 +199,10 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   emptyTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
   },
   emptyBody: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
     textAlign: 'center',
     lineHeight: 22,

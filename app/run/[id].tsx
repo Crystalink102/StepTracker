@@ -11,9 +11,10 @@ import {
   Modal,
   Pressable,
   Alert,
+  TextInput,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import * as ActivityService from '@/src/services/activity.service';
 import RouteMap from '@/src/components/activity/RouteMap';
 import RouteReplay from '@/src/components/activity/RouteReplay';
@@ -23,8 +24,8 @@ import SplitsTable from '@/src/components/activity/SplitsTable';
 import ElevationProfile from '@/src/components/activity/ElevationProfile';
 import RunPersonalBests from '@/src/components/activity/RunPersonalBests';
 import HeartRateZones from '@/src/components/activity/HeartRateZones';
-import { Badge } from '@/src/components/ui';
-import { Activity, ActivityWaypoint } from '@/src/types/database';
+import { Badge, ConfirmModal } from '@/src/components/ui';
+import { Activity, ActivityWaypoint, Gear } from '@/src/types/database';
 import { formatRelativeDate, formatTime } from '@/src/utils/date-helpers';
 import {
   formatDistance,
@@ -37,9 +38,16 @@ import {
 } from '@/src/utils/formatters';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { useProfile } from '@/src/hooks/useProfile';
+import { useAuth } from '@/src/context/AuthContext';
 import { haversineDistance } from '@/src/utils/geo';
 import { exportActivity } from '@/src/utils/export';
 import { ageFromDOB, calculateMaxHR } from '@/src/utils/hr-zones';
+import { getSubtypeLabel, ACTIVITY_SUBTYPES, PRIVACY_OPTIONS } from '@/src/utils/activity-name';
+import {
+  estimateCadence,
+  analyzeNegativeSplit,
+  detectBestEfforts,
+} from '@/src/utils/running-metrics';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
@@ -84,6 +92,8 @@ function getElevationGain(waypoints: ActivityWaypoint[]): number | null {
 export default function RunDetailScreen() {
   const { colors } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+  const { user } = useAuth();
   const [activity, setActivity] = useState<Activity | null>(null);
   const [waypoints, setWaypoints] = useState<ActivityWaypoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -93,6 +103,14 @@ export default function RunDetailScreen() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [isReplaying, setIsReplaying] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editDesc, setEditDesc] = useState('');
+  const [editEffort, setEditEffort] = useState<number | null>(null);
+  const [editSubtype, setEditSubtype] = useState<string | null>(null);
+  const [editPrivacy, setEditPrivacy] = useState('public');
+  const [isEditSaving, setIsEditSaving] = useState(false);
 
   const handleReplayEnd = useCallback(() => {
     setIsReplaying(false);
@@ -113,6 +131,57 @@ export default function RunDetailScreen() {
     },
     [activity, waypoints]
   );
+
+  const handleToggleFavorite = useCallback(async () => {
+    if (!activity || !id) return;
+    try {
+      const newVal = await ActivityService.toggleFavorite(id, activity.is_favorite);
+      setActivity((prev) => prev ? { ...prev, is_favorite: newVal } : prev);
+    } catch (err) {
+      console.warn('[RunDetail] Favorite toggle failed:', err);
+    }
+  }, [activity, id]);
+
+  const handleDelete = useCallback(async () => {
+    if (!id) return;
+    setShowDeleteConfirm(false);
+    try {
+      await ActivityService.deleteActivity(id);
+      router.back();
+    } catch (err: any) {
+      Alert.alert('Delete Failed', err?.message || 'Could not delete activity');
+    }
+  }, [id, router]);
+
+  const openEditModal = useCallback(() => {
+    if (!activity) return;
+    setEditName(activity.name || '');
+    setEditDesc(activity.description || '');
+    setEditEffort(activity.perceived_effort);
+    setEditSubtype(activity.activity_subtype);
+    setEditPrivacy(activity.privacy || 'public');
+    setShowEditModal(true);
+  }, [activity]);
+
+  const handleEditSave = useCallback(async () => {
+    if (!id || isEditSaving) return;
+    setIsEditSaving(true);
+    try {
+      const updated = await ActivityService.editActivity(id, {
+        name: editName.trim() || null,
+        description: editDesc.trim() || null,
+        perceived_effort: editEffort,
+        activity_subtype: editSubtype,
+        privacy: editPrivacy,
+      });
+      setActivity(updated);
+      setShowEditModal(false);
+    } catch (err: any) {
+      Alert.alert('Save Failed', err?.message || 'Could not save changes');
+    } finally {
+      setIsEditSaving(false);
+    }
+  }, [id, editName, editDesc, editEffort, editSubtype, editPrivacy, isEditSaving]);
 
   useEffect(() => {
     if (!id) return;
@@ -141,6 +210,25 @@ export default function RunDetailScreen() {
     return age ? calculateMaxHR(age) : 190;
   }, [profile?.date_of_birth]);
 
+  // Advanced running metrics
+  const cadence = useMemo(
+    () => activity ? estimateCadence(activity.avg_pace_seconds_per_km, profile?.height_cm ?? null) : null,
+    [activity, profile?.height_cm]
+  );
+
+  const negativeSplit = useMemo(
+    () => activity ? analyzeNegativeSplit(waypoints, activity.distance_meters, activity.duration_seconds) : null,
+    [activity, waypoints]
+  );
+
+  const bestEfforts = useMemo(
+    () => detectBestEfforts(waypoints),
+    [waypoints]
+  );
+
+  const activityDisplayName = activity?.name || (activity?.type === 'run' ? 'Run' : 'Walk');
+  const subtypeLabel = activity ? getSubtypeLabel(activity.activity_subtype) : null;
+
   const handleShare = async () => {
     if (!activity) return;
     const emoji = activity.type === 'run' ? '\u{1F3C3}' : '\u{1F6B6}';
@@ -154,7 +242,7 @@ export default function RunDetailScreen() {
       : null;
 
     const lines = [
-      `${emoji} ${activity.type === 'run' ? 'Run' : 'Walk'} Complete!`,
+      `${emoji} ${activityDisplayName}`,
       `\u{1F4CF} ${dist}`,
       `\u{23F1}\u{FE0F} ${dur}`,
       pace ? `\u{26A1} ${pace}` : null,
@@ -218,14 +306,14 @@ export default function RunDetailScreen() {
       value: elevGain != null ? `${elevGain}m` : '--',
     },
     {
+      icon: 'footsteps-outline' as const,
+      label: 'Cadence',
+      value: cadence ? `${cadence} spm` : '--',
+    },
+    {
       icon: 'star-outline' as const,
       label: 'XP Earned',
       value: `+${activity.xp_earned}`,
-    },
-    {
-      icon: 'pulse-outline' as const,
-      label: 'HR Source',
-      value: activity.hr_source === 'auto' ? 'Auto' : activity.hr_source === 'manual' ? 'Manual' : '--',
     },
   ];
 
@@ -273,12 +361,12 @@ export default function RunDetailScreen() {
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <Badge
-                label={activity.type}
+                label={subtypeLabel || activity.type}
                 variant={activity.type === 'run' ? 'primary' : 'secondary'}
               />
-              <View>
-                <Text style={[styles.activityTitle, { color: colors.textPrimary }]}>
-                  {activity.type === 'run' ? 'Run' : 'Walk'}
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.activityTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {activityDisplayName}
                 </Text>
                 <Text style={[styles.date, { color: colors.textSecondary }]}>
                   {formatRelativeDate(activity.started_at)} at{' '}
@@ -288,16 +376,15 @@ export default function RunDetailScreen() {
             </View>
             {activity.status === 'completed' && (
               <View style={styles.headerActions}>
-                <TouchableOpacity
-                  onPress={() => setShowExportModal(true)}
-                  style={[styles.shareButton, { backgroundColor: colors.surface }]}
-                  disabled={isExporting}
-                >
-                  {isExporting ? (
-                    <ActivityIndicator size="small" color={Colors.primary} />
-                  ) : (
-                    <Ionicons name="download-outline" size={20} color={Colors.primary} />
-                  )}
+                <TouchableOpacity onPress={handleToggleFavorite} style={[styles.shareButton, { backgroundColor: colors.surface }]}>
+                  <Ionicons
+                    name={activity.is_favorite ? 'star' : 'star-outline'}
+                    size={20}
+                    color={activity.is_favorite ? Colors.gold : colors.textMuted}
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity onPress={openEditModal} style={[styles.shareButton, { backgroundColor: colors.surface }]}>
+                  <Ionicons name="pencil-outline" size={20} color={Colors.primary} />
                 </TouchableOpacity>
                 <TouchableOpacity onPress={handleShare} style={[styles.shareButton, { backgroundColor: colors.surface }]}>
                   <Ionicons name="share-outline" size={20} color={Colors.primary} />
@@ -305,6 +392,38 @@ export default function RunDetailScreen() {
               </View>
             )}
           </View>
+
+          {/* Description */}
+          {activity.description ? (
+            <Text style={[styles.descriptionText, { color: colors.textSecondary }]}>
+              {activity.description}
+            </Text>
+          ) : null}
+
+          {/* Effort + Privacy row */}
+          {(activity.perceived_effort != null || activity.privacy !== 'public') && (
+            <View style={styles.metaRow}>
+              {activity.perceived_effort != null && (
+                <View style={[styles.metaBadge, { backgroundColor: colors.surface }]}>
+                  <Text style={[styles.metaBadgeText, { color: colors.textSecondary }]}>
+                    Effort: {activity.perceived_effort}/10
+                  </Text>
+                </View>
+              )}
+              {activity.privacy !== 'public' && (
+                <View style={[styles.metaBadge, { backgroundColor: colors.surface }]}>
+                  <Ionicons
+                    name={activity.privacy === 'private' ? 'lock-closed-outline' : 'people-outline'}
+                    size={12}
+                    color={colors.textMuted}
+                  />
+                  <Text style={[styles.metaBadgeText, { color: colors.textSecondary }]}>
+                    {activity.privacy === 'private' ? 'Private' : 'Friends'}
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
 
           {/* Big distance display */}
           <View style={styles.distanceSection}>
@@ -326,6 +445,65 @@ export default function RunDetailScreen() {
               </View>
             ))}
           </View>
+
+          {/* Negative Split Analysis */}
+          {negativeSplit && (
+            <View style={[styles.splitAnalysis, { backgroundColor: colors.surface }]}>
+              <View style={styles.splitAnalysisHeader}>
+                <Ionicons
+                  name={negativeSplit.isNegativeSplit ? 'trending-down-outline' : 'trending-up-outline'}
+                  size={18}
+                  color={negativeSplit.rating === 'perfect' ? '#22C55E' : negativeSplit.rating === 'good' ? '#22C55E' : negativeSplit.rating === 'even' ? colors.textSecondary : '#F59E0B'}
+                />
+                <Text style={[styles.splitAnalysisTitle, { color: colors.textPrimary }]}>
+                  {negativeSplit.isNegativeSplit ? 'Negative Split' : negativeSplit.rating === 'even' ? 'Even Split' : 'Positive Split'}
+                </Text>
+              </View>
+              <Text style={[styles.splitAnalysisMsg, { color: colors.textSecondary }]}>
+                {negativeSplit.message}
+              </Text>
+              <View style={styles.splitAnalysisPaces}>
+                <View style={styles.splitAnalysisPace}>
+                  <Text style={[styles.splitPaceLabel, { color: colors.textMuted }]}>1st Half</Text>
+                  <Text style={[styles.splitPaceValue, { color: colors.textPrimary }]}>
+                    {formatPace(negativeSplit.firstHalfPace, unit)} {paceUnitLabel(unit)}
+                  </Text>
+                </View>
+                <View style={styles.splitAnalysisPace}>
+                  <Text style={[styles.splitPaceLabel, { color: colors.textMuted }]}>2nd Half</Text>
+                  <Text style={[styles.splitPaceValue, { color: negativeSplit.isNegativeSplit ? '#22C55E' : colors.textPrimary }]}>
+                    {formatPace(negativeSplit.secondHalfPace, unit)} {paceUnitLabel(unit)}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* Best Efforts */}
+          {bestEfforts.length > 0 && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionHeader, { color: colors.textMuted }]}>BEST EFFORTS</Text>
+              <View style={[styles.bestEffortsCard, { backgroundColor: colors.surface }]}>
+                {bestEfforts.map((be, i) => (
+                  <View
+                    key={be.label}
+                    style={[
+                      styles.bestEffortRow,
+                      i < bestEfforts.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.surfaceLight },
+                    ]}
+                  >
+                    <Text style={[styles.bestEffortLabel, { color: colors.textPrimary }]}>{be.label}</Text>
+                    <Text style={[styles.bestEffortTime, { color: colors.textSecondary }]}>
+                      {formatDuration(be.timeSeconds)}
+                    </Text>
+                    <Text style={[styles.bestEffortPace, { color: Colors.primary }]}>
+                      {formatPace(be.paceSecPerKm, unit)} {paceUnitLabel(unit)}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          )}
 
           {/* Replay Route button */}
           {hasRoute && hasEnoughWaypoints && (
@@ -388,6 +566,28 @@ export default function RunDetailScreen() {
               <ElevationProfile waypoints={waypoints} />
             </View>
           )}
+
+          {/* Action buttons */}
+          {activity.status === 'completed' && (
+            <View style={styles.section}>
+              <TouchableOpacity
+                onPress={() => setShowExportModal(true)}
+                style={[styles.actionButton, { backgroundColor: colors.surface }]}
+                disabled={isExporting}
+              >
+                <Ionicons name="download-outline" size={20} color={Colors.primary} />
+                <Text style={[styles.actionButtonText, { color: Colors.primary }]}>Export Activity</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={() => setShowDeleteConfirm(true)}
+                style={[styles.actionButton, { backgroundColor: colors.surface, marginTop: Spacing.sm }]}
+              >
+                <Ionicons name="trash-outline" size={20} color={colors.danger} />
+                <Text style={[styles.actionButtonText, { color: colors.danger }]}>Delete Activity</Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -439,6 +639,131 @@ export default function RunDetailScreen() {
           </View>
         </Pressable>
       </Modal>
+
+      {/* Edit Activity Modal */}
+      <Modal
+        visible={showEditModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowEditModal(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowEditModal(false)}>
+          <Pressable style={[styles.editModalContent, { backgroundColor: colors.surface }]} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.editModalHeader}>
+              <TouchableOpacity onPress={() => setShowEditModal(false)}>
+                <Text style={[{ color: colors.textMuted, fontSize: FontSize.lg }]}>Cancel</Text>
+              </TouchableOpacity>
+              <Text style={[styles.modalTitle, { color: colors.textPrimary, marginBottom: 0 }]}>Edit Activity</Text>
+              <TouchableOpacity onPress={handleEditSave} disabled={isEditSaving}>
+                {isEditSaving ? (
+                  <ActivityIndicator size="small" color={Colors.primary} />
+                ) : (
+                  <Text style={{ color: Colors.primary, fontSize: FontSize.lg, fontWeight: FontWeight.bold }}>Save</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              <Text style={[styles.editLabel, { color: colors.textMuted }]}>TITLE</Text>
+              <TextInput
+                style={[styles.editInput, { color: colors.textPrimary, borderBottomColor: colors.surfaceLight }]}
+                value={editName}
+                onChangeText={setEditName}
+                placeholder="Activity name"
+                placeholderTextColor={colors.textMuted}
+                maxLength={100}
+              />
+
+              <Text style={[styles.editLabel, { color: colors.textMuted, marginTop: Spacing.xl }]}>DESCRIPTION</Text>
+              <TextInput
+                style={[styles.editDescInput, { color: colors.textPrimary, backgroundColor: colors.surfaceLight }]}
+                value={editDesc}
+                onChangeText={setEditDesc}
+                placeholder="Add notes..."
+                placeholderTextColor={colors.textMuted}
+                multiline
+                textAlignVertical="top"
+                maxLength={500}
+              />
+
+              <Text style={[styles.editLabel, { color: colors.textMuted, marginTop: Spacing.xl }]}>
+                EFFORT {editEffort ? `(${editEffort}/10)` : ''}
+              </Text>
+              <View style={styles.editEffortRow}>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => (
+                  <TouchableOpacity
+                    key={n}
+                    style={[
+                      styles.editEffortDot,
+                      { backgroundColor: colors.surfaceLight },
+                      editEffort != null && n <= editEffort && {
+                        backgroundColor: n <= 3 ? '#22C55E' : n <= 6 ? '#F59E0B' : n <= 8 ? '#F97316' : '#EF4444',
+                      },
+                    ]}
+                    onPress={() => setEditEffort(editEffort === n ? null : n)}
+                  >
+                    <Text style={[{ fontSize: FontSize.xs, fontWeight: FontWeight.bold, color: colors.textMuted }, editEffort != null && n <= editEffort && { color: '#FFF' }]}>
+                      {n}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={[styles.editLabel, { color: colors.textMuted, marginTop: Spacing.xl }]}>ACTIVITY TYPE</Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.sm }}>
+                {(ACTIVITY_SUBTYPES[(activity?.type as 'run' | 'walk') || 'run'] || ACTIVITY_SUBTYPES.run).map((opt) => (
+                  <TouchableOpacity
+                    key={opt.value}
+                    style={[
+                      styles.editChip,
+                      { backgroundColor: colors.surfaceLight },
+                      editSubtype === opt.value && { backgroundColor: Colors.primary },
+                    ]}
+                    onPress={() => setEditSubtype(editSubtype === opt.value ? null : opt.value)}
+                  >
+                    <Text style={[{ fontSize: FontSize.sm, color: colors.textSecondary }, editSubtype === opt.value && { color: '#FFF' }]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={[styles.editLabel, { color: colors.textMuted, marginTop: Spacing.xl }]}>VISIBILITY</Text>
+              <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+                {PRIVACY_OPTIONS.map((opt) => (
+                  <TouchableOpacity
+                    key={opt.value}
+                    style={[
+                      styles.editChip,
+                      { backgroundColor: colors.surfaceLight, flexDirection: 'row', gap: 4 },
+                      editPrivacy === opt.value && { backgroundColor: Colors.primary },
+                    ]}
+                    onPress={() => setEditPrivacy(opt.value)}
+                  >
+                    <Ionicons name={opt.icon} size={14} color={editPrivacy === opt.value ? '#FFF' : colors.textMuted} />
+                    <Text style={[{ fontSize: FontSize.sm, color: colors.textSecondary }, editPrivacy === opt.value && { color: '#FFF' }]}>
+                      {opt.label}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View style={{ height: 40 }} />
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Delete Confirmation */}
+      <ConfirmModal
+        visible={showDeleteConfirm}
+        title="Delete Activity"
+        message="This will permanently delete this activity and all its data. This cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        onConfirm={handleDelete}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </>
   );
 }
@@ -446,29 +771,24 @@ export default function RunDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   centered: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   errorText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.lg,
   },
   noMapPlaceholder: {
     height: 120,
-    backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.sm,
   },
   noMapText: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
   },
   contentCard: {
-    backgroundColor: Colors.background,
     marginTop: -20,
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
@@ -494,7 +814,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   activityTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
   },
@@ -502,12 +821,10 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   date: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     marginTop: 2,
   },
@@ -517,13 +834,11 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
   },
   distanceValue: {
-    color: Colors.textPrimary,
     fontSize: 56,
     fontWeight: FontWeight.bold,
     lineHeight: 60,
   },
   distanceUnit: {
-    color: Colors.textMuted,
     fontSize: FontSize.lg,
     marginTop: Spacing.xs,
     textTransform: 'uppercase',
@@ -532,7 +847,6 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     overflow: 'hidden',
   },
@@ -542,18 +856,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomWidth: 1,
     borderRightWidth: 1,
-    borderColor: Colors.surfaceLight,
   },
   statIcon: {
     marginBottom: 4,
   },
   statValue: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
   },
   statLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: 4,
     textTransform: 'uppercase',
@@ -571,7 +882,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.sm,
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
@@ -591,14 +901,12 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: Colors.surface,
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
     padding: Spacing.xxl,
     paddingBottom: 40,
   },
   modalTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.xl,
@@ -607,7 +915,6 @@ const styles = StyleSheet.create({
   exportOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surfaceLight,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     marginBottom: Spacing.md,
@@ -617,12 +924,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   exportOptionTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
   },
   exportOptionDesc: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     marginTop: 2,
   },
@@ -632,8 +937,154 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   cancelText: {
-    color: Colors.textMuted,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.medium,
+  },
+  descriptionText: {
+    fontSize: FontSize.md,
+    lineHeight: 22,
+    marginBottom: Spacing.lg,
+  },
+  metaRow: {
+    flexDirection: 'row',
+    gap: Spacing.sm,
+    marginBottom: Spacing.lg,
+  },
+  metaBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.full,
+  },
+  metaBadgeText: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.medium,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg,
+  },
+  actionButtonText: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
+  },
+  editModalContent: {
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
+    padding: Spacing.xxl,
+    paddingBottom: 40,
+    maxHeight: '85%',
+  },
+  editModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.xl,
+  },
+  editLabel: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 1,
+    marginBottom: Spacing.sm,
+  },
+  editInput: {
+    fontSize: FontSize.xl,
+    fontWeight: FontWeight.bold,
+    borderBottomWidth: 1,
+    paddingBottom: Spacing.sm,
+  },
+  editDescInput: {
+    fontSize: FontSize.md,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    minHeight: 80,
+  },
+  editEffortRow: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  editEffortDot: {
+    flex: 1,
+    aspectRatio: 1,
+    borderRadius: BorderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    maxWidth: 30,
+  },
+  editChip: {
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    alignItems: 'center',
+  },
+  splitAnalysis: {
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginTop: Spacing.lg,
+  },
+  splitAnalysisHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.xs,
+  },
+  splitAnalysisTitle: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.semibold,
+  },
+  splitAnalysisMsg: {
+    fontSize: FontSize.sm,
+    marginBottom: Spacing.md,
+  },
+  splitAnalysisPaces: {
+    flexDirection: 'row',
+    gap: Spacing.xl,
+  },
+  splitAnalysisPace: {},
+  splitPaceLabel: {
+    fontSize: FontSize.xs,
+    textTransform: 'uppercase' as const,
+    marginBottom: 2,
+  },
+  splitPaceValue: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+  },
+  sectionHeader: {
+    fontSize: FontSize.xs,
+    fontWeight: FontWeight.bold,
+    letterSpacing: 1,
+    marginBottom: Spacing.md,
+  },
+  bestEffortsCard: {
+    borderRadius: BorderRadius.lg,
+    overflow: 'hidden',
+  },
+  bestEffortRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+  },
+  bestEffortLabel: {
+    flex: 1,
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
+  },
+  bestEffortTime: {
+    fontSize: FontSize.md,
+    marginRight: Spacing.lg,
+  },
+  bestEffortPace: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
+    minWidth: 80,
+    textAlign: 'right',
   },
 });

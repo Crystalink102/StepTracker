@@ -70,7 +70,6 @@ export default function AchievementsScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   centered: {
     flex: 1,
@@ -93,7 +92,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   countLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
     marginTop: Spacing.xs,
   },

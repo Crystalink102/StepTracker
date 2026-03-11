@@ -138,7 +138,7 @@ export default function SearchFriendsScreen() {
       )}
 
       {searchError ? (
-        <Text style={styles.errorText}>{searchError}</Text>
+        <Text style={[styles.errorText, { color: colors.danger }]}>{searchError}</Text>
       ) : null}
 
       <FlatList
@@ -172,7 +172,6 @@ export default function SearchFriendsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   searchBox: {
     paddingHorizontal: Spacing.lg,
@@ -191,11 +190,9 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xxxl,
   },
   emptyText: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
   },
   errorText: {
-    color: Colors.danger,
     fontSize: FontSize.sm,
     textAlign: 'center' as const,
     paddingHorizontal: Spacing.lg,

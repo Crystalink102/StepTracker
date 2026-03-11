@@ -288,19 +288,16 @@ export default function FriendProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   content: {
     paddingBottom: Spacing.xxxl * 2,
   },
   loadingContainer: {
     flex: 1,
-    backgroundColor: Colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
   errorText: {
-    color: Colors.textMuted,
     fontSize: FontSize.lg,
   },
   profileHeader: {
@@ -310,18 +307,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   displayName: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
     marginTop: Spacing.md,
   },
   username: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
     marginTop: Spacing.xs,
   },
   bio: {
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
     textAlign: 'center',
     marginTop: Spacing.sm,
@@ -338,7 +332,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
   },
   sectionTitle: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
     letterSpacing: 1,
@@ -353,12 +346,10 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
   },
   statValue: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
   },
   statLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: 2,
   },
@@ -367,7 +358,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
   },
   emptyText: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     textAlign: 'center',
     paddingVertical: Spacing.md,
@@ -377,13 +367,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
   },
   activityIcon: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.surfaceLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -395,12 +383,10 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.md,
   },
   activityType: {
-    color: Colors.textPrimary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
   },
   activityDate: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: 2,
   },
@@ -408,12 +394,10 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   activityDistance: {
-    color: Colors.textPrimary,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
   },
   activityDuration: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: 2,
   },
