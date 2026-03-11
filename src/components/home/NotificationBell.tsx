@@ -3,9 +3,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useNotificationCenter } from '@/src/hooks/useNotificationCenter';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 export default function NotificationBell() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { unreadCount } = useNotificationCenter();
 
   return (
@@ -20,9 +22,9 @@ export default function NotificationBell() {
           : 'Notifications'
       }
     >
-      <Ionicons name="notifications-outline" size={24} color={Colors.textPrimary} />
+      <Ionicons name="notifications-outline" size={24} color={colors.textPrimary} />
       {unreadCount > 0 && (
-        <View style={styles.badge} accessibilityElementsHidden>
+        <View style={[styles.badge, { backgroundColor: colors.danger }]} accessibilityElementsHidden>
           <Text style={styles.badgeText}>
             {unreadCount > 99 ? '99+' : unreadCount}
           </Text>
@@ -43,7 +45,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 2,
     right: 2,
-    backgroundColor: Colors.danger,
     borderRadius: 9999,
     minWidth: 18,
     height: 18,

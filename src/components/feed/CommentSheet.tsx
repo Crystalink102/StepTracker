@@ -14,6 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import { useAuth } from '@/src/context/AuthContext';
 import type { CommentWithAuthor } from '@/src/services/feed.service';
 
@@ -56,6 +57,7 @@ export default function CommentSheet({
   getComments,
 }: CommentSheetProps) {
   const { user } = useAuth();
+  const { colors } = useTheme();
   const [comments, setComments] = useState<CommentWithAuthor[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [text, setText] = useState('');
@@ -117,12 +119,12 @@ export default function CommentSheet({
         />
         <View style={styles.commentContent}>
           <View style={styles.commentHeader}>
-            <Text style={styles.commentAuthor} numberOfLines={1}>
+            <Text style={[styles.commentAuthor, { color: colors.textPrimary }]} numberOfLines={1}>
               {displayName}
             </Text>
-            <Text style={styles.commentTime}>{timeAgo(item.created_at)}</Text>
+            <Text style={[styles.commentTime, { color: colors.textMuted }]}>{timeAgo(item.created_at)}</Text>
           </View>
-          <Text style={styles.commentText}>{item.content}</Text>
+          <Text style={[styles.commentText, { color: colors.textSecondary }]}>{item.content}</Text>
         </View>
         {isOwn && (
           <TouchableOpacity
@@ -130,7 +132,7 @@ export default function CommentSheet({
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             style={styles.deleteButton}
           >
-            <Ionicons name="trash-outline" size={16} color={Colors.textMuted} />
+            <Ionicons name="trash-outline" size={16} color={colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
@@ -145,15 +147,15 @@ export default function CommentSheet({
       onRequestClose={onClose}
     >
       <KeyboardAvoidingView
-        style={styles.container}
+        style={[styles.container, { backgroundColor: colors.background }]}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         keyboardVerticalOffset={0}
       >
         {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Comments</Text>
+        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Comments</Text>
           <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <Ionicons name="close" size={24} color={Colors.textPrimary} />
+            <Ionicons name="close" size={24} color={colors.textPrimary} />
           </TouchableOpacity>
         </View>
 
@@ -164,9 +166,9 @@ export default function CommentSheet({
           </View>
         ) : comments.length === 0 ? (
           <View style={styles.centered}>
-            <Ionicons name="chatbubble-outline" size={48} color={Colors.textMuted} />
-            <Text style={styles.emptyText}>No comments yet</Text>
-            <Text style={styles.emptySubtext}>Be the first to comment!</Text>
+            <Ionicons name="chatbubble-outline" size={48} color={colors.textMuted} />
+            <Text style={[styles.emptyText, { color: colors.textSecondary }]}>No comments yet</Text>
+            <Text style={[styles.emptySubtext, { color: colors.textMuted }]}>Be the first to comment!</Text>
           </View>
         ) : (
           <FlatList
@@ -179,11 +181,11 @@ export default function CommentSheet({
         )}
 
         {/* Input bar */}
-        <View style={styles.inputBar}>
+        <View style={[styles.inputBar, { borderTopColor: colors.border }]}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.surface, color: colors.textPrimary }]}
             placeholder="Add a comment..."
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={colors.textMuted}
             value={text}
             onChangeText={setText}
             multiline
@@ -213,7 +215,6 @@ export default function CommentSheet({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   header: {
     flexDirection: 'row',
@@ -222,10 +223,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border,
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
   },
@@ -236,13 +235,11 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   emptyText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
     marginTop: Spacing.md,
   },
   emptySubtext: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
   },
   list: {
@@ -265,17 +262,14 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   commentAuthor: {
-    color: Colors.textPrimary,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
     flexShrink: 1,
   },
   commentTime: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
   },
   commentText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
     lineHeight: 20,
   },
@@ -289,16 +283,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
     gap: Spacing.sm,
   },
   input: {
     flex: 1,
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.xl,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
-    color: Colors.textPrimary,
     fontSize: FontSize.md,
     maxHeight: 100,
   },

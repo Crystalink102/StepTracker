@@ -119,16 +119,13 @@ export default function AccountScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
     padding: Spacing.xxl,
   },
   section: {
     paddingVertical: Spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.surface,
   },
   sectionTitle: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
     textTransform: 'uppercase',
@@ -136,7 +133,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xs,
   },
   sectionValue: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
   },
   actions: {

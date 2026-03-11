@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Avatar, Badge } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import { formatDistance, formatDuration, formatPace, paceUnitLabel } from '@/src/utils/formatters';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import type { FeedItem } from '@/src/services/feed.service';
@@ -117,6 +118,7 @@ const miniStyles = StyleSheet.create({
 
 export default function FeedCard({ item, route, onLike, onComment }: FeedCardProps) {
   const router = useRouter();
+  const { colors } = useTheme();
   const { preferences } = usePreferences();
   const unit = preferences.distanceUnit;
 
@@ -129,7 +131,7 @@ export default function FeedCard({ item, route, onLike, onComment }: FeedCardPro
 
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, { backgroundColor: colors.surface }]}
       onPress={handlePress}
       activeOpacity={0.7}
     >
@@ -142,10 +144,10 @@ export default function FeedCard({ item, route, onLike, onComment }: FeedCardPro
             size={40}
           />
           <View style={styles.headerText}>
-            <Text style={styles.authorName} numberOfLines={1}>
+            <Text style={[styles.authorName, { color: colors.textPrimary }]} numberOfLines={1}>
               {displayName}
             </Text>
-            <Text style={styles.timeAgo}>{timeAgo(endedAt)}</Text>
+            <Text style={[styles.timeAgo, { color: colors.textMuted }]}>{timeAgo(endedAt)}</Text>
           </View>
         </View>
         <Badge
@@ -155,21 +157,21 @@ export default function FeedCard({ item, route, onLike, onComment }: FeedCardPro
       </View>
 
       {/* Distance - big text */}
-      <Text style={styles.distance}>
+      <Text style={[styles.distance, { color: colors.textPrimary }]}>
         {formatDistance(item.distance_meters, unit)}
       </Text>
 
       {/* Stats row */}
       <View style={styles.statsRow}>
         <View style={styles.stat}>
-          <Ionicons name="time-outline" size={14} color={Colors.textMuted} />
-          <Text style={styles.statText}>
+          <Ionicons name="time-outline" size={14} color={colors.textMuted} />
+          <Text style={[styles.statText, { color: colors.textSecondary }]}>
             {formatDuration(item.duration_seconds)}
           </Text>
         </View>
         <View style={styles.stat}>
-          <Ionicons name="speedometer-outline" size={14} color={Colors.textMuted} />
-          <Text style={styles.statText}>
+          <Ionicons name="speedometer-outline" size={14} color={colors.textMuted} />
+          <Text style={[styles.statText, { color: colors.textSecondary }]}>
             {item.avg_pace_seconds_per_km
               ? `${formatPace(item.avg_pace_seconds_per_km, unit)} ${paceUnitLabel(unit)}`
               : '--'}
@@ -177,8 +179,8 @@ export default function FeedCard({ item, route, onLike, onComment }: FeedCardPro
         </View>
         {item.calories_estimate != null && item.calories_estimate > 0 && (
           <View style={styles.stat}>
-            <Ionicons name="flame-outline" size={14} color={Colors.textMuted} />
-            <Text style={styles.statText}>{Math.round(item.calories_estimate)} cal</Text>
+            <Ionicons name="flame-outline" size={14} color={colors.textMuted} />
+            <Text style={[styles.statText, { color: colors.textSecondary }]}>{Math.round(item.calories_estimate)} cal</Text>
           </View>
         )}
       </View>
@@ -187,7 +189,7 @@ export default function FeedCard({ item, route, onLike, onComment }: FeedCardPro
       {route && route.length > 1 && <MiniRoute coords={route} />}
 
       {/* Like / Comment bar */}
-      <View style={styles.actionBar}>
+      <View style={[styles.actionBar, { borderTopColor: colors.border }]}>
         <TouchableOpacity
           style={styles.actionButton}
           onPress={(e) => {
@@ -199,13 +201,14 @@ export default function FeedCard({ item, route, onLike, onComment }: FeedCardPro
           <Ionicons
             name={item.has_liked ? 'heart' : 'heart-outline'}
             size={22}
-            color={item.has_liked ? Colors.danger : Colors.textSecondary}
+            color={item.has_liked ? colors.danger : colors.textSecondary}
           />
           {item.like_count > 0 && (
             <Text
               style={[
                 styles.actionCount,
-                item.has_liked && styles.actionCountActive,
+                { color: colors.textSecondary },
+                item.has_liked && { color: colors.danger },
               ]}
             >
               {item.like_count}
@@ -224,10 +227,10 @@ export default function FeedCard({ item, route, onLike, onComment }: FeedCardPro
           <Ionicons
             name="chatbubble-outline"
             size={20}
-            color={Colors.textSecondary}
+            color={colors.textSecondary}
           />
           {item.comment_count > 0 && (
-            <Text style={styles.actionCount}>{item.comment_count}</Text>
+            <Text style={[styles.actionCount, { color: colors.textSecondary }]}>{item.comment_count}</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -237,7 +240,6 @@ export default function FeedCard({ item, route, onLike, onComment }: FeedCardPro
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     marginHorizontal: Spacing.lg,
@@ -259,17 +261,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   authorName: {
-    color: Colors.textPrimary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
   },
   timeAgo: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: 1,
   },
   distance: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxxl,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.sm,
@@ -285,7 +284,6 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   statText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
   },
   actionBar: {
@@ -293,7 +291,6 @@ const styles = StyleSheet.create({
     gap: Spacing.xl,
     paddingTop: Spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
   },
   actionButton: {
     flexDirection: 'row',
@@ -302,11 +299,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xs,
   },
   actionCount: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
-  },
-  actionCountActive: {
-    color: Colors.danger,
   },
 });

@@ -110,6 +110,13 @@ export interface Database {
           hr_source: string | null;
           calories_estimate: number | null;
           xp_earned: number;
+          name: string | null;
+          description: string | null;
+          perceived_effort: number | null;
+          is_favorite: boolean;
+          privacy: string;
+          activity_subtype: string | null;
+          gear_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -125,6 +132,13 @@ export interface Database {
           hr_source?: string | null;
           calories_estimate?: number | null;
           xp_earned?: number;
+          name?: string | null;
+          description?: string | null;
+          perceived_effort?: number | null;
+          is_favorite?: boolean;
+          privacy?: string;
+          activity_subtype?: string | null;
+          gear_id?: string | null;
         };
         Update: {
           status?: string;
@@ -136,6 +150,47 @@ export interface Database {
           hr_source?: string | null;
           calories_estimate?: number | null;
           xp_earned?: number;
+          name?: string | null;
+          description?: string | null;
+          perceived_effort?: number | null;
+          is_favorite?: boolean;
+          privacy?: string;
+          activity_subtype?: string | null;
+          gear_id?: string | null;
+        };
+        Relationships: [];
+      };
+      gear: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          brand: string | null;
+          type: string;
+          distance_meters: number;
+          max_distance_meters: number | null;
+          is_retired: boolean;
+          is_default: boolean;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          name: string;
+          brand?: string | null;
+          type?: string;
+          distance_meters?: number;
+          max_distance_meters?: number | null;
+          is_retired?: boolean;
+          is_default?: boolean;
+        };
+        Update: {
+          name?: string;
+          brand?: string | null;
+          type?: string;
+          distance_meters?: number;
+          max_distance_meters?: number | null;
+          is_retired?: boolean;
+          is_default?: boolean;
         };
         Relationships: [];
       };
@@ -401,6 +456,7 @@ export type UserXP = Database['public']['Tables']['user_xp']['Row'];
 export type AchievementDefinition = Database['public']['Tables']['achievement_definitions']['Row'];
 export type UserAchievement = Database['public']['Tables']['user_achievements']['Row'];
 export type Friendship = Database['public']['Tables']['friendships']['Row'];
+export type Gear = Database['public']['Tables']['gear']['Row'];
 
 export type LeaderboardEntry = {
   user_id: string;

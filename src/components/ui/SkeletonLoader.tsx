@@ -56,7 +56,5 @@ export default function SkeletonLoader({
 }
 
 const styles = StyleSheet.create({
-  skeleton: {
-    backgroundColor: Colors.surfaceLight,
-  },
+  skeleton: {},
 });

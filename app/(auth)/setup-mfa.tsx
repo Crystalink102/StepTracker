@@ -13,10 +13,12 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
 import { ConfirmModal } from '@/src/components/ui';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 export default function SetupMFAScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { enrollMFA, verifyMFA } = useAuth();
 
   const [qrCode, setQrCode] = useState('');
@@ -65,21 +67,21 @@ export default function SetupMFAScreen() {
 
   if (isEnrolling) {
     return (
-      <View style={[styles.container, styles.centered]}>
+      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>Setting up 2FA...</Text>
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Setting up 2FA...</Text>
       </View>
     );
   }
 
   return (
     <ScrollView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       contentContainerStyle={styles.scrollContent}
     >
       <View style={styles.header}>
-        <Text style={styles.title}>Set Up 2FA</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Set Up 2FA</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
           Scan this QR code with your authenticator app (Google Authenticator,
           Authy, etc.)
         </Text>
@@ -95,8 +97,8 @@ export default function SetupMFAScreen() {
         </View>
       ) : null}
 
-      <View style={styles.secretContainer}>
-        <Text style={styles.secretLabel}>Or enter this code manually:</Text>
+      <View style={[styles.secretContainer, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.secretLabel, { color: colors.textSecondary }]}>Or enter this code manually:</Text>
         <Text style={styles.secretText} selectable>
           {secret}
         </Text>
@@ -104,13 +106,13 @@ export default function SetupMFAScreen() {
 
       <View style={styles.form}>
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Authenticator Code</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>Authenticator Code</Text>
           <TextInput
-            style={styles.codeInput}
+            style={[styles.codeInput, { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border }]}
             value={code}
             onChangeText={setCode}
             placeholder="000000"
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={colors.textMuted}
             keyboardType="number-pad"
             maxLength={6}
             textAlign="center"
@@ -143,7 +145,6 @@ export default function SetupMFAScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   centered: {
     alignItems: 'center',
@@ -154,7 +155,6 @@ const styles = StyleSheet.create({
     paddingTop: 60,
   },
   loadingText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.lg,
     marginTop: Spacing.lg,
   },
@@ -162,12 +162,10 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xxl,
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.display,
     fontWeight: FontWeight.bold,
   },
   subtitle: {
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
     marginTop: Spacing.md,
     lineHeight: 22,
@@ -185,13 +183,11 @@ const styles = StyleSheet.create({
     height: 200,
   },
   secretContainer: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     marginBottom: Spacing.xxl,
   },
   secretLabel: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     marginBottom: Spacing.sm,
   },
@@ -209,22 +205,18 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   label: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   codeInput: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.xl,
-    color: Colors.textPrimary,
     fontSize: FontSize.display,
     fontWeight: FontWeight.bold,
     letterSpacing: 12,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   button: {
     backgroundColor: Colors.secondary,

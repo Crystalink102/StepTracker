@@ -11,9 +11,11 @@ import {
 } from 'react-native';
 import { useAuth } from '@/src/context/AuthContext';
 import { ConfirmModal } from '@/src/components/ui';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 export default function VerifyMFAScreen() {
+  const { colors } = useTheme();
   const { verifyMFA, getMFAFactors } = useAuth();
 
   const [factorId, setFactorId] = useState('');
@@ -65,33 +67,33 @@ export default function VerifyMFAScreen() {
 
   if (isLoadingFactor) {
     return (
-      <View style={[styles.container, styles.centered]}>
+      <View style={[styles.container, styles.centered, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={styles.loadingText}>Loading 2FA...</Text>
+        <Text style={[styles.loadingText, { color: colors.textSecondary }]}>Loading 2FA...</Text>
       </View>
     );
   }
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>Two-Factor{'\n'}Authentication</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Two-Factor{'\n'}Authentication</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Enter the 6-digit code from your authenticator app to continue.
           </Text>
         </View>
 
         <View style={styles.form}>
           <TextInput
-            style={styles.codeInput}
+            style={[styles.codeInput, { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border }]}
             value={code}
             onChangeText={setCode}
             placeholder="000000"
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={colors.textMuted}
             keyboardType="number-pad"
             maxLength={6}
             textAlign="center"
@@ -125,14 +127,12 @@ export default function VerifyMFAScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   centered: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   loadingText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.lg,
     marginTop: Spacing.lg,
   },
@@ -145,12 +145,10 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xxxl,
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.display,
     fontWeight: FontWeight.bold,
   },
   subtitle: {
-    color: Colors.textSecondary,
     fontSize: FontSize.lg,
     marginTop: Spacing.md,
     lineHeight: 24,
@@ -159,15 +157,12 @@ const styles = StyleSheet.create({
     gap: Spacing.xl,
   },
   codeInput: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.xl,
-    color: Colors.textPrimary,
     fontSize: FontSize.display,
     fontWeight: FontWeight.bold,
     letterSpacing: 12,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   button: {
     backgroundColor: Colors.primary,

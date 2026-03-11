@@ -2,6 +2,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { AchievementDefinition, UserAchievement } from '@/src/types/database';
 import { CATEGORY_CONFIG } from '@/src/constants/achievements';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type AchievementCardProps = {
   definition: AchievementDefinition;
@@ -9,6 +10,7 @@ type AchievementCardProps = {
 };
 
 export default function AchievementCard({ definition, userAchievement }: AchievementCardProps) {
+  const { colors } = useTheme();
   const isUnlocked = !!userAchievement;
   const categoryColor = CATEGORY_CONFIG[definition.category]?.color ?? Colors.primary;
 
@@ -20,28 +22,28 @@ export default function AchievementCard({ definition, userAchievement }: Achieve
     : null;
 
   return (
-    <View style={[styles.container, !isUnlocked && styles.locked]}>
-      <View style={[styles.iconCircle, { backgroundColor: isUnlocked ? categoryColor : Colors.surfaceLight }]}>
+    <View style={[styles.container, { backgroundColor: colors.surface }, !isUnlocked && styles.locked]}>
+      <View style={[styles.iconCircle, { backgroundColor: isUnlocked ? categoryColor : colors.surfaceLight }]}>
         <Text style={styles.iconText}>
           {isUnlocked ? getIconEmoji(definition.icon_name) : '?'}
         </Text>
       </View>
 
       <View style={styles.info}>
-        <Text style={[styles.title, !isUnlocked && styles.lockedText]}>
+        <Text style={[styles.title, { color: colors.textPrimary }, !isUnlocked && { color: colors.textMuted }]}>
           {definition.title}
         </Text>
-        <Text style={[styles.description, !isUnlocked && styles.lockedText]}>
+        <Text style={[styles.description, { color: colors.textSecondary }, !isUnlocked && { color: colors.textMuted }]}>
           {definition.description}
         </Text>
         {isUnlocked && unlockedDate && (
-          <Text style={styles.date}>Unlocked {unlockedDate}</Text>
+          <Text style={[styles.date, { color: colors.textMuted }]}>Unlocked {unlockedDate}</Text>
         )}
       </View>
 
       {definition.xp_reward > 0 && (
         <View style={styles.xpBadge}>
-          <Text style={[styles.xpText, !isUnlocked && styles.lockedText]}>
+          <Text style={[styles.xpText, !isUnlocked && { color: colors.textMuted }]}>
             +{definition.xp_reward} XP
           </Text>
         </View>
@@ -73,7 +75,6 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     marginBottom: Spacing.sm,
@@ -96,22 +97,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
   },
   description: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     marginTop: 2,
   },
   date: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: 4,
-  },
-  lockedText: {
-    color: Colors.textMuted,
   },
   xpBadge: {
     marginLeft: Spacing.sm,

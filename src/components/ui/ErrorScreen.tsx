@@ -15,7 +15,7 @@ export default function ErrorScreen({ error, retry }: ErrorScreenProps) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Text style={[styles.icon, { backgroundColor: colors.surface }]}>!</Text>
+      <Text style={[styles.icon, { color: colors.warning, backgroundColor: colors.surface }]}>!</Text>
       <Text style={[styles.title, { color: colors.textPrimary }]}>Something went wrong</Text>
       <Text style={[styles.message, { color: colors.textSecondary }]}>{error.message}</Text>
       <View style={styles.actions}>
@@ -33,7 +33,6 @@ export default function ErrorScreen({ error, retry }: ErrorScreenProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     padding: Spacing.xxxl,
@@ -41,8 +40,6 @@ const styles = StyleSheet.create({
   icon: {
     fontSize: 48,
     fontWeight: FontWeight.bold,
-    color: Colors.warning,
-    backgroundColor: Colors.surface,
     width: 80,
     height: 80,
     borderRadius: BorderRadius.full,
@@ -52,14 +49,12 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.md,
     textAlign: 'center',
   },
   message: {
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
     textAlign: 'center',
     marginBottom: Spacing.xxxl,

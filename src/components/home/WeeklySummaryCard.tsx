@@ -13,6 +13,7 @@ import {
   Spacing,
   BorderRadius,
 } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import type { Activity, DailySteps } from '@/src/types/database';
 
 type WeekData = {
@@ -54,6 +55,7 @@ function calcPercentChange(current: number, previous: number): number | null {
 export default function WeeklySummaryCard() {
   const { user } = useAuth();
   const { preferences } = usePreferences();
+  const { colors } = useTheme();
   const [thisWeek, setThisWeek] = useState<WeekData | null>(null);
   const [lastWeek, setLastWeek] = useState<WeekData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -134,8 +136,8 @@ export default function WeeklySummaryCard() {
     return (
       <Card style={styles.card}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color={Colors.textMuted} />
-          <Text style={styles.loadingText}>Loading weekly summary...</Text>
+          <ActivityIndicator size="small" color={colors.textMuted} />
+          <Text style={[styles.loadingText, { color: colors.textMuted }]}>Loading weekly summary...</Text>
         </View>
       </Card>
     );
@@ -168,13 +170,13 @@ export default function WeeklySummaryCard() {
 
   return (
     <Card style={styles.card}>
-      <Text style={styles.title}>WEEKLY SUMMARY</Text>
-      <Text style={styles.subtitle}>This week vs last week</Text>
+      <Text style={[styles.title, { color: colors.textMuted }]}>WEEKLY SUMMARY</Text>
+      <Text style={[styles.subtitle, { color: colors.textSecondary }]}>This week vs last week</Text>
 
       {rows.map((row) => (
-        <View key={row.label} style={styles.row}>
-          <Text style={styles.rowLabel}>{row.label}</Text>
-          <Text style={styles.rowValue}>{row.current}</Text>
+        <View key={row.label} style={[styles.row, { borderBottomColor: colors.border }]}>
+          <Text style={[styles.rowLabel, { color: colors.textSecondary }]}>{row.label}</Text>
+          <Text style={[styles.rowValue, { color: colors.textPrimary }]}>{row.current}</Text>
           {row.pct !== null ? (
             <View
               style={[
@@ -196,8 +198,8 @@ export default function WeeklySummaryCard() {
               </Text>
             </View>
           ) : (
-            <View style={[styles.pctBadge, { backgroundColor: Colors.surfaceLight }]}>
-              <Text style={[styles.pctText, { color: Colors.textMuted }]}>--</Text>
+            <View style={[styles.pctBadge, { backgroundColor: colors.surfaceLight }]}>
+              <Text style={[styles.pctText, { color: colors.textMuted }]}>--</Text>
             </View>
           )}
         </View>
@@ -219,18 +221,15 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
   },
   loadingText: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
   },
   title: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
     letterSpacing: 1,
     marginBottom: Spacing.xs,
   },
   subtitle: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     marginBottom: Spacing.md,
   },
@@ -239,15 +238,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
   },
   rowLabel: {
     flex: 1,
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
   },
   rowValue: {
-    color: Colors.textPrimary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
     marginRight: Spacing.md,

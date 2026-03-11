@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { StepDay } from '@/src/hooks/useStepStats';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 type BarChartProps = {
@@ -10,21 +11,22 @@ type BarChartProps = {
 const BAR_MAX_HEIGHT = 120;
 
 export default function BarChart({ data, goal = 10000 }: BarChartProps) {
+  const { colors } = useTheme();
   const maxSteps = Math.max(...data.map((d) => d.steps), goal, 1);
 
   // For month view with many bars, we skip some labels
   const showEveryNth = data.length > 10 ? Math.ceil(data.length / 7) : 1;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
       {/* Goal line */}
       <View
         style={[
           styles.goalLine,
-          { bottom: (goal / maxSteps) * BAR_MAX_HEIGHT + 20 },
+          { bottom: (goal / maxSteps) * BAR_MAX_HEIGHT + 20, borderTopColor: colors.textMuted },
         ]}
       >
-        <Text style={styles.goalLabel}>{(goal / 1000).toFixed(0)}k</Text>
+        <Text style={[styles.goalLabel, { color: colors.textMuted }]}>{(goal / 1000).toFixed(0)}k</Text>
       </View>
 
       <View style={styles.barsRow}>
@@ -44,9 +46,9 @@ export default function BarChart({ data, goal = 10000 }: BarChartProps) {
                 ]}
               />
               {idx % showEveryNth === 0 ? (
-                <Text style={styles.barLabel}>{day.label}</Text>
+                <Text style={[styles.barLabel, { color: colors.textMuted }]}>{day.label}</Text>
               ) : (
-                <Text style={styles.barLabel}> </Text>
+                <Text style={[styles.barLabel, { color: colors.textMuted }]}> </Text>
               )}
             </View>
           );
@@ -59,7 +61,6 @@ export default function BarChart({ data, goal = 10000 }: BarChartProps) {
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: Spacing.lg,
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     paddingTop: Spacing.xl,
@@ -70,7 +71,6 @@ const styles = StyleSheet.create({
     left: Spacing.lg,
     right: Spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: Colors.textMuted,
     borderStyle: 'dashed',
     zIndex: 1,
   },
@@ -78,7 +78,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     top: -14,
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.medium,
   },
@@ -101,7 +100,6 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   barLabel: {
-    color: Colors.textMuted,
     fontSize: 9,
     marginTop: 4,
   },

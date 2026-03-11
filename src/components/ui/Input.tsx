@@ -8,6 +8,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type InputProps = TextInputProps & {
   label?: string;
@@ -21,18 +22,20 @@ export default function Input({
   containerStyle,
   ...props
 }: InputProps) {
+  const { colors } = useTheme();
   const [isFocused, setIsFocused] = useState(false);
 
   return (
     <View style={[styles.container, containerStyle]}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>}
       <TextInput
         style={[
           styles.input,
+          { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border },
           isFocused && styles.inputFocused,
           error && styles.inputError,
         ]}
-        placeholderTextColor={Colors.textMuted}
+        placeholderTextColor={colors.textMuted}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         {...props}
@@ -49,20 +52,16 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   label: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   inputFocused: {
     borderColor: Colors.primary,

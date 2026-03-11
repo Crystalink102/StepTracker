@@ -10,6 +10,8 @@ export default function RunLayout() {
         headerTintColor: colors.textPrimary,
         contentStyle: { backgroundColor: colors.background },
       }}
-    />
+    >
+      <Stack.Screen name="save" options={{ headerShown: false, presentation: 'modal' }} />
+    </Stack>
   );
 }

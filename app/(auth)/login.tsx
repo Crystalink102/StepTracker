@@ -13,10 +13,12 @@ import {
 import { Link, useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
 import { ConfirmModal } from '@/src/components/ui';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { loginEmail, loginPhone, hasMFA } = useAuth();
 
   const [identifier, setIdentifier] = useState('');
@@ -53,7 +55,7 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
@@ -62,19 +64,19 @@ export default function LoginScreen() {
       >
         <View style={styles.header}>
           <Text style={styles.appName}>5tepTracker</Text>
-          <Text style={styles.title}>Welcome back</Text>
-          <Text style={styles.subtitle}>Log in to continue your grind</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Welcome back</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Log in to continue your grind</Text>
         </View>
 
         <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email or Phone</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Email or Phone</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border }]}
               value={identifier}
               onChangeText={setIdentifier}
               placeholder="email@example.com or +1234567890"
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
               keyboardType="email-address"
@@ -82,13 +84,13 @@ export default function LoginScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Password</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border }]}
               value={password}
               onChangeText={setPassword}
               placeholder="Your password"
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={colors.textMuted}
               secureTextEntry
             />
           </View>
@@ -111,7 +113,7 @@ export default function LoginScreen() {
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account? </Text>
+          <Text style={[styles.footerText, { color: colors.textSecondary }]}>Don't have an account? </Text>
           <Link href="/(auth)/sign-up" asChild>
             <TouchableOpacity>
               <Text style={styles.linkText}>Sign Up</Text>
@@ -133,7 +135,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -152,12 +153,10 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.display,
     fontWeight: FontWeight.bold,
   },
   subtitle: {
-    color: Colors.textSecondary,
     fontSize: FontSize.lg,
     marginTop: Spacing.sm,
   },
@@ -168,20 +167,16 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   label: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   button: {
     backgroundColor: Colors.primary,
@@ -204,7 +199,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xxxl,
   },
   footerText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
   },
   forgotText: {

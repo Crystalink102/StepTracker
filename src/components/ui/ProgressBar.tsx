@@ -4,6 +4,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { Colors, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type ProgressBarProps = {
   progress: number; // 0 to 1
@@ -18,6 +19,7 @@ export default function ProgressBar({
   height = 8,
   style,
 }: ProgressBarProps) {
+  const { colors } = useTheme();
   const clampedProgress = Math.min(Math.max(progress, 0), 1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -25,7 +27,7 @@ export default function ProgressBar({
   }));
 
   return (
-    <View style={[styles.track, { height }, style]}>
+    <View style={[styles.track, { height, backgroundColor: colors.surfaceLight }, style]}>
       <Animated.View
         style={[
           styles.fill,
@@ -39,7 +41,6 @@ export default function ProgressBar({
 
 const styles = StyleSheet.create({
   track: {
-    backgroundColor: Colors.surfaceLight,
     borderRadius: BorderRadius.full,
     overflow: 'hidden',
   },

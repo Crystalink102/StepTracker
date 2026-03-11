@@ -10,6 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Button, Input } from '@/src/components/ui';
 import DateScrollPicker from '@/src/components/ui/DateScrollPicker';
 import type { CustomGoal } from '@/src/services/custom-goals.service';
@@ -30,6 +31,7 @@ type CreateGoalModalProps = {
 };
 
 export default function CreateGoalModal({ visible, onClose, onSave }: CreateGoalModalProps) {
+  const { colors } = useTheme();
   const [name, setName] = useState('');
   const [type, setType] = useState<GoalType>('steps');
   const [target, setTarget] = useState('');
@@ -81,10 +83,10 @@ export default function CreateGoalModal({ visible, onClose, onSave }: CreateGoal
         style={styles.overlay}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <View style={styles.sheet}>
+        <View style={[styles.sheet, { backgroundColor: colors.background }]}>
           <ScrollView showsVerticalScrollIndicator={false}>
-            <View style={styles.handleBar} />
-            <Text style={styles.title}>Create Personal Goal</Text>
+            <View style={[styles.handleBar, { backgroundColor: colors.border }]} />
+            <Text style={[styles.title, { color: colors.textPrimary }]}>Create Personal Goal</Text>
 
             <Input
               label="GOAL NAME"
@@ -96,12 +98,16 @@ export default function CreateGoalModal({ visible, onClose, onSave }: CreateGoal
             />
 
             <View style={styles.field}>
-              <Text style={styles.label}>TYPE</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>TYPE</Text>
               <View style={styles.typeRow}>
                 {GOAL_TYPES.map((gt) => (
                   <TouchableOpacity
                     key={gt.value}
-                    style={[styles.typeChip, type === gt.value && styles.typeChipActive]}
+                    style={[
+                      styles.typeChip,
+                      { backgroundColor: colors.surface, borderColor: colors.border },
+                      type === gt.value && { borderColor: Colors.primary, backgroundColor: colors.surfaceLight },
+                    ]}
                     onPress={() => setType(gt.value)}
                     accessibilityRole="radio"
                     accessibilityState={{ selected: type === gt.value }}
@@ -110,6 +116,7 @@ export default function CreateGoalModal({ visible, onClose, onSave }: CreateGoal
                     <Text
                       style={[
                         styles.typeLabel,
+                        { color: colors.textMuted },
                         type === gt.value && styles.typeLabelActive,
                       ]}
                     >
@@ -160,7 +167,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: Colors.background,
     borderTopLeftRadius: BorderRadius.xl,
     borderTopRightRadius: BorderRadius.xl,
     padding: Spacing.xxl,
@@ -170,13 +176,11 @@ const styles = StyleSheet.create({
   handleBar: {
     width: 40,
     height: 4,
-    backgroundColor: Colors.border,
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: Spacing.xxl,
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.xxl,
@@ -185,7 +189,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   label: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
     textTransform: 'uppercase',
@@ -198,23 +201,16 @@ const styles = StyleSheet.create({
   },
   typeChip: {
     flex: 1,
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  typeChipActive: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.surfaceLight,
   },
   typeIcon: {
     fontSize: 18,
     marginBottom: Spacing.xs,
   },
   typeLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.medium,
   },

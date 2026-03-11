@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-nativ
 import { Badge } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 import { isAutoHRUnlocked, estimateHRFromPace } from '@/src/utils/xp-calculator';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type HeartRateInputProps = {
   level: number;
@@ -17,6 +18,7 @@ export default function HeartRateInput({
   restingHR,
   onHeartRateChange,
 }: HeartRateInputProps) {
+  const { colors } = useTheme();
   const [mode, setMode] = useState<'manual' | 'auto'>('manual');
   const [manualHR, setManualHR] = useState('');
   const autoUnlocked = isAutoHRUnlocked(level);
@@ -51,9 +53,9 @@ export default function HeartRateInput({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <View style={styles.header}>
-        <Text style={styles.label}>HEART RATE</Text>
+        <Text style={[styles.label, { color: colors.textMuted }]}>HEART RATE</Text>
         {autoUnlocked ? (
           <TouchableOpacity onPress={toggleMode}>
             <Badge
@@ -69,20 +71,20 @@ export default function HeartRateInput({
       {mode === 'manual' ? (
         <View style={styles.inputRow}>
           <TextInput
-            style={styles.input}
+            style={[styles.input, { backgroundColor: colors.surfaceLight, color: colors.textPrimary }]}
             value={manualHR}
             onChangeText={handleManualChange}
             placeholder="Enter BPM"
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={colors.textMuted}
             keyboardType="number-pad"
             maxLength={3}
           />
-          <Text style={styles.unit}>BPM</Text>
+          <Text style={[styles.unit, { color: colors.textMuted }]}>BPM</Text>
         </View>
       ) : (
         <View style={styles.autoDisplay}>
           <Text style={styles.autoHR}>{estimatedHR}</Text>
-          <Text style={styles.unit}>BPM (estimated)</Text>
+          <Text style={[styles.unit, { color: colors.textMuted }]}>BPM (estimated)</Text>
         </View>
       )}
     </View>
@@ -91,7 +93,6 @@ export default function HeartRateInput({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     marginHorizontal: Spacing.lg,
@@ -104,7 +105,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   label: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
     letterSpacing: 1,
@@ -115,17 +115,14 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   input: {
-    backgroundColor: Colors.surfaceLight,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
-    color: Colors.textPrimary,
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
     flex: 1,
     textAlign: 'center',
   },
   unit: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
   },
   autoDisplay: {

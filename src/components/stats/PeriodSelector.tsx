@@ -1,5 +1,6 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { StepStatPeriod } from '@/src/hooks/useStepStats';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 type PeriodSelectorProps = {
@@ -13,6 +14,8 @@ const OPTIONS: { label: string; value: StepStatPeriod }[] = [
 ];
 
 export default function PeriodSelector({ period, onSelect }: PeriodSelectorProps) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.container}>
       {OPTIONS.map((opt) => {
@@ -20,10 +23,10 @@ export default function PeriodSelector({ period, onSelect }: PeriodSelectorProps
         return (
           <TouchableOpacity
             key={opt.value}
-            style={[styles.pill, active && styles.activePill]}
+            style={[styles.pill, { backgroundColor: colors.surface }, active && styles.activePill]}
             onPress={() => onSelect(opt.value)}
           >
-            <Text style={[styles.label, active && styles.activeLabel]}>
+            <Text style={[styles.label, { color: colors.textMuted }, active && styles.activeLabel]}>
               {opt.label}
             </Text>
           </TouchableOpacity>
@@ -44,13 +47,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.surface,
   },
   activePill: {
     backgroundColor: Colors.primary,
   },
   label: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
   },

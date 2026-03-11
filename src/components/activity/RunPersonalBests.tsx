@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '@/src/context/AuthContext';
+import { useTheme } from '@/src/context/ThemeContext';
 import * as PersonalBestService from '@/src/services/personal-best.service';
 import { PersonalBest } from '@/src/types/database';
 import { formatDuration } from '@/src/utils/formatters';
@@ -13,6 +14,7 @@ type Props = {
 
 export default function RunPersonalBests({ activityId }: Props) {
   const { user } = useAuth();
+  const { colors } = useTheme();
   const [pbs, setPbs] = useState<PersonalBest[]>([]);
 
   useEffect(() => {
@@ -29,19 +31,19 @@ export default function RunPersonalBests({ activityId }: Props) {
   if (pbs.length === 0) return null;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <View style={styles.header}>
         <Ionicons name="trophy" size={20} color={Colors.gold} />
-        <Text style={styles.sectionTitle}>Personal Bests</Text>
+        <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Personal Bests</Text>
       </View>
 
       {pbs.map((pb) => (
-        <View key={pb.distance_label} style={styles.pbRow}>
+        <View key={pb.distance_label} style={[styles.pbRow, { borderBottomColor: colors.surfaceLight }]}>
           <View style={styles.pbLeft}>
             <View style={styles.medal}>
               <Ionicons name="medal" size={16} color={Colors.gold} />
             </View>
-            <Text style={styles.pbDistance}>{pb.distance_label}</Text>
+            <Text style={[styles.pbDistance, { color: colors.textPrimary }]}>{pb.distance_label}</Text>
           </View>
           <Text style={styles.pbTime}>{formatDuration(pb.best_time_seconds)}</Text>
         </View>
@@ -52,7 +54,6 @@ export default function RunPersonalBests({ activityId }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     borderWidth: 1,
@@ -65,7 +66,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   sectionTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
   },
@@ -75,7 +75,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: Spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.surfaceLight,
   },
   pbLeft: {
     flexDirection: 'row',
@@ -91,7 +90,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   pbDistance: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
   },

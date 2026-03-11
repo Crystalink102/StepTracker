@@ -92,10 +92,8 @@ export default function LeaderboardScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   screenTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxxl,
     fontWeight: FontWeight.bold,
     paddingHorizontal: Spacing.lg,
@@ -111,12 +109,10 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xxxl * 2,
   },
   emptyText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.semibold,
   },
   emptySubtext: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
     marginTop: Spacing.sm,
   },

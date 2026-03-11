@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { formatDistance } from '@/src/utils/formatters';
 import type { ChallengeWithParticipants } from '@/src/services/challenge.service';
@@ -51,6 +52,7 @@ function formatTarget(type: string, value: number, distanceFmt: (m: number) => s
 export default function ChallengeCard({ challenge, variant = 'active', onJoin }: Props) {
   const router = useRouter();
   const { preferences } = usePreferences();
+  const { colors } = useTheme();
   const distanceFmt = (m: number) => formatDistance(m, preferences.distanceUnit);
   const daysLeft = getDaysRemaining(challenge.end_date);
   const progress = variant === 'active' && challenge.my_progress != null
@@ -60,13 +62,13 @@ export default function ChallengeCard({ challenge, variant = 'active', onJoin }:
 
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[styles.card, { backgroundColor: colors.surface }]}
       activeOpacity={0.7}
       onPress={() => router.push(`/challenges/${challenge.id}` as any)}
     >
       {/* Header row */}
       <View style={styles.header}>
-        <View style={styles.typeTag}>
+        <View style={[styles.typeTag, { backgroundColor: colors.surfaceLight }]}>
           <Ionicons
             name={TYPE_ICONS[challenge.type] ?? 'help-circle'}
             size={14}
@@ -74,25 +76,25 @@ export default function ChallengeCard({ challenge, variant = 'active', onJoin }:
           />
           <Text style={styles.typeLabel}>{TYPE_LABELS[challenge.type] ?? challenge.type}</Text>
         </View>
-        <Text style={styles.daysLeft}>
+        <Text style={[styles.daysLeft, { color: colors.textMuted }]}>
           {daysLeft > 0 ? `${daysLeft}d left` : 'Ended'}
         </Text>
       </View>
 
       {/* Title */}
-      <Text style={styles.title} numberOfLines={1}>
+      <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
         {challenge.title}
       </Text>
 
       {/* Target */}
-      <Text style={styles.target}>
+      <Text style={[styles.target, { color: colors.textSecondary }]}>
         Goal: {formatTarget(challenge.type, challenge.target_value, distanceFmt)}
       </Text>
 
       {/* Progress bar (active only) */}
       {variant === 'active' && (
         <View style={styles.progressContainer}>
-          <View style={styles.progressBar}>
+          <View style={[styles.progressBar, { backgroundColor: colors.surfaceLight }]}>
             <View
               style={[
                 styles.progressFill,
@@ -105,15 +107,15 @@ export default function ChallengeCard({ challenge, variant = 'active', onJoin }:
               ]}
             />
           </View>
-          <Text style={styles.progressText}>{progressPct}%</Text>
+          <Text style={[styles.progressText, { color: colors.textSecondary }]}>{progressPct}%</Text>
         </View>
       )}
 
       {/* Footer */}
       <View style={styles.footer}>
         <View style={styles.participantBadge}>
-          <Ionicons name="people" size={14} color={Colors.textMuted} />
-          <Text style={styles.participantCount}>
+          <Ionicons name="people" size={14} color={colors.textMuted} />
+          <Text style={[styles.participantCount, { color: colors.textMuted }]}>
             {challenge.participant_count}
           </Text>
         </View>
@@ -137,7 +139,6 @@ export default function ChallengeCard({ challenge, variant = 'active', onJoin }:
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     marginBottom: Spacing.md,
@@ -152,7 +153,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: Colors.surfaceLight,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 3,
     borderRadius: BorderRadius.sm,
@@ -164,18 +164,15 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   daysLeft: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
     marginBottom: 2,
   },
   target: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     marginBottom: Spacing.md,
   },
@@ -188,7 +185,6 @@ const styles = StyleSheet.create({
   progressBar: {
     flex: 1,
     height: 8,
-    backgroundColor: Colors.surfaceLight,
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -197,7 +193,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   progressText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
     minWidth: 36,
@@ -214,7 +209,6 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   participantCount: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
   },
   joinBtn: {

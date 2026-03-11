@@ -1,5 +1,6 @@
 import { View, TouchableOpacity, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type RunControlsProps = {
   isActive: boolean;
@@ -20,6 +21,8 @@ export default function RunControls({
   onResume,
   onStop,
 }: RunControlsProps) {
+  const { colors } = useTheme();
+
   if (!isActive) {
     return (
       <View style={styles.startContainer}>
@@ -75,7 +78,7 @@ export default function RunControls({
         </TouchableOpacity>
       )}
       <TouchableOpacity
-        style={[styles.controlButton, { backgroundColor: Colors.danger }]}
+        style={[styles.controlButton, { backgroundColor: colors.danger }]}
         onPress={onStop}
         accessibilityRole="button"
         accessibilityLabel="Stop activity"

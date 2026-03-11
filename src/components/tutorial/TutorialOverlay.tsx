@@ -11,6 +11,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 const TUTORIAL_KEY = 'tutorial_completed';
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -81,6 +82,7 @@ type Props = {
 };
 
 export default function TutorialOverlay({ step, onNext, onSkip }: Props) {
+  const { colors } = useTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(40)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -155,13 +157,14 @@ export default function TutorialOverlay({ step, onNext, onSkip }: Props) {
         style={[
           styles.card,
           {
+            backgroundColor: colors.surface,
             opacity: fadeAnim,
             transform: [{ translateY: slideAnim }],
           },
         ]}
       >
         {/* Progress bar */}
-        <View style={styles.progressContainer}>
+        <View style={[styles.progressContainer, { backgroundColor: colors.surfaceLight }]}>
           <Animated.View
             style={[
               styles.progressBar,
@@ -182,6 +185,7 @@ export default function TutorialOverlay({ step, onNext, onSkip }: Props) {
               key={i}
               style={[
                 styles.dot,
+                { backgroundColor: colors.surfaceLight },
                 i === step && styles.dotActive,
                 i < step && styles.dotDone,
               ]}
@@ -193,33 +197,33 @@ export default function TutorialOverlay({ step, onNext, onSkip }: Props) {
         <Animated.View
           style={[styles.iconCircle, { transform: [{ scale: pulseAnim }] }]}
         >
-          <Ionicons name={current.icon} size={36} color={Colors.white} />
+          <Ionicons name={current.icon} size={36} color={colors.white} />
         </Animated.View>
 
         {/* Tab label chip */}
-        <View style={styles.tabChip}>
+        <View style={[styles.tabChip, { backgroundColor: colors.surfaceLight }]}>
           <Text style={styles.tabChipText}>{current.tabLabel}</Text>
         </View>
 
-        <Text style={styles.title}>{current.title}</Text>
-        <Text style={styles.description}>{current.description}</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{current.title}</Text>
+        <Text style={[styles.description, { color: colors.textSecondary }]}>{current.description}</Text>
 
         {/* Actions */}
         <View style={styles.actions}>
           {!isLast && (
             <TouchableOpacity onPress={onSkip} style={styles.skipBtn}>
-              <Text style={styles.skipText}>Skip</Text>
+              <Text style={[styles.skipText, { color: colors.textMuted }]}>Skip</Text>
             </TouchableOpacity>
           )}
           <TouchableOpacity onPress={onNext} style={styles.nextBtn}>
-            <Text style={styles.nextText}>
+            <Text style={[styles.nextText, { color: colors.white }]}>
               {isLast ? "Got it!" : 'Next'}
             </Text>
             {!isLast && (
               <Ionicons
                 name="arrow-forward"
                 size={18}
-                color={Colors.white}
+                color={colors.white}
                 style={{ marginLeft: 6 }}
               />
             )}
@@ -264,7 +268,6 @@ const styles = StyleSheet.create({
   card: {
     width: SCREEN_W - 48,
     maxWidth: 400,
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.xl,
     alignItems: 'center',
     paddingHorizontal: Spacing.xxl,
@@ -280,7 +283,6 @@ const styles = StyleSheet.create({
   progressContainer: {
     width: '100%',
     height: 3,
-    backgroundColor: Colors.surfaceLight,
     borderRadius: 2,
     overflow: 'hidden',
     marginBottom: Spacing.lg,
@@ -299,7 +301,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: Colors.surfaceLight,
   },
   dotActive: {
     backgroundColor: Colors.primary,
@@ -323,7 +324,6 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   tabChip: {
-    backgroundColor: Colors.surfaceLight,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.xs,
     borderRadius: BorderRadius.full,
@@ -337,14 +337,12 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
     textAlign: 'center',
     marginBottom: Spacing.sm,
   },
   description: {
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
     lineHeight: 22,
     textAlign: 'center',
@@ -360,7 +358,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
   },
   skipText: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
     fontWeight: FontWeight.medium,
   },
@@ -373,7 +370,6 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
   },
   nextText: {
-    color: Colors.white,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
   },

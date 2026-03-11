@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Button } from '@/src/components/ui';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 const FEATURES = [
@@ -31,29 +32,30 @@ const FEATURES = [
 
 export default function WelcomeScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <View style={styles.container}>
         <View style={styles.hero}>
           <View style={styles.iconContainer}>
             <Ionicons name="footsteps" size={80} color={Colors.primary} />
           </View>
           <Text style={styles.appName}>5tepTracker</Text>
-          <Text style={styles.tagline}>
+          <Text style={[styles.tagline, { color: colors.textSecondary }]}>
             Track your steps. Crush your goals.{'\n'}Level up.
           </Text>
         </View>
 
         <View style={styles.features}>
           {FEATURES.map((f) => (
-            <View key={f.title} style={styles.featureRow}>
+            <View key={f.title} style={[styles.featureRow, { backgroundColor: colors.surface }]}>
               <View style={[styles.iconBg, { backgroundColor: f.bg }]}>
                 <Ionicons name={f.icon} size={24} color={f.color} />
               </View>
               <View style={styles.featureText}>
-                <Text style={styles.featureTitle}>{f.title}</Text>
-                <Text style={styles.featureDesc}>{f.desc}</Text>
+                <Text style={[styles.featureTitle, { color: colors.textPrimary }]}>{f.title}</Text>
+                <Text style={[styles.featureDesc, { color: colors.textMuted }]}>{f.desc}</Text>
               </View>
             </View>
           ))}
@@ -73,7 +75,6 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   container: {
     flex: 1,
@@ -101,7 +102,6 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontSize: FontSize.lg,
-    color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
   },
@@ -112,7 +112,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.lg,
-    backgroundColor: Colors.surface,
     padding: Spacing.lg,
     borderRadius: BorderRadius.lg,
   },
@@ -127,12 +126,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   featureTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
   },
   featureDesc: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     marginTop: 2,
   },

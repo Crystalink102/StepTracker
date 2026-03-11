@@ -19,6 +19,7 @@ import { Avatar, Input } from '@/src/components/ui';
 import * as ProfileService from '@/src/services/profile.service';
 import * as StorageService from '@/src/services/storage.service';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 const PROFILE_SETUP_KEY = 'profile_setup_completed';
 const { width: SCREEN_W } = Dimensions.get('window');
@@ -48,6 +49,7 @@ type Props = {
 export default function ProfileSetupOverlay({ onComplete }: Props) {
   const { user } = useAuth();
   const { profile, refresh: refreshProfile } = useProfile();
+  const { colors } = useTheme();
 
   const [step, setStep] = useState(0);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -235,17 +237,17 @@ export default function ProfileSetupOverlay({ onComplete }: Props) {
         <View style={styles.stepContent}>
           <TouchableOpacity onPress={handlePickPhoto} disabled={isSaving} style={styles.avatarPicker}>
             {isSaving ? (
-              <View style={styles.avatarLoading}>
+              <View style={[styles.avatarLoading, { backgroundColor: colors.surfaceLight }]}>
                 <ActivityIndicator size="large" color={Colors.primary} />
               </View>
             ) : avatarUrl ? (
               <Avatar uri={avatarUrl} size={120} />
             ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Ionicons name="camera-outline" size={40} color={Colors.textMuted} />
+              <View style={[styles.avatarPlaceholder, { backgroundColor: colors.surfaceLight, borderColor: colors.border }]}>
+                <Ionicons name="camera-outline" size={40} color={colors.textMuted} />
               </View>
             )}
-            <Text style={styles.tapHint}>
+            <Text style={[styles.tapHint, { color: colors.textMuted }]}>
               {avatarUrl ? 'Tap to change' : 'Tap to choose a photo'}
             </Text>
           </TouchableOpacity>
@@ -299,13 +301,14 @@ export default function ProfileSetupOverlay({ onComplete }: Props) {
           style={[
             styles.card,
             {
+              backgroundColor: colors.surface,
               opacity: fadeAnim,
               transform: [{ translateY: slideAnim }],
             },
           ]}
         >
           {/* Progress bar */}
-          <View style={styles.progressContainer}>
+          <View style={[styles.progressContainer, { backgroundColor: colors.surfaceLight }]}>
             <Animated.View
               style={[
                 styles.progressBar,
@@ -326,6 +329,7 @@ export default function ProfileSetupOverlay({ onComplete }: Props) {
                 key={i}
                 style={[
                   styles.dot,
+                  { backgroundColor: colors.surfaceLight },
                   i === step && styles.dotActive,
                   i < step && styles.dotDone,
                 ]}
@@ -337,22 +341,22 @@ export default function ProfileSetupOverlay({ onComplete }: Props) {
           <Animated.View
             style={[styles.iconCircle, { transform: [{ scale: pulseAnim }] }]}
           >
-            <Ionicons name={current.icon} size={36} color={Colors.white} />
+            <Ionicons name={current.icon} size={36} color={colors.white} />
           </Animated.View>
 
-          <Text style={styles.title}>{current.title}</Text>
-          <Text style={styles.subtitle}>{current.subtitle}</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{current.title}</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{current.subtitle}</Text>
 
           {renderStepContent()}
 
           {step === 0 && error ? (
-            <Text style={styles.errorText}>{error}</Text>
+            <Text style={[styles.errorText, { color: colors.danger }]}>{error}</Text>
           ) : null}
 
           {/* Actions */}
           <View style={styles.actions}>
             <TouchableOpacity onPress={handleSkip} style={styles.skipBtn} disabled={isSaving}>
-              <Text style={styles.skipText}>Skip</Text>
+              <Text style={[styles.skipText, { color: colors.textMuted }]}>Skip</Text>
             </TouchableOpacity>
             <TouchableOpacity
               onPress={handleSaveAndNext}
@@ -360,17 +364,17 @@ export default function ProfileSetupOverlay({ onComplete }: Props) {
               disabled={isSaving}
             >
               {isSaving ? (
-                <ActivityIndicator color={Colors.white} size="small" />
+                <ActivityIndicator color={colors.white} size="small" />
               ) : (
                 <>
-                  <Text style={styles.nextText}>
+                  <Text style={[styles.nextText, { color: colors.white }]}>
                     {isLast ? 'Done' : 'Next'}
                   </Text>
                   {!isLast && (
                     <Ionicons
                       name="arrow-forward"
                       size={18}
-                      color={Colors.white}
+                      color={colors.white}
                       style={{ marginLeft: 6 }}
                     />
                   )}
@@ -424,7 +428,6 @@ const styles = StyleSheet.create({
   card: {
     width: SCREEN_W - 48,
     maxWidth: 400,
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.xl,
     alignItems: 'center',
     paddingHorizontal: Spacing.xxl,
@@ -439,7 +442,6 @@ const styles = StyleSheet.create({
   progressContainer: {
     width: '100%',
     height: 3,
-    backgroundColor: Colors.surfaceLight,
     borderRadius: 2,
     overflow: 'hidden',
     marginBottom: Spacing.lg,
@@ -458,7 +460,6 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: Colors.surfaceLight,
   },
   dotActive: {
     backgroundColor: Colors.primary,
@@ -482,14 +483,12 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
     textAlign: 'center',
     marginBottom: Spacing.xs,
   },
   subtitle: {
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
     textAlign: 'center',
     marginBottom: Spacing.xl,
@@ -505,9 +504,7 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: Colors.surfaceLight,
     borderWidth: 2,
-    borderColor: Colors.border,
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
@@ -516,17 +513,14 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: Colors.surfaceLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
   tapHint: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     marginTop: Spacing.md,
   },
   errorText: {
-    color: Colors.danger,
     fontSize: FontSize.sm,
     textAlign: 'center',
     marginBottom: Spacing.md,
@@ -541,7 +535,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xl,
   },
   skipText: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
     fontWeight: FontWeight.medium,
   },
@@ -557,7 +550,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   nextText: {
-    color: Colors.white,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
   },

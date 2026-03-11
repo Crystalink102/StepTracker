@@ -12,12 +12,14 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
 import { ConfirmModal } from '@/src/components/ui';
+import { useTheme } from '@/src/context/ThemeContext';
 import * as ProfileService from '@/src/services/profile.service';
 import { supabase } from '@/src/services/supabase';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 export default function VerifyOTPScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { verifyOTP, resendConfirmation, user } = useAuth();
   const params = useLocalSearchParams<{ type: 'sms' | 'email'; identifier: string; username?: string }>();
 
@@ -60,13 +62,13 @@ export default function VerifyOTPScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>Verify Your{'\n'}{params.type === 'sms' ? 'Phone' : 'Email'}</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Verify Your{'\n'}{params.type === 'sms' ? 'Phone' : 'Email'}</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             We sent a 6-digit code to{'\n'}
             <Text style={styles.identifier}>{params.identifier}</Text>
           </Text>
@@ -74,11 +76,11 @@ export default function VerifyOTPScreen() {
 
         <View style={styles.form}>
           <TextInput
-            style={styles.codeInput}
+            style={[styles.codeInput, { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border }]}
             value={code}
             onChangeText={setCode}
             placeholder="000000"
-            placeholderTextColor={Colors.textMuted}
+            placeholderTextColor={colors.textMuted}
             keyboardType="number-pad"
             maxLength={6}
             textAlign="center"
@@ -134,7 +136,6 @@ export default function VerifyOTPScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   content: {
     flex: 1,
@@ -145,12 +146,10 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xxxl,
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.display,
     fontWeight: FontWeight.bold,
   },
   subtitle: {
-    color: Colors.textSecondary,
     fontSize: FontSize.lg,
     marginTop: Spacing.md,
     lineHeight: 24,
@@ -163,15 +162,12 @@ const styles = StyleSheet.create({
     gap: Spacing.xl,
   },
   codeInput: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.xl,
-    color: Colors.textPrimary,
     fontSize: FontSize.display,
     fontWeight: FontWeight.bold,
     letterSpacing: 12,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   button: {
     backgroundColor: Colors.primary,

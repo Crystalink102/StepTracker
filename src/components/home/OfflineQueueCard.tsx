@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { getQueueSize, processQueue } from '@/src/services/offline-queue';
 import { useNetwork } from '@/src/context/NetworkContext';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 /**
  * Shows a card on the home screen when there are pending offline operations
@@ -11,6 +12,7 @@ import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/const
  */
 export default function OfflineQueueCard() {
   const { isOnline } = useNetwork();
+  const { colors } = useTheme();
   const [queueSize, setQueueSize] = useState(getQueueSize());
   const [isSyncing, setIsSyncing] = useState(false);
 
@@ -39,19 +41,19 @@ export default function OfflineQueueCard() {
   if (queueSize === 0 || !isOnline) return null;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.surface, borderLeftColor: colors.warning }]}>
       <View style={styles.row}>
         <View style={styles.iconContainer}>
-          <Ionicons name="cloud-upload-outline" size={20} color={Colors.warning} />
+          <Ionicons name="cloud-upload-outline" size={20} color={colors.warning} />
         </View>
         <View style={styles.textContainer}>
-          <Text style={styles.title}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>
             {queueSize} {queueSize === 1 ? 'item' : 'items'} waiting to sync
           </Text>
-          <Text style={styles.subtitle}>Tap retry to sync now</Text>
+          <Text style={[styles.subtitle, { color: colors.textMuted }]}>Tap retry to sync now</Text>
         </View>
         <TouchableOpacity
-          style={styles.retryButton}
+          style={[styles.retryButton, { backgroundColor: colors.surfaceLight }]}
           onPress={handleRetry}
           disabled={isSyncing}
           accessibilityRole="button"
@@ -75,10 +77,8 @@ const styles = StyleSheet.create({
   container: {
     marginHorizontal: Spacing.lg,
     marginTop: Spacing.sm,
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     borderLeftWidth: 3,
-    borderLeftColor: Colors.warning,
     padding: Spacing.md,
   },
   row: {
@@ -92,12 +92,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
   },
   subtitle: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     marginTop: 2,
   },
@@ -108,7 +106,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.sm,
-    backgroundColor: Colors.surfaceLight,
   },
   retryText: {
     color: Colors.primary,

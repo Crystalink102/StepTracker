@@ -2,7 +2,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { AchievementDefinition, UserAchievement } from '@/src/types/database';
 import { CATEGORY_CONFIG, CATEGORY_ORDER } from '@/src/constants/achievements';
 import AchievementCard from './AchievementCard';
-import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 
 type AchievementListProps = {
   definitions: AchievementDefinition[];

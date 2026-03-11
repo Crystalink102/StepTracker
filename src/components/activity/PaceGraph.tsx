@@ -4,6 +4,7 @@ import { ActivityWaypoint } from '@/src/types/database';
 import { haversineDistance } from '@/src/utils/geo';
 import { formatPace, paceUnitLabel } from '@/src/utils/formatters';
 import { usePreferences, type DistanceUnit } from '@/src/context/PreferencesContext';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 type PacePoint = {
@@ -113,6 +114,7 @@ type PaceGraphProps = {
 
 export default function PaceGraph({ waypoints }: PaceGraphProps) {
   const { preferences } = usePreferences();
+  const { colors } = useTheme();
   const unit: DistanceUnit =
     preferences.distanceUnit === 'm' ? 'km' : preferences.distanceUnit;
 
@@ -186,8 +188,8 @@ export default function PaceGraph({ waypoints }: PaceGraphProps) {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Pace</Text>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
+      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Pace</Text>
 
       <View style={styles.chartContainer}>
         {/* Y-axis labels */}
@@ -202,7 +204,7 @@ export default function PaceGraph({ waypoints }: PaceGraphProps) {
                 },
               ]}
             >
-              <Text style={styles.yLabelText}>
+              <Text style={[styles.yLabelText, { color: colors.textMuted }]}>
                 {formatPace(pace, unit)}
               </Text>
             </View>
@@ -219,6 +221,7 @@ export default function PaceGraph({ waypoints }: PaceGraphProps) {
                 styles.gridLine,
                 {
                   top: paceToY(pace),
+                  backgroundColor: colors.surfaceLight,
                 },
               ]}
             />
@@ -237,7 +240,7 @@ export default function PaceGraph({ waypoints }: PaceGraphProps) {
                 style={[
                   styles.dash,
                   i % 2 === 0
-                    ? styles.dashVisible
+                    ? { backgroundColor: colors.warning }
                     : styles.dashInvisible,
                 ]}
               />
@@ -245,8 +248,8 @@ export default function PaceGraph({ waypoints }: PaceGraphProps) {
           </View>
 
           {/* Avg pace label */}
-          <View style={[styles.avgLabel, { top: avgPaceY - 18 }]}>
-            <Text style={styles.avgLabelText}>
+          <View style={[styles.avgLabel, { top: avgPaceY - 18, backgroundColor: colors.surface }]}>
+            <Text style={[styles.avgLabelText, { color: colors.warning }]}>
               avg {formatPace(avgPace, unit)}
             </Text>
           </View>
@@ -304,7 +307,7 @@ export default function PaceGraph({ waypoints }: PaceGraphProps) {
           })}
 
           {/* X-axis labels */}
-          <View style={styles.xAxis}>
+          <View style={[styles.xAxis, { borderTopColor: colors.surfaceLight }]}>
             {xLabels.map((label, i) => {
               const xPos = maxDistDisplay > 0
                 ? (label.value / maxDistDisplay) * 100
@@ -314,7 +317,7 @@ export default function PaceGraph({ waypoints }: PaceGraphProps) {
                   key={`xlabel-${i}`}
                   style={[
                     styles.xLabelText,
-                    { left: `${xPos}%` },
+                    { left: `${xPos}%`, color: colors.textMuted },
                   ]}
                 >
                   {label.label}
@@ -327,10 +330,10 @@ export default function PaceGraph({ waypoints }: PaceGraphProps) {
 
       {/* Axis unit labels */}
       <View style={styles.axisLabels}>
-        <Text style={styles.axisUnitLabel}>
+        <Text style={[styles.axisUnitLabel, { color: colors.textMuted }]}>
           {paceUnitLabel(unit)}
         </Text>
-        <Text style={styles.axisUnitLabel}>
+        <Text style={[styles.axisUnitLabel, { color: colors.textMuted }]}>
           {unit === 'mi' ? 'miles' : 'km'}
         </Text>
       </View>
@@ -340,12 +343,10 @@ export default function PaceGraph({ waypoints }: PaceGraphProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
   },
   sectionTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.lg,
@@ -364,7 +365,6 @@ const styles = StyleSheet.create({
     right: Spacing.xs,
   },
   yLabelText: {
-    color: Colors.textMuted,
     fontSize: 9,
     textAlign: 'right',
   },
@@ -379,7 +379,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: StyleSheet.hairlineWidth,
-    backgroundColor: Colors.surfaceLight,
   },
   avgLine: {
     position: 'absolute',
@@ -393,22 +392,17 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 2,
   },
-  dashVisible: {
-    backgroundColor: Colors.warning,
-  },
   dashInvisible: {
     backgroundColor: 'transparent',
   },
   avgLabel: {
     position: 'absolute',
     right: 0,
-    backgroundColor: Colors.surface,
     paddingHorizontal: 4,
     paddingVertical: 1,
     borderRadius: 3,
   },
   avgLabelText: {
-    color: Colors.warning,
     fontSize: 9,
     fontWeight: FontWeight.semibold,
   },
@@ -431,12 +425,10 @@ const styles = StyleSheet.create({
     right: 0,
     height: X_AXIS_HEIGHT,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.surfaceLight,
   },
   xLabelText: {
     position: 'absolute',
     top: 4,
-    color: Colors.textMuted,
     fontSize: 9,
     marginLeft: -8,
   },
@@ -447,7 +439,6 @@ const styles = StyleSheet.create({
     paddingLeft: Y_AXIS_WIDTH,
   },
   axisUnitLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     textTransform: 'uppercase',
     letterSpacing: 0.5,

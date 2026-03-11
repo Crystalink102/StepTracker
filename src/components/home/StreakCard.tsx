@@ -3,6 +3,7 @@ import { Ionicons } from '@expo/vector-icons';
 import Card from '@/src/components/ui/Card';
 import FlameIcon from './FlameIcon';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type StreakCardProps = {
   streak: number;
@@ -17,27 +18,29 @@ export default function StreakCard({
   freezeEnabled = false,
   freezeUsed = false,
 }: StreakCardProps) {
+  const { colors } = useTheme();
+
   return (
     <Card style={styles.card} accessible accessibilityLabel={`${streak}-day streak${freezeUsed ? ', streak freeze used' : ''}${freezeAvailable ? ', streak freeze available' : ''}`}>
       <View style={styles.row}>
         <FlameIcon size={32} streak={streak} />
         <View style={styles.textContainer}>
-          <Text style={styles.count}>{streak}</Text>
-          <Text style={styles.label}>day streak</Text>
+          <Text style={[styles.count, { color: colors.textPrimary }]}>{streak}</Text>
+          <Text style={[styles.label, { color: colors.textSecondary }]}>day streak</Text>
         </View>
       </View>
 
       {freezeEnabled && (
-        <View style={styles.freezeRow}>
+        <View style={[styles.freezeRow, { borderTopColor: colors.border }]}>
           <Ionicons
             name="snow-outline"
             size={16}
-            color={freezeAvailable ? '#60A5FA' : Colors.textMuted}
+            color={freezeAvailable ? '#60A5FA' : colors.textMuted}
           />
           <Text
             style={[
               styles.freezeText,
-              { color: freezeAvailable ? '#60A5FA' : Colors.textMuted },
+              { color: freezeAvailable ? '#60A5FA' : colors.textMuted },
             ]}
           >
             {freezeUsed
@@ -68,12 +71,10 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   count: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
   },
   label: {
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.medium,
   },
@@ -84,7 +85,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
     paddingTop: Spacing.md,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
   },
   freezeText: {
     fontSize: FontSize.sm,

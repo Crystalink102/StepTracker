@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Card, ProgressBar } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import { IntervalPhase, IntervalTimerState, formatTotalTime } from '@/src/hooks/useIntervalTimer';
 
 type IntervalDisplayProps = IntervalTimerState;
@@ -37,6 +38,7 @@ export default function IntervalDisplay({
   totalDuration,
   isComplete,
 }: IntervalDisplayProps) {
+  const { colors } = useTheme();
   const phaseColor = PHASE_COLORS[currentPhase];
   const progress = totalDuration > 0 ? totalElapsed / totalDuration : 0;
 
@@ -48,7 +50,7 @@ export default function IntervalDisplay({
           <Text style={styles.phaseBadgeText}>{PHASE_LABELS[currentPhase]}</Text>
         </View>
         {currentPhase === 'run' || currentPhase === 'rest' ? (
-          <Text style={styles.intervalCounter}>
+          <Text style={[styles.intervalCounter, { color: colors.textSecondary }]}>
             Interval {currentInterval} of {totalIntervals}
           </Text>
         ) : null}
@@ -67,7 +69,7 @@ export default function IntervalDisplay({
       <View style={styles.dotsContainer}>
         {Array.from({ length: totalIntervals }).map((_, i) => {
           const intervalNum = i + 1;
-          let dotColor = Colors.surfaceLight;
+          let dotColor = colors.surfaceLight;
           if (intervalNum < currentInterval) {
             dotColor = '#22C55E'; // completed - green
           } else if (intervalNum === currentInterval && currentPhase === 'run') {
@@ -84,7 +86,7 @@ export default function IntervalDisplay({
               style={[
                 styles.dot,
                 { backgroundColor: dotColor },
-                intervalNum === currentInterval && !isComplete && styles.dotActive,
+                intervalNum === currentInterval && !isComplete && [styles.dotActive, { borderColor: colors.textPrimary }],
               ]}
             />
           );
@@ -95,16 +97,16 @@ export default function IntervalDisplay({
       <View style={styles.progressSection}>
         <ProgressBar progress={progress} color={phaseColor} height={6} />
         <View style={styles.progressLabels}>
-          <Text style={styles.progressText}>{formatTotalTime(totalElapsed)}</Text>
-          <Text style={styles.progressText}>{formatTotalTime(totalDuration)}</Text>
+          <Text style={[styles.progressText, { color: colors.textMuted }]}>{formatTotalTime(totalElapsed)}</Text>
+          <Text style={[styles.progressText, { color: colors.textMuted }]}>{formatTotalTime(totalDuration)}</Text>
         </View>
       </View>
 
       {/* Next up preview */}
       {!isComplete && (
         <View style={styles.nextUp}>
-          <Text style={styles.nextUpLabel}>Next:</Text>
-          <Text style={styles.nextUpValue}>{getNextPhaseLabel(currentPhase, currentInterval, totalIntervals)}</Text>
+          <Text style={[styles.nextUpLabel, { color: colors.textMuted }]}>Next:</Text>
+          <Text style={[styles.nextUpValue, { color: colors.textSecondary }]}>{getNextPhaseLabel(currentPhase, currentInterval, totalIntervals)}</Text>
         </View>
       )}
     </Card>
@@ -158,7 +160,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   intervalCounter: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
   },
@@ -185,7 +186,6 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: Colors.textPrimary,
   },
   progressSection: {
     marginTop: Spacing.sm,
@@ -196,7 +196,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
   },
   progressText: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.medium,
   },
@@ -208,12 +207,10 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   nextUpLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
   },
   nextUpValue: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
   },

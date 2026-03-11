@@ -165,7 +165,6 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
     padding: Spacing.xxl,
   },
   centered: {
@@ -178,19 +177,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: Spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.surface,
   },
   textSection: {
     flex: 1,
     marginRight: Spacing.lg,
   },
   label: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.medium,
   },
   description: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     marginTop: 2,
   },
@@ -214,7 +210,6 @@ const styles = StyleSheet.create({
   },
   webNote: {
     marginTop: Spacing.lg,
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     textAlign: 'center',
     fontStyle: 'italic',

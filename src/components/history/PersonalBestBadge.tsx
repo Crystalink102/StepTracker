@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import { formatDuration } from '@/src/utils/formatters';
 import { PersonalBest } from '@/src/types/database';
 
@@ -8,10 +9,12 @@ type PersonalBestBadgeProps = {
 };
 
 export default function PersonalBestBadge({ pb }: PersonalBestBadgeProps) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.container}>
       <Text style={styles.distance}>{pb.distance_label}</Text>
-      <Text style={styles.time}>{formatDuration(pb.best_time_seconds)}</Text>
+      <Text style={[styles.time, { color: colors.textPrimary }]}>{formatDuration(pb.best_time_seconds)}</Text>
     </View>
   );
 }
@@ -34,7 +37,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   time: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
   },

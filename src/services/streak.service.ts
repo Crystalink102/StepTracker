@@ -30,10 +30,13 @@ function getDateString(date: Date): string {
 
 /**
  * Get yesterday's date in Central Time.
+ * Uses CT-aware arithmetic instead of subtracting 24h (DST-safe).
  */
 function getYesterday(): string {
-  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  return getDateString(yesterday);
+  const today = getTodayString(); // YYYY-MM-DD in CT
+  const [y, m, d] = today.split('-').map(Number);
+  const dt = new Date(y, m - 1, d - 1); // JS Date handles month/year boundaries
+  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
 }
 
 /** Returns the ISO week string (YYYY-Www) for a given date */
@@ -145,9 +148,10 @@ export async function checkAndUpdateStreak(userId: string): Promise<StreakResult
     }
   } else {
     // Gap of 2+ days — check for freeze (only if the gap is exactly 2 days = missed one day)
-    const dayBeforeYesterday = new Date();
-    dayBeforeYesterday.setDate(dayBeforeYesterday.getDate() - 2);
-    const twoDaysAgo = getDateString(dayBeforeYesterday);
+    const today = getTodayString();
+    const [ty, tm, td] = today.split('-').map(Number);
+    const twoDaysAgoDate = new Date(ty, tm - 1, td - 2);
+    const twoDaysAgo = `${twoDaysAgoDate.getFullYear()}-${String(twoDaysAgoDate.getMonth() + 1).padStart(2, '0')}-${String(twoDaysAgoDate.getDate()).padStart(2, '0')}`;
 
     if (lastDate === twoDaysAgo && currentStreak > 0) {
       const freezeEnabled = await isFreezeEnabled();

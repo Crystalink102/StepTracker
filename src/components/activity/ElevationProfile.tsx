@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { ActivityWaypoint } from '@/src/types/database';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type ElevationStats = {
   gain: number;
@@ -59,14 +60,15 @@ type Props = {
 };
 
 export default function ElevationProfile({ waypoints }: Props) {
+  const { colors } = useTheme();
   const stats = calculateElevation(waypoints);
   if (!stats) return null;
 
   const chartHeight = 80;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Elevation</Text>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
+      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Elevation</Text>
 
       {/* Mini elevation chart */}
       <View style={[styles.chart, { height: chartHeight }]}>
@@ -87,23 +89,23 @@ export default function ElevationProfile({ waypoints }: Props) {
       {/* Stats row */}
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{stats.gain}m</Text>
-          <Text style={styles.statLabel}>Gain</Text>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats.gain}m</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Gain</Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: colors.surfaceLight }]} />
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{stats.loss}m</Text>
-          <Text style={styles.statLabel}>Loss</Text>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats.loss}m</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Loss</Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: colors.surfaceLight }]} />
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{stats.max}m</Text>
-          <Text style={styles.statLabel}>Max</Text>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats.max}m</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Max</Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: colors.surfaceLight }]} />
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>{stats.min}m</Text>
-          <Text style={styles.statLabel}>Min</Text>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>{stats.min}m</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Min</Text>
         </View>
       </View>
     </View>
@@ -112,12 +114,10 @@ export default function ElevationProfile({ waypoints }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
   },
   sectionTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.lg,
@@ -145,15 +145,12 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: 30,
-    backgroundColor: Colors.surfaceLight,
   },
   statValue: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
   },
   statLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: 2,
     textTransform: 'uppercase',

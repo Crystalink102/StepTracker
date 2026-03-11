@@ -218,14 +218,12 @@ export default function PreferencesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   content: {
     padding: Spacing.lg,
     paddingBottom: Spacing.xxxl * 2,
   },
   sectionHeader: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
     letterSpacing: 1,
@@ -233,7 +231,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   row: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     marginBottom: Spacing.sm,
@@ -246,18 +243,15 @@ const styles = StyleSheet.create({
     marginRight: Spacing.md,
   },
   rowLabel: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.medium,
   },
   rowDescription: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     marginTop: 2,
   },
   segmentContainer: {
     flexDirection: 'row',
-    backgroundColor: Colors.surfaceLight,
     borderRadius: BorderRadius.sm,
     overflow: 'hidden',
   },
@@ -270,7 +264,6 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.sm,
   },
   segmentText: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
   },
@@ -278,7 +271,6 @@ const styles = StyleSheet.create({
     color: Colors.white,
   },
   replayArrow: {
-    color: Colors.textMuted,
     fontSize: FontSize.xxl,
   },
 });

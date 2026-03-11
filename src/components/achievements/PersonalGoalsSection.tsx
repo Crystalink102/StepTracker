@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ProgressBar } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import type { CustomGoal } from '@/src/services/custom-goals.service';
 
 const TYPE_LABELS: Record<string, string> = {
@@ -29,6 +30,8 @@ export default function PersonalGoalsSection({
   onDelete,
   onCreatePress,
 }: PersonalGoalsSectionProps) {
+  const { colors } = useTheme();
+
   const handleDelete = (goal: CustomGoal) => {
     Alert.alert('Delete Goal', `Remove "${goal.name}"?`, [
       { text: 'Cancel', style: 'cancel' },
@@ -51,9 +54,12 @@ export default function PersonalGoalsSection({
       </View>
 
       {goals.length === 0 && (
-        <TouchableOpacity style={styles.emptyCard} onPress={onCreatePress}>
-          <Ionicons name="flag-outline" size={28} color={Colors.textMuted} />
-          <Text style={styles.emptyText}>Create your first personal goal</Text>
+        <TouchableOpacity
+          style={[styles.emptyCard, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          onPress={onCreatePress}
+        >
+          <Ionicons name="flag-outline" size={28} color={colors.textMuted} />
+          <Text style={[styles.emptyText, { color: colors.textMuted }]}>Create your first personal goal</Text>
         </TouchableOpacity>
       )}
 
@@ -62,14 +68,21 @@ export default function PersonalGoalsSection({
         const expired = isExpired(goal);
 
         return (
-          <View key={goal.id} style={[styles.goalCard, expired && !goal.completed && styles.expired]}>
+          <View
+            key={goal.id}
+            style={[
+              styles.goalCard,
+              { backgroundColor: colors.surface },
+              expired && !goal.completed && styles.expired,
+            ]}
+          >
             <View style={styles.goalTop}>
               <Text style={styles.goalIcon}>{TYPE_ICONS[goal.type] ?? '\u{2B50}'}</Text>
               <View style={styles.goalInfo}>
-                <Text style={styles.goalName} numberOfLines={1}>
+                <Text style={[styles.goalName, { color: colors.textPrimary }]} numberOfLines={1}>
                   {goal.name}
                 </Text>
-                <Text style={styles.goalMeta}>
+                <Text style={[styles.goalMeta, { color: colors.textMuted }]}>
                   {TYPE_LABELS[goal.type] ?? goal.type}
                   {goal.deadline ? ` \u{00B7} Due ${goal.deadline}` : ''}
                 </Text>
@@ -81,7 +94,7 @@ export default function PersonalGoalsSection({
                   onPress={() => handleDelete(goal)}
                   hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  <Ionicons name="trash-outline" size={18} color={Colors.textMuted} />
+                  <Ionicons name="trash-outline" size={18} color={colors.textMuted} />
                 </TouchableOpacity>
               )}
             </View>
@@ -93,13 +106,13 @@ export default function PersonalGoalsSection({
                 height={6}
                 style={styles.progressBar}
               />
-              <Text style={styles.progressText}>
+              <Text style={[styles.progressText, { color: colors.textSecondary }]}>
                 {goal.progress.toLocaleString()} / {goal.target.toLocaleString()}
               </Text>
             </View>
 
             {expired && !goal.completed && (
-              <Text style={styles.expiredText}>Expired</Text>
+              <Text style={[styles.expiredText, { color: colors.danger }]}>Expired</Text>
             )}
           </View>
         );
@@ -129,22 +142,18 @@ const styles = StyleSheet.create({
     padding: Spacing.xs,
   },
   emptyCard: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.xxl,
     marginHorizontal: Spacing.lg,
     alignItems: 'center',
     gap: Spacing.sm,
     borderWidth: 1,
-    borderColor: Colors.border,
     borderStyle: 'dashed',
   },
   emptyText: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
   },
   goalCard: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     marginHorizontal: Spacing.lg,
@@ -166,12 +175,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   goalName: {
-    color: Colors.textPrimary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
   },
   goalMeta: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: 2,
   },
@@ -184,14 +191,12 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   progressText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.medium,
     minWidth: 80,
     textAlign: 'right',
   },
   expiredText: {
-    color: Colors.danger,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.medium,
     marginTop: Spacing.xs,

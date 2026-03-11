@@ -100,6 +100,8 @@ export default function ProfileScreen() {
   const settingsItems = [
     { label: 'Edit Profile', route: '/settings/edit-profile' as const },
     { label: 'Personal Info', route: '/settings/personal-info' as const },
+    { label: 'Gear & Shoes', route: '/settings/gear' as const },
+    { label: 'Training Paces', route: '/settings/training-paces' as const },
     { label: 'Preferences', route: '/settings/preferences' as const },
     { label: 'Account', route: '/settings/account' as const },
     { label: 'Privacy Policy', route: '/settings/privacy-policy' as const },
@@ -191,7 +193,6 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   container: {
     flex: 1,
@@ -202,7 +203,6 @@ const styles = StyleSheet.create({
   },
   completionContainer: {
     marginHorizontal: Spacing.lg,
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
   },
@@ -213,7 +213,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   completionLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
   },
@@ -224,7 +223,6 @@ const styles = StyleSheet.create({
   },
   completionBarBg: {
     height: 6,
-    backgroundColor: Colors.surfaceLight,
     borderRadius: BorderRadius.full,
     overflow: 'hidden',
   },
@@ -253,7 +251,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.md,
   },
   sectionTitle: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
     letterSpacing: 1,
@@ -263,13 +260,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
     padding: Spacing.lg,
     borderRadius: BorderRadius.md,
     marginBottom: Spacing.sm,
   },
   settingsLabel: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
   },
   menuItemRow: {
@@ -278,7 +273,6 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   arrow: {
-    color: Colors.textMuted,
     fontSize: FontSize.xxl,
   },
 });

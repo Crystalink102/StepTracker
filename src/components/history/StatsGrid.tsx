@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import { formatDistance, formatDuration, formatPace, paceUnitLabel } from '@/src/utils/formatters';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { Activity } from '@/src/types/database';
@@ -9,6 +10,7 @@ type StatsGridProps = {
 };
 
 export default function StatsGrid({ activity }: StatsGridProps) {
+  const { colors } = useTheme();
   const { preferences } = usePreferences();
   const unit = preferences.distanceUnit;
 
@@ -33,11 +35,11 @@ export default function StatsGrid({ activity }: StatsGridProps) {
   ];
 
   return (
-    <View style={styles.grid}>
+    <View style={[styles.grid, { backgroundColor: colors.surface }]}>
       {stats.map((stat) => (
-        <View key={stat.label} style={styles.cell}>
-          <Text style={styles.value}>{stat.value}</Text>
-          <Text style={styles.label}>{stat.label}</Text>
+        <View key={stat.label} style={[styles.cell, { borderColor: colors.surfaceLight }]}>
+          <Text style={[styles.value, { color: colors.textPrimary }]}>{stat.value}</Text>
+          <Text style={[styles.label, { color: colors.textMuted }]}>{stat.label}</Text>
         </View>
       ))}
     </View>
@@ -48,7 +50,6 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     overflow: 'hidden',
   },
@@ -58,15 +59,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderBottomWidth: 1,
     borderRightWidth: 1,
-    borderColor: Colors.surfaceLight,
   },
   value: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
   },
   label: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: 4,
     textTransform: 'uppercase',

@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Card } from '@/src/components/ui';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 import { formatNumber, distanceUnitShort } from '@/src/utils/formatters';
 import { usePreferences } from '@/src/context/PreferencesContext';
@@ -18,6 +19,7 @@ export default function StatsOverview({
   totalDistanceKm,
 }: StatsOverviewProps) {
   const { preferences } = usePreferences();
+  const { colors } = useTheme();
   const unit = preferences.distanceUnit;
   const displayDist = unit === 'mi' ? totalDistanceKm * 0.621371 : unit === 'm' ? totalDistanceKm * 1000 : totalDistanceKm;
 
@@ -33,8 +35,8 @@ export default function StatsOverview({
       <View style={styles.grid}>
         {stats.map((stat) => (
           <View key={stat.label} style={styles.stat}>
-            <Text style={styles.value}>{stat.value}</Text>
-            <Text style={styles.label}>{stat.label}</Text>
+            <Text style={[styles.value, { color: colors.textPrimary }]}>{stat.value}</Text>
+            <Text style={[styles.label, { color: colors.textMuted }]}>{stat.label}</Text>
           </View>
         ))}
       </View>
@@ -56,12 +58,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   value: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
   },
   label: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: 4,
     textTransform: 'uppercase',

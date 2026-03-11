@@ -1,5 +1,6 @@
 import { useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 export type TrendsDataPoint = {
@@ -24,6 +25,7 @@ export default function TrendsChart({
   color = Colors.primary,
   formatValue,
 }: TrendsChartProps) {
+  const { colors } = useTheme();
   const maxValue = Math.max(...data.map((d) => d.value), 1);
   const maxIndex = data.findIndex((d) => d.value === maxValue && d.value > 0);
 
@@ -59,10 +61,10 @@ export default function TrendsChart({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>{title}</Text>
-        <Text style={styles.unit}>{unit}</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{title}</Text>
+        <Text style={[styles.unit, { color: colors.textMuted }]}>{unit}</Text>
       </View>
 
       <View style={styles.barsRow}>
@@ -98,7 +100,7 @@ export default function TrendsChart({
                 ]}
               />
 
-              <Text style={[styles.barLabel, isMax && styles.barLabelActive]}>
+              <Text style={[styles.barLabel, { color: colors.textMuted }, isMax && styles.barLabelActive]}>
                 {point.label}
               </Text>
             </View>
@@ -111,7 +113,6 @@ export default function TrendsChart({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     paddingTop: Spacing.md,
@@ -123,12 +124,10 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
   },
   unit: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -152,7 +151,6 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   barLabel: {
-    color: Colors.textMuted,
     fontSize: 9,
     marginTop: 4,
     textAlign: 'center',

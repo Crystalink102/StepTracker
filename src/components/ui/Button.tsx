@@ -7,6 +7,8 @@ import {
   TextStyle,
 } from 'react-native';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
+import type { ThemeColors } from '@/src/constants/theme';
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost';
 
@@ -20,12 +22,14 @@ type ButtonProps = {
   textStyle?: TextStyle;
 };
 
-const variantStyles: Record<ButtonVariant, { bg: string; text: string }> = {
-  primary: { bg: Colors.primary, text: Colors.white },
-  secondary: { bg: Colors.secondary, text: Colors.white },
-  danger: { bg: Colors.danger, text: Colors.white },
-  ghost: { bg: Colors.transparent, text: Colors.primary },
-};
+function getVariantStyles(themeColors: ThemeColors): Record<ButtonVariant, { bg: string; text: string }> {
+  return {
+    primary: { bg: themeColors.primary, text: themeColors.white },
+    secondary: { bg: themeColors.secondary, text: themeColors.white },
+    danger: { bg: themeColors.danger, text: themeColors.white },
+    ghost: { bg: themeColors.transparent, text: themeColors.primary },
+  };
+}
 
 export default function Button({
   title,
@@ -36,14 +40,16 @@ export default function Button({
   style,
   textStyle,
 }: ButtonProps) {
-  const colors = variantStyles[variant];
+  const { colors: themeColors } = useTheme();
+  const variantStyles = getVariantStyles(themeColors);
+  const variantColor = variantStyles[variant];
 
   return (
     <TouchableOpacity
       style={[
         styles.button,
-        { backgroundColor: colors.bg },
-        variant === 'ghost' && styles.ghostBorder,
+        { backgroundColor: variantColor.bg },
+        variant === 'ghost' && { borderWidth: 1.5, borderColor: themeColors.primary },
         (disabled || isLoading) && styles.disabled,
         style,
       ]}
@@ -55,9 +61,9 @@ export default function Button({
       accessibilityState={{ disabled: disabled || isLoading, busy: isLoading }}
     >
       {isLoading ? (
-        <ActivityIndicator color={colors.text} />
+        <ActivityIndicator color={variantColor.text} />
       ) : (
-        <Text style={[styles.text, { color: colors.text }, textStyle]}>
+        <Text style={[styles.text, { color: variantColor.text }, textStyle]}>
           {title}
         </Text>
       )}
@@ -75,10 +81,6 @@ const styles = StyleSheet.create({
   text: {
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
-  },
-  ghostBorder: {
-    borderWidth: 1.5,
-    borderColor: Colors.primary,
   },
   disabled: {
     opacity: 0.5,

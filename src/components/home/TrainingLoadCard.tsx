@@ -24,6 +24,7 @@ import {
   type FreshnessResult,
 } from '@/src/utils/training-load';
 import { Activity } from '@/src/types/database';
+import { useTheme } from '@/src/context/ThemeContext';
 
 const DEFAULT_MAX_HR = 190;
 const DEFAULT_RESTING_HR = 65;
@@ -31,6 +32,7 @@ const DEFAULT_RESTING_HR = 65;
 export default function TrainingLoadCard() {
   const { user } = useAuth();
   const { profile } = useProfile();
+  const { colors } = useTheme();
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -172,8 +174,8 @@ export default function TrainingLoadCard() {
     return (
       <Card style={styles.card}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color={Colors.textMuted} />
-          <Text style={styles.loadingText}>Loading training data...</Text>
+          <ActivityIndicator size="small" color={colors.textMuted} />
+          <Text style={[styles.loadingText, { color: colors.textMuted }]}>Loading training data...</Text>
         </View>
       </Card>
     );
@@ -182,12 +184,12 @@ export default function TrainingLoadCard() {
   return (
     <Card style={styles.card}>
       {/* Header */}
-      <Text style={styles.title}>TRAINING LOAD</Text>
+      <Text style={[styles.title, { color: colors.textMuted }]}>TRAINING LOAD</Text>
 
       {/* Weekly load row */}
       <View style={styles.mainRow}>
         <View style={styles.loadValueContainer}>
-          <Text style={styles.loadValue}>{weeklyLoad}</Text>
+          <Text style={[styles.loadValue, { color: colors.textPrimary }]}>{weeklyLoad}</Text>
           <View style={[styles.loadBadge, { backgroundColor: loadLabel.color + '22' }]}>
             <View style={[styles.loadDot, { backgroundColor: loadLabel.color }]} />
             <Text style={[styles.loadBadgeText, { color: loadLabel.color }]}>
@@ -201,7 +203,7 @@ export default function TrainingLoadCard() {
           <Text style={[styles.trendArrow, { color: loadStatus.color }]}>
             {trendArrow.symbol}
           </Text>
-          <Text style={styles.trendLabel}>vs last week</Text>
+          <Text style={[styles.trendLabel, { color: colors.textMuted }]}>vs last week</Text>
         </View>
       </View>
 
@@ -211,13 +213,13 @@ export default function TrainingLoadCard() {
       </Text>
 
       {/* Divider */}
-      <View style={styles.divider} />
+      <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
       {/* Bottom row: Recovery + Freshness */}
       <View style={styles.bottomRow}>
         {/* Recovery */}
         <View style={styles.bottomItem}>
-          <Text style={styles.bottomLabel}>RECOVERY</Text>
+          <Text style={[styles.bottomLabel, { color: colors.textMuted }]}>RECOVERY</Text>
           <Text
             style={[
               styles.bottomValue,
@@ -230,7 +232,7 @@ export default function TrainingLoadCard() {
 
         {/* Freshness */}
         <View style={[styles.bottomItem, styles.bottomItemRight]}>
-          <Text style={styles.bottomLabel}>FRESHNESS</Text>
+          <Text style={[styles.bottomLabel, { color: colors.textMuted }]}>FRESHNESS</Text>
           <Text
             style={[
               styles.bottomValue,
@@ -250,7 +252,7 @@ export default function TrainingLoadCard() {
       </View>
 
       {/* Freshness advice */}
-      <Text style={styles.adviceText}>{freshness.label}</Text>
+      <Text style={[styles.adviceText, { color: colors.textSecondary }]}>{freshness.label}</Text>
     </Card>
   );
 }
@@ -268,11 +270,9 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
   },
   loadingText: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
   },
   title: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
     letterSpacing: 1,
@@ -290,7 +290,6 @@ const styles = StyleSheet.create({
     gap: Spacing.md,
   },
   loadValue: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxxl,
     fontWeight: FontWeight.bold,
   },
@@ -319,7 +318,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   trendLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
   },
   statusMessage: {
@@ -329,7 +327,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: Colors.border,
     marginBottom: Spacing.md,
   },
   bottomRow: {
@@ -343,7 +340,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   bottomLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
     letterSpacing: 0.5,
@@ -354,7 +350,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.semibold,
   },
   adviceText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.xs,
     fontStyle: 'italic',
     marginTop: Spacing.xs,

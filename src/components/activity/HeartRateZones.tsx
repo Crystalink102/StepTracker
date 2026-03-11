@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import {
   getZone,
   getZoneName,
@@ -16,17 +17,18 @@ type Props = {
 };
 
 export default function HeartRateZones({ avgHeartRate, maxHR }: Props) {
+  const { colors } = useTheme();
   const currentZone = getZone(avgHeartRate, maxHR);
   const zones = getZoneRanges(maxHR);
   const currentColor = getZoneColor(currentZone);
   const percent = Math.round((avgHeartRate / maxHR) * 100);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
       {/* Header */}
       <View style={styles.header}>
         <Ionicons name="heart" size={18} color={currentColor} />
-        <Text style={styles.title}>Heart Rate Zone</Text>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>Heart Rate Zone</Text>
       </View>
 
       {/* Current zone badge */}
@@ -36,8 +38,8 @@ export default function HeartRateZones({ avgHeartRate, maxHR }: Props) {
             Zone {currentZone}
           </Text>
         </View>
-        <Text style={styles.zoneNameText}>{getZoneName(currentZone)}</Text>
-        <Text style={styles.hrValueText}>
+        <Text style={[styles.zoneNameText, { color: colors.textPrimary }]}>{getZoneName(currentZone)}</Text>
+        <Text style={[styles.hrValueText, { color: colors.textSecondary }]}>
           {avgHeartRate} bpm ({percent}%)
         </Text>
       </View>
@@ -45,23 +47,23 @@ export default function HeartRateZones({ avgHeartRate, maxHR }: Props) {
       {/* Zone bar chart */}
       <View style={styles.barsContainer}>
         {zones.map((z) => (
-          <ZoneBar key={z.zone} zone={z} isActive={z.zone === currentZone} />
+          <ZoneBar key={z.zone} zone={z} isActive={z.zone === currentZone} colors={colors} />
         ))}
       </View>
 
       {/* Description */}
-      <Text style={styles.description}>{getZoneDescription(currentZone)}</Text>
+      <Text style={[styles.description, { color: colors.textSecondary }]}>{getZoneDescription(currentZone)}</Text>
     </View>
   );
 }
 
-function ZoneBar({ zone, isActive }: { zone: ZoneInfo; isActive: boolean }) {
+function ZoneBar({ zone, isActive, colors }: { zone: ZoneInfo; isActive: boolean; colors: any }) {
   return (
     <View style={styles.barRow}>
-      <Text style={[styles.barLabel, isActive && { color: zone.color, fontWeight: FontWeight.bold }]}>
+      <Text style={[styles.barLabel, { color: colors.textMuted }, isActive && { color: zone.color, fontWeight: FontWeight.bold }]}>
         Z{zone.zone}
       </Text>
-      <View style={styles.barTrack}>
+      <View style={[styles.barTrack, { backgroundColor: colors.surfaceLight }]}>
         <View
           style={[
             styles.barFill,
@@ -73,11 +75,11 @@ function ZoneBar({ zone, isActive }: { zone: ZoneInfo; isActive: boolean }) {
         />
         {isActive && (
           <View style={[styles.barIndicator, { left: `${(zone.minPercent + zone.maxPercent) / 2}%` }]}>
-            <View style={[styles.indicatorDot, { backgroundColor: zone.color }]} />
+            <View style={[styles.indicatorDot, { backgroundColor: zone.color, borderColor: colors.surface }]} />
           </View>
         )}
       </View>
-      <Text style={[styles.barRange, isActive && { color: Colors.textPrimary }]}>
+      <Text style={[styles.barRange, { color: colors.textMuted }, isActive && { color: colors.textPrimary }]}>
         {zone.minHR}-{zone.maxHR}
       </Text>
     </View>
@@ -86,7 +88,6 @@ function ZoneBar({ zone, isActive }: { zone: ZoneInfo; isActive: boolean }) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
   },
@@ -97,7 +98,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.lg,
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
   },
@@ -117,13 +117,11 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   zoneNameText: {
-    color: Colors.textPrimary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
     flex: 1,
   },
   hrValueText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
   },
   barsContainer: {
@@ -137,14 +135,12 @@ const styles = StyleSheet.create({
   },
   barLabel: {
     width: 22,
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.medium,
   },
   barTrack: {
     flex: 1,
     height: 12,
-    backgroundColor: Colors.surfaceLight,
     borderRadius: 6,
     overflow: 'hidden',
     position: 'relative',
@@ -163,16 +159,13 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: Colors.surface,
   },
   barRange: {
     width: 62,
     textAlign: 'right',
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
   },
   description: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     lineHeight: 18,
   },

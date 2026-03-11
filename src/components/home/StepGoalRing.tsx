@@ -4,6 +4,7 @@ import { useSteps } from '@/src/context/StepContext';
 import { useProfile } from '@/src/hooks/useProfile';
 import { formatNumber } from '@/src/utils/formatters';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import Confetti from '@/src/components/ui/Confetti';
 import { useCelebration } from '@/src/hooks/useCelebration';
 import { usePreferences } from '@/src/context/PreferencesContext';
@@ -13,6 +14,7 @@ const RING_SIZE = 180;
 const STROKE_WIDTH = 12;
 
 export default function StepGoalRing() {
+  const { colors } = useTheme();
   const { todaySteps } = useSteps();
   const { profile } = useProfile();
   const { preferences } = usePreferences();
@@ -58,7 +60,7 @@ export default function StepGoalRing() {
                 height: RING_SIZE,
                 borderRadius: RING_SIZE / 2,
                 borderWidth: STROKE_WIDTH,
-                borderColor: Colors.surfaceLight,
+                borderColor: colors.surfaceLight,
               },
             ]}
           />
@@ -85,10 +87,10 @@ export default function StepGoalRing() {
 
         {/* Center content */}
         <View style={styles.centerContent}>
-          <Text style={[styles.stepCount, isGoalHit && styles.goalHitText]}>
+          <Text style={[styles.stepCount, { color: colors.textPrimary }, isGoalHit && styles.goalHitText]}>
             {formatNumber(todaySteps)}
           </Text>
-          <Text style={styles.goalText}>/ {formatNumber(goal)}</Text>
+          <Text style={[styles.goalText, { color: colors.textMuted }]}>/ {formatNumber(goal)}</Text>
         </View>
       </View>
 
@@ -126,7 +128,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   stepCount: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxxl,
     fontWeight: FontWeight.bold,
   },
@@ -134,7 +135,6 @@ const styles = StyleSheet.create({
     color: Colors.gold,
   },
   goalText: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
     marginTop: 2,

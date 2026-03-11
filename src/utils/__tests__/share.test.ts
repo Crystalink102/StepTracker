@@ -21,6 +21,13 @@ const makeActivity = (overrides: Record<string, any> = {}) => ({
   hr_source: null,
   calories_estimate: 350,
   xp_earned: 100,
+  name: null,
+  description: null,
+  perceived_effort: null,
+  is_favorite: false,
+  privacy: 'public',
+  activity_subtype: null,
+  gear_id: null,
   created_at: '2025-06-01T10:30:00Z',
   ...overrides,
 });

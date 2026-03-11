@@ -1,39 +1,42 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 import { getZoneRanges, type ZoneInfo } from '@/src/utils/hr-zones';
+import type { ThemeColors } from '@/src/constants/theme';
 
 type Props = {
   maxHR: number;
 };
 
 export default function HRZonesReference({ maxHR }: Props) {
+  const { colors } = useTheme();
   const zones = getZoneRanges(maxHR);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { borderBottomColor: colors.surfaceLight }]}>
         <View style={styles.headerLeft}>
           <Ionicons name="heart-circle-outline" size={20} color={Colors.primary} />
-          <Text style={styles.title}>Heart Rate Zones</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Heart Rate Zones</Text>
         </View>
-        <Text style={styles.maxHRLabel}>Max HR: {maxHR} bpm</Text>
+        <Text style={[styles.maxHRLabel, { color: colors.textMuted }]}>Max HR: {maxHR} bpm</Text>
       </View>
 
       {/* Zone rows */}
       <View style={styles.zonesContainer}>
         {zones.map((z) => (
-          <ZoneRow key={z.zone} zone={z} />
+          <ZoneRow key={z.zone} zone={z} colors={colors} />
         ))}
       </View>
     </View>
   );
 }
 
-function ZoneRow({ zone }: { zone: ZoneInfo }) {
+function ZoneRow({ zone, colors }: { zone: ZoneInfo; colors: ThemeColors }) {
   return (
-    <View style={styles.zoneRow}>
+    <View style={[styles.zoneRow, { borderBottomColor: colors.surfaceLight }]}>
       {/* Color indicator + zone number */}
       <View style={[styles.zoneIndicator, { backgroundColor: zone.color }]}>
         <Text style={styles.zoneNumber}>{zone.zone}</Text>
@@ -41,8 +44,8 @@ function ZoneRow({ zone }: { zone: ZoneInfo }) {
 
       {/* Name + description */}
       <View style={styles.zoneInfo}>
-        <Text style={styles.zoneName}>{zone.name}</Text>
-        <Text style={styles.zoneDesc} numberOfLines={2}>
+        <Text style={[styles.zoneName, { color: colors.textPrimary }]}>{zone.name}</Text>
+        <Text style={[styles.zoneDesc, { color: colors.textMuted }]} numberOfLines={2}>
           {zone.description}
         </Text>
       </View>
@@ -52,7 +55,7 @@ function ZoneRow({ zone }: { zone: ZoneInfo }) {
         <Text style={[styles.zoneHR, { color: zone.color }]}>
           {zone.minHR}-{zone.maxHR}
         </Text>
-        <Text style={styles.zonePercent}>
+        <Text style={[styles.zonePercent, { color: colors.textMuted }]}>
           {zone.minPercent}-{zone.maxPercent}%
         </Text>
       </View>
@@ -62,7 +65,6 @@ function ZoneRow({ zone }: { zone: ZoneInfo }) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     overflow: 'hidden',
   },
@@ -72,7 +74,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: Spacing.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.surfaceLight,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -80,12 +81,10 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
   },
   maxHRLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
   },
   zonesContainer: {
@@ -98,7 +97,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     gap: Spacing.md,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.surfaceLight,
   },
   zoneIndicator: {
     width: 32,
@@ -116,13 +114,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   zoneName: {
-    color: Colors.textPrimary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
     marginBottom: 2,
   },
   zoneDesc: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     lineHeight: 15,
   },
@@ -134,7 +130,6 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   zonePercent: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: 2,
   },

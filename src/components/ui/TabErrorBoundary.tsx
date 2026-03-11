@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import Button from './Button';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
+import type { ThemeColors } from '@/src/constants/theme';
 
 /**
  * Error boundary for individual tabs / route screens.
@@ -31,11 +33,15 @@ type TabErrorBoundaryState = {
   error: Error | null;
 };
 
-export class TabErrorBoundary extends React.Component<
-  TabErrorBoundaryProps,
+type InnerErrorBoundaryProps = TabErrorBoundaryProps & {
+  themeColors: ThemeColors;
+};
+
+class InnerTabErrorBoundary extends React.Component<
+  InnerErrorBoundaryProps,
   TabErrorBoundaryState
 > {
-  constructor(props: TabErrorBoundaryProps) {
+  constructor(props: InnerErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null };
   }
@@ -56,13 +62,14 @@ export class TabErrorBoundary extends React.Component<
     if (this.state.hasError) {
       const message = this.state.error?.message ?? 'An unexpected error occurred';
       const truncated = message.length > 200 ? message.slice(0, 200) + '...' : message;
+      const { themeColors } = this.props;
 
       return (
-        <View style={styles.container}>
-          <Text style={styles.icon}>!</Text>
-          <Text style={styles.title}>Something went wrong</Text>
-          <Text style={styles.tabContext}>Error in {this.props.tabName}</Text>
-          <Text style={styles.message}>{truncated}</Text>
+        <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+          <Text style={[styles.icon, { color: themeColors.warning, backgroundColor: themeColors.surface }]}>!</Text>
+          <Text style={[styles.title, { color: themeColors.textPrimary }]}>Something went wrong</Text>
+          <Text style={[styles.tabContext, { color: themeColors.textMuted }]}>Error in {this.props.tabName}</Text>
+          <Text style={[styles.message, { color: themeColors.textSecondary }]}>{truncated}</Text>
           <Button
             title="Try Again"
             onPress={() => this.setState({ hasError: false, error: null })}
@@ -75,6 +82,16 @@ export class TabErrorBoundary extends React.Component<
   }
 }
 
+/** Functional wrapper that provides theme colors to the class-based error boundary */
+export function TabErrorBoundary({ children, tabName }: TabErrorBoundaryProps) {
+  const { colors } = useTheme();
+  return (
+    <InnerTabErrorBoundary tabName={tabName} themeColors={colors}>
+      {children}
+    </InnerTabErrorBoundary>
+  );
+}
+
 /**
  * Expo Router-compatible ErrorBoundary export.
  *
@@ -84,14 +101,15 @@ export class TabErrorBoundary extends React.Component<
  * Expo Router passes { error, retry } to this component automatically.
  */
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {
+  const { colors } = useTheme();
   const message = error.message ?? 'An unexpected error occurred';
   const truncated = message.length > 200 ? message.slice(0, 200) + '...' : message;
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.icon}>!</Text>
-      <Text style={styles.title}>Something went wrong</Text>
-      <Text style={styles.message}>{truncated}</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Text style={[styles.icon, { color: colors.warning, backgroundColor: colors.surface }]}>!</Text>
+      <Text style={[styles.title, { color: colors.textPrimary }]}>Something went wrong</Text>
+      <Text style={[styles.message, { color: colors.textSecondary }]}>{truncated}</Text>
       <View style={styles.actions}>
         <Button title="Try Again" onPress={retry} />
       </View>
@@ -102,7 +120,6 @@ export function ErrorBoundary({ error, retry }: { error: Error; retry: () => voi
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     padding: Spacing.xxxl,
@@ -110,8 +127,6 @@ const styles = StyleSheet.create({
   icon: {
     fontSize: 48,
     fontWeight: FontWeight.bold,
-    color: Colors.warning,
-    backgroundColor: Colors.surface,
     width: 80,
     height: 80,
     borderRadius: BorderRadius.full,
@@ -121,21 +136,18 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.md,
     textAlign: 'center',
   },
   tabContext: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
     fontWeight: FontWeight.medium,
     marginBottom: Spacing.sm,
     textAlign: 'center',
   },
   message: {
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
     textAlign: 'center',
     marginBottom: Spacing.xxxl,

@@ -85,7 +85,6 @@ export default function ChallengesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   scroll: {
     flex: 1,
@@ -99,7 +98,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xxl,
   },
   sectionTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.md,
@@ -109,13 +107,11 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.xxxl * 2,
   },
   emptyText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
     marginTop: Spacing.md,
   },
   emptySubtext: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
     marginTop: Spacing.xs,
   },

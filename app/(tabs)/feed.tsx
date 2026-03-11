@@ -183,7 +183,6 @@ function SkeletonCard() {
 
 const skeletonStyles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.surface,
     borderRadius: 14,
     padding: Spacing.lg,
     marginHorizontal: Spacing.lg,
@@ -199,7 +198,6 @@ const skeletonStyles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.surfaceLight,
   },
   headerLines: {
     gap: 6,
@@ -207,7 +205,6 @@ const skeletonStyles = StyleSheet.create({
   line: {
     height: 14,
     borderRadius: 7,
-    backgroundColor: Colors.surfaceLight,
   },
   statsRow: {
     flexDirection: 'row',
@@ -219,21 +216,18 @@ const skeletonStyles = StyleSheet.create({
     gap: Spacing.xl,
     paddingTop: Spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: Colors.border,
   },
 });
 
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   headerBar: {
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
   },
   screenTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
   },

@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type BadgeVariant = 'primary' | 'secondary' | 'accent' | 'muted';
 
@@ -9,19 +10,21 @@ type BadgeProps = {
   style?: ViewStyle;
 };
 
-const variantColors: Record<BadgeVariant, { bg: string; text: string }> = {
-  primary: { bg: Colors.primary + '20', text: Colors.primaryLight },
-  secondary: { bg: Colors.secondary + '20', text: Colors.secondaryLight },
-  accent: { bg: Colors.accent + '20', text: Colors.accentLight },
-  muted: { bg: Colors.surfaceLight, text: Colors.textSecondary },
-};
-
 export default function Badge({ label, variant = 'primary', style }: BadgeProps) {
-  const colors = variantColors[variant];
+  const { colors: themeColors } = useTheme();
+
+  const variantMap: Record<BadgeVariant, { bg: string; text: string }> = {
+    primary: { bg: Colors.primary + '20', text: Colors.primaryLight },
+    secondary: { bg: Colors.secondary + '20', text: Colors.secondaryLight },
+    accent: { bg: Colors.accent + '20', text: Colors.accentLight },
+    muted: { bg: themeColors.surfaceLight, text: themeColors.textSecondary },
+  };
+
+  const vc = variantMap[variant];
 
   return (
-    <View style={[styles.badge, { backgroundColor: colors.bg }, style]}>
-      <Text style={[styles.text, { color: colors.text }]}>{label}</Text>
+    <View style={[styles.badge, { backgroundColor: vc.bg }, style]}>
+      <Text style={[styles.text, { color: vc.text }]}>{label}</Text>
     </View>
   );
 }

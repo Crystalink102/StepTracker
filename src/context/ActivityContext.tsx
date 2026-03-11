@@ -34,6 +34,7 @@ import { isPlausibleGPSMove, smoothedPace, caloriesFromActivity } from '@/src/ut
 import { enqueue } from '@/src/services/offline-queue';
 import * as ProfileService from '@/src/services/profile.service';
 import { Activity } from '@/src/types/database';
+import { generateActivityName } from '@/src/utils/activity-name';
 
 type Waypoint = {
   latitude: number;
@@ -341,6 +342,19 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         currentActivity.type as 'run' | 'walk'
       );
 
+      // Auto-generate a default name for the activity
+      const autoName = generateActivityName(
+        currentActivity.type,
+        currentActivity.started_at
+      );
+
+      // Try to get default gear
+      let defaultGearId: string | null = null;
+      try {
+        const defaultGear = await ActivityService.getDefaultGear(userId);
+        if (defaultGear) defaultGearId = defaultGear.id;
+      } catch {}
+
       const activityUpdate = {
         status: 'completed',
         ended_at: new Date().toISOString(),
@@ -351,6 +365,8 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         hr_source: hrSource ?? null,
         calories_estimate: calories,
         xp_earned: xp,
+        name: autoName,
+        gear_id: defaultGearId,
       };
 
       let completed: Activity;
@@ -451,6 +467,13 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       } catch (err) {
         // Reset the stopping flag so user can retry
         isStoppingRef.current = false;
+        // Restart GPS tracking — we stopped it at the top of try but the save failed,
+        // so the activity is still in progress and needs location data.
+        try {
+          await startBackgroundLocation();
+        } catch {
+          console.warn('[Activity] Failed to restart GPS after stop failure');
+        }
         throw err;
       }
     },

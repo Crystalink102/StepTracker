@@ -2,6 +2,7 @@ import { useRef, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, Platform, Animated, Easing } from 'react-native';
 import { Colors, BorderRadius, Spacing, FontSize, FontWeight } from '@/src/constants/theme';
 import { usePreferences } from '@/src/context/PreferencesContext';
+import { useTheme } from '@/src/context/ThemeContext';
 import { formatDistance as fmtDist, formatPace as fmtPace, paceUnitLabel } from '@/src/utils/formatters';
 
 // react-native-maps doesn't support web
@@ -108,32 +109,33 @@ function PulsingDot() {
 function WebFallback({ waypoints, distanceMeters, currentPaceSecPerKm }: Omit<LiveRouteMapProps, 'isActive'>) {
   const lastCoord = waypoints.length > 0 ? waypoints[waypoints.length - 1] : null;
   const { preferences } = usePreferences();
+  const { colors } = useTheme();
   const unit = preferences.distanceUnit;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <View style={styles.webFallback}>
-        <Text style={styles.webFallbackTitle}>Live Route</Text>
-        <Text style={styles.webFallbackSubtitle}>Map not available on web</Text>
+        <Text style={[styles.webFallbackTitle, { color: colors.textPrimary }]}>Live Route</Text>
+        <Text style={[styles.webFallbackSubtitle, { color: colors.textMuted }]}>Map not available on web</Text>
 
         <View style={styles.webStatsRow}>
           <View style={styles.webStat}>
-            <Text style={styles.webStatValue}>{fmtDist(distanceMeters, unit)}</Text>
-            <Text style={styles.webStatLabel}>Distance</Text>
+            <Text style={[styles.webStatValue, { color: colors.textPrimary }]}>{fmtDist(distanceMeters, unit)}</Text>
+            <Text style={[styles.webStatLabel, { color: colors.textSecondary }]}>Distance</Text>
           </View>
-          <View style={styles.webStatDivider} />
+          <View style={[styles.webStatDivider, { backgroundColor: colors.border }]} />
           <View style={styles.webStat}>
-            <Text style={styles.webStatValue}>{safePace(currentPaceSecPerKm, unit)}</Text>
-            <Text style={styles.webStatLabel}>Pace {paceUnitLabel(unit)}</Text>
+            <Text style={[styles.webStatValue, { color: colors.textPrimary }]}>{safePace(currentPaceSecPerKm, unit)}</Text>
+            <Text style={[styles.webStatLabel, { color: colors.textSecondary }]}>Pace {paceUnitLabel(unit)}</Text>
           </View>
         </View>
 
         {lastCoord && (
-          <Text style={styles.webCoordText}>
+          <Text style={[styles.webCoordText, { color: colors.textSecondary }]}>
             {lastCoord.latitude.toFixed(5)}, {lastCoord.longitude.toFixed(5)}
           </Text>
         )}
-        <Text style={styles.webWaypointCount}>{waypoints.length} waypoints recorded</Text>
+        <Text style={[styles.webWaypointCount, { color: colors.textMuted }]}>{waypoints.length} waypoints recorded</Text>
       </View>
     </View>
   );
@@ -146,6 +148,7 @@ export default function LiveRouteMap({
   currentPaceSecPerKm,
 }: LiveRouteMapProps) {
   const { preferences } = usePreferences();
+  const { colors } = useTheme();
   const unit = preferences.distanceUnit;
   const mapRef = useRef<any>(null);
   const lastAnimateRef = useRef(0);
@@ -192,7 +195,7 @@ export default function LiveRouteMap({
   const startPos = waypoints.length > 0 ? waypoints[0] : null;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <MapView
         ref={mapRef}
         style={styles.map}
@@ -263,13 +266,13 @@ export default function LiveRouteMap({
       {/* Distance & pace overlay */}
       <View style={styles.overlay}>
         <View style={styles.overlayStat}>
-          <Text style={styles.overlayValue}>{fmtDist(distanceMeters, unit)}</Text>
-          <Text style={styles.overlayLabel}>dist</Text>
+          <Text style={[styles.overlayValue, { color: colors.textPrimary }]}>{fmtDist(distanceMeters, unit)}</Text>
+          <Text style={[styles.overlayLabel, { color: colors.textMuted }]}>dist</Text>
         </View>
-        <View style={styles.overlayDivider} />
+        <View style={[styles.overlayDivider, { backgroundColor: colors.border }]} />
         <View style={styles.overlayStat}>
-          <Text style={styles.overlayValue}>{safePace(currentPaceSecPerKm, unit)}</Text>
-          <Text style={styles.overlayLabel}>{paceUnitLabel(unit)}</Text>
+          <Text style={[styles.overlayValue, { color: colors.textPrimary }]}>{safePace(currentPaceSecPerKm, unit)}</Text>
+          <Text style={[styles.overlayLabel, { color: colors.textMuted }]}>{paceUnitLabel(unit)}</Text>
         </View>
       </View>
     </View>
@@ -283,7 +286,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
     borderRadius: BorderRadius.lg,
     overflow: 'hidden',
-    backgroundColor: Colors.surface,
   },
   map: {
     width: '100%',
@@ -347,19 +349,16 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   overlayValue: {
-    color: Colors.textPrimary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
   },
   overlayLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.medium,
   },
   overlayDivider: {
     width: 1,
     height: 14,
-    backgroundColor: Colors.border,
     marginHorizontal: Spacing.sm,
   },
 
@@ -371,13 +370,11 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
   },
   webFallbackTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
     marginBottom: Spacing.xs,
   },
   webFallbackSubtitle: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     marginBottom: Spacing.lg,
   },
@@ -391,28 +388,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
   },
   webStatValue: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
   },
   webStatLabel: {
-    color: Colors.textSecondary,
     fontSize: FontSize.xs,
     marginTop: 2,
   },
   webStatDivider: {
     width: 1,
     height: 24,
-    backgroundColor: Colors.border,
   },
   webCoordText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.xs,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     marginTop: Spacing.sm,
   },
   webWaypointCount: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: Spacing.xs,
   },

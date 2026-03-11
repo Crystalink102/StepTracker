@@ -256,14 +256,12 @@ export default function CreateChallengeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   content: {
     padding: Spacing.lg,
     paddingBottom: 60,
   },
   label: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
     textTransform: 'uppercase',
@@ -271,13 +269,10 @@ const styles = StyleSheet.create({
     marginTop: Spacing.lg,
   },
   input: {
-    backgroundColor: Colors.surface,
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   multilineInput: {
     minHeight: 80,
@@ -292,19 +287,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: Colors.surface,
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm + 2,
     borderRadius: BorderRadius.sm,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   chipActive: {
     backgroundColor: Colors.primary,
     borderColor: Colors.primary,
   },
   chipText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.medium,
   },
@@ -312,11 +304,9 @@ const styles = StyleSheet.create({
     color: Colors.white,
   },
   previewCard: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
     borderStyle: 'dashed',
   },
   previewHeader: {
@@ -329,7 +319,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: Colors.surfaceLight,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 3,
     borderRadius: BorderRadius.sm,
@@ -341,23 +330,19 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   previewDays: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
   },
   previewTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
     marginBottom: 2,
   },
   previewTarget: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     marginBottom: Spacing.xs,
   },
   previewDesc: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
   },
   createBtn: {

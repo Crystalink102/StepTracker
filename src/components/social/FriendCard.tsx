@@ -1,6 +1,7 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Avatar, Badge } from '@/src/components/ui';
 import { formatNumber } from '@/src/utils/formatters';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 type FriendCardProps = {
@@ -20,14 +21,16 @@ export default function FriendCard({
   todaySteps,
   streak,
 }: FriendCardProps) {
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <Avatar uri={avatarUrl} name={displayName || username} size={48} />
       <View style={styles.info}>
-        <Text style={styles.name}>{displayName || username}</Text>
+        <Text style={[styles.name, { color: colors.textPrimary }]}>{displayName || username}</Text>
         <View style={styles.statsRow}>
-          <Text style={styles.stat}>{formatNumber(todaySteps)} steps</Text>
-          {streak > 0 && <Text style={styles.stat}>{streak}d streak</Text>}
+          <Text style={[styles.stat, { color: colors.textMuted }]}>{formatNumber(todaySteps)} steps</Text>
+          {streak > 0 && <Text style={[styles.stat, { color: colors.textMuted }]}>{streak}d streak</Text>}
         </View>
       </View>
       <Badge label={`Lv ${level}`} variant="primary" />
@@ -39,7 +42,6 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     marginBottom: Spacing.sm,
@@ -49,7 +51,6 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.md,
   },
   name: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
   },
@@ -59,7 +60,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   stat: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
   },
 });

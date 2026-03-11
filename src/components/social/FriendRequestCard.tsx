@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Avatar, Button } from '@/src/components/ui';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 type FriendRequestCardProps = {
@@ -19,12 +20,14 @@ export default function FriendRequestCard({
   onDecline,
   isProcessing = false,
 }: FriendRequestCardProps) {
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <Avatar uri={avatarUrl} name={displayName || username} size={48} />
       <View style={styles.info}>
-        <Text style={styles.name}>{displayName || username}</Text>
-        <Text style={styles.username}>@{username}</Text>
+        <Text style={[styles.name, { color: colors.textPrimary }]}>{displayName || username}</Text>
+        <Text style={[styles.username, { color: colors.textMuted }]}>@{username}</Text>
       </View>
       <View style={styles.actions}>
         <Button title="Accept" onPress={onAccept} variant="primary" style={styles.btn} disabled={isProcessing} isLoading={isProcessing} />
@@ -38,7 +41,6 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
     marginBottom: Spacing.sm,
@@ -48,12 +50,10 @@ const styles = StyleSheet.create({
     marginLeft: Spacing.md,
   },
   name: {
-    color: Colors.textPrimary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
   },
   username: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     marginTop: 2,
   },

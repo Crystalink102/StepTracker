@@ -1,18 +1,20 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { Card, ProgressBar, Badge } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import { formatNumber } from '@/src/utils/formatters';
 import { useXP } from '@/src/hooks/useXP';
 
 export default function XPCard() {
+  const { colors } = useTheme();
   const { level, totalXP, progress, xpRemaining, xpNeeded } = useXP();
 
   return (
     <Card style={styles.card} accessible accessibilityLabel={`Level ${level}, ${formatNumber(totalXP)} XP total, ${formatNumber(xpRemaining)} XP to next level`}>
       <View style={styles.header}>
         <View style={styles.levelContainer}>
-          <Text style={styles.levelLabel}>LEVEL</Text>
-          <Text style={styles.levelNumber}>{level}</Text>
+          <Text style={[styles.levelLabel, { color: colors.textMuted }]}>LEVEL</Text>
+          <Text style={[styles.levelNumber, { color: colors.textPrimary }]}>{level}</Text>
         </View>
         <Badge label={`${formatNumber(totalXP)} XP`} variant="secondary" />
       </View>
@@ -25,10 +27,10 @@ export default function XPCard() {
       />
 
       <View style={styles.footer}>
-        <Text style={styles.footerText}>
+        <Text style={[styles.footerText, { color: colors.textMuted }]}>
           {formatNumber(xpRemaining)} XP to Level {level + 1}
         </Text>
-        <Text style={styles.footerText}>
+        <Text style={[styles.footerText, { color: colors.textMuted }]}>
           {formatNumber(xpNeeded)} XP needed
         </Text>
       </View>
@@ -53,13 +55,11 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   levelLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
     letterSpacing: 1,
   },
   levelNumber: {
-    color: Colors.textPrimary,
     fontSize: FontSize.display,
     fontWeight: FontWeight.bold,
   },
@@ -71,7 +71,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   footerText: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
   },
 });

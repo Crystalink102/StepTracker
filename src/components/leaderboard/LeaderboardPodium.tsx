@@ -2,6 +2,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Avatar } from '@/src/components/ui';
 import { formatNumber } from '@/src/utils/formatters';
 import { LeaderboardEntry } from '@/src/types/database';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 type LeaderboardPodiumProps = {
@@ -18,9 +19,11 @@ function PodiumSpot({
   entry: LeaderboardEntry | undefined;
   rank: number;
 }) {
+  const { colors } = useTheme();
+
   if (!entry) return <View style={styles.spotEmpty} />;
 
-  const color = PODIUM_COLORS[rank - 1] ?? Colors.textMuted;
+  const color = PODIUM_COLORS[rank - 1] ?? colors.textMuted;
   const height = PODIUM_HEIGHTS[rank - 1] ?? 80;
 
   return (
@@ -30,7 +33,7 @@ function PodiumSpot({
         name={entry.display_name || entry.username}
         size={rank === 1 ? 56 : 44}
       />
-      <Text style={styles.spotName} numberOfLines={1}>
+      <Text style={[styles.spotName, { color: colors.textPrimary }]} numberOfLines={1}>
         {entry.display_name || entry.username}
       </Text>
       <Text style={[styles.spotValue, { color }]}>
@@ -81,7 +84,6 @@ const styles = StyleSheet.create({
     maxWidth: 120,
   },
   spotName: {
-    color: Colors.textPrimary,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
     marginTop: Spacing.xs,

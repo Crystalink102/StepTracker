@@ -1,6 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Avatar, Badge } from '@/src/components/ui';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 import { Profile } from '@/src/types/database';
 
@@ -18,6 +19,7 @@ function formatMemberSince(dateStr: string): string {
 
 export default function ProfileHeader({ profile, level }: ProfileHeaderProps) {
   const router = useRouter();
+  const { colors } = useTheme();
 
   return (
     <View style={styles.container}>
@@ -29,29 +31,29 @@ export default function ProfileHeader({ profile, level }: ProfileHeaderProps) {
         />
 
         <View style={styles.info}>
-          <Text style={styles.name}>
+          <Text style={[styles.name, { color: colors.textPrimary }]}>
             {profile?.display_name || profile?.username || 'New Runner'}
           </Text>
           {profile?.username && (
-            <Text style={styles.username}>@{profile.username}</Text>
+            <Text style={[styles.username, { color: colors.textSecondary }]}>@{profile.username}</Text>
           )}
           <Badge label={`Level ${level}`} variant="secondary" style={styles.badge} />
         </View>
 
         <TouchableOpacity
-          style={styles.editButton}
+          style={[styles.editButton, { borderColor: colors.border }]}
           onPress={() => router.push('/settings/edit-profile')}
         >
-          <Text style={styles.editText}>Edit</Text>
+          <Text style={[styles.editText, { color: colors.textSecondary }]}>Edit</Text>
         </TouchableOpacity>
       </View>
 
       {profile?.bio ? (
-        <Text style={styles.bio}>{profile.bio}</Text>
+        <Text style={[styles.bio, { color: colors.textSecondary }]}>{profile.bio}</Text>
       ) : null}
 
       {profile?.created_at ? (
-        <Text style={styles.memberSince}>
+        <Text style={[styles.memberSince, { color: colors.textMuted }]}>
           {formatMemberSince(profile.created_at)}
         </Text>
       ) : null}
@@ -72,12 +74,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   name: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
   },
   username: {
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
     marginTop: 2,
   },
@@ -85,13 +85,11 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
   bio: {
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
     marginTop: Spacing.md,
     lineHeight: 20,
   },
   memberSince: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     marginTop: Spacing.xs,
   },
@@ -100,10 +98,8 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.sm,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   editText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
   },

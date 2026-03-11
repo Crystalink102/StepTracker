@@ -310,15 +310,15 @@ export default function ChallengeDetailScreen() {
       {/* Leave button (if not creator) */}
       {myParticipation && !isCreator && (
         <TouchableOpacity
-          style={styles.leaveBtn}
+          style={[styles.leaveBtn, { borderColor: colors.danger }]}
           onPress={handleLeave}
           disabled={isLeaving}
           activeOpacity={0.7}
         >
           {isLeaving ? (
-            <ActivityIndicator color={Colors.danger} size="small" />
+            <ActivityIndicator color={colors.danger} size="small" />
           ) : (
-            <Text style={styles.leaveBtnText}>Leave Challenge</Text>
+            <Text style={[styles.leaveBtnText, { color: colors.danger }]}>Leave Challenge</Text>
           )}
         </TouchableOpacity>
       )}
@@ -329,7 +329,6 @@ export default function ChallengeDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   center: {
     alignItems: 'center',
@@ -340,13 +339,11 @@ const styles = StyleSheet.create({
     paddingBottom: 60,
   },
   errorText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.lg,
     marginTop: Spacing.md,
   },
   // ─── Info Card ──────
   infoCard: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     marginBottom: Spacing.md,
@@ -361,7 +358,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: Colors.surfaceLight,
     paddingHorizontal: Spacing.sm,
     paddingVertical: 4,
     borderRadius: BorderRadius.sm,
@@ -383,18 +379,15 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   statusText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
   },
   challengeTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.xs,
   },
   description: {
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
     marginBottom: Spacing.md,
     lineHeight: 20,
@@ -405,19 +398,16 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   targetText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.medium,
   },
   // ─── My Progress ──────
   myProgressCard: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     marginBottom: Spacing.md,
   },
   sectionTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.md,
@@ -428,18 +418,15 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   myProgressValue: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxxl,
     fontWeight: FontWeight.bold,
   },
   myProgressOf: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
     marginLeft: Spacing.xs,
   },
   bigProgressBar: {
     height: 12,
-    backgroundColor: Colors.surfaceLight,
     borderRadius: 6,
     overflow: 'hidden',
     marginBottom: Spacing.sm,
@@ -449,7 +436,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   myProgressPct: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
   },
@@ -466,7 +452,6 @@ const styles = StyleSheet.create({
   },
   // ─── Leaderboard ──────
   leaderboardSection: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     marginBottom: Spacing.md,
@@ -476,17 +461,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceLight,
     gap: Spacing.md,
   },
   leaderRowMe: {
-    backgroundColor: Colors.surfaceLight,
     marginHorizontal: -Spacing.md,
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.sm,
   },
   rank: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
     width: 30,
@@ -501,7 +483,6 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   leaderName: {
-    color: Colors.textPrimary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
   },
@@ -510,7 +491,6 @@ const styles = StyleSheet.create({
   },
   leaderProgressBar: {
     height: 6,
-    backgroundColor: Colors.background,
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -519,14 +499,12 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   leaderValue: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
     minWidth: 50,
     textAlign: 'right',
   },
   emptyLeaderboard: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
     textAlign: 'center',
     paddingVertical: Spacing.lg,
@@ -534,14 +512,12 @@ const styles = StyleSheet.create({
   // ─── Leave ──────
   leaveBtn: {
     borderWidth: 1,
-    borderColor: Colors.danger,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     alignItems: 'center',
     marginTop: Spacing.sm,
   },
   leaveBtnText: {
-    color: Colors.danger,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
   },

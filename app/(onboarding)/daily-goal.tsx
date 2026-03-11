@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
 import { useProfile } from '@/src/hooks/useProfile';
 import { Button, Input } from '@/src/components/ui';
+import { useTheme } from '@/src/context/ThemeContext';
 import * as ProfileService from '@/src/services/profile.service';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
@@ -17,6 +18,7 @@ const PRESETS = [
 
 export default function DailyGoalScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { user } = useAuth();
   const { refresh: refreshProfile } = useProfile();
   const [selected, setSelected] = useState(10000);
@@ -65,12 +67,12 @@ export default function DailyGoalScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <View style={styles.container}>
         <View style={styles.top}>
           <Text style={styles.step}>Step 3 of 3</Text>
-          <Text style={styles.title}>Daily Step Goal</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Daily Step Goal</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Pick a target that feels right. You can always change it later in settings.
           </Text>
 
@@ -80,7 +82,8 @@ export default function DailyGoalScreen() {
                 key={p.value}
                 style={[
                   styles.preset,
-                  !showCustom && selected === p.value && styles.presetActive,
+                  { backgroundColor: colors.surface, borderColor: colors.surface },
+                  !showCustom && selected === p.value && [styles.presetActive, { backgroundColor: colors.surfaceLight }],
                 ]}
                 onPress={() => {
                   setSelected(p.value);
@@ -90,12 +93,13 @@ export default function DailyGoalScreen() {
                 <Text
                   style={[
                     styles.presetText,
+                    { color: colors.textPrimary },
                     !showCustom && selected === p.value && styles.presetTextActive,
                   ]}
                 >
                   {p.label}
                 </Text>
-                <Text style={styles.presetLabel}>steps</Text>
+                <Text style={[styles.presetLabel, { color: colors.textMuted }]}>steps</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -122,7 +126,7 @@ export default function DailyGoalScreen() {
 
         <View style={styles.bottom}>
           {saveError ? (
-            <Text style={styles.errorText}>{saveError}</Text>
+            <Text style={[styles.errorText, { color: colors.danger }]}>{saveError}</Text>
           ) : null}
           <Button
             title="Let's Go!"
@@ -138,7 +142,6 @@ export default function DailyGoalScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   container: {
     flex: 1,
@@ -155,13 +158,11 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxxl,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.sm,
   },
   subtitle: {
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
     lineHeight: 20,
     marginBottom: Spacing.xxxl,
@@ -175,19 +176,15 @@ const styles = StyleSheet.create({
   preset: {
     flex: 1,
     minWidth: '40%',
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: Colors.surface,
   },
   presetActive: {
     borderColor: Colors.primary,
-    backgroundColor: Colors.surfaceLight,
   },
   presetText: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.bold,
   },
@@ -195,7 +192,6 @@ const styles = StyleSheet.create({
     color: Colors.primary,
   },
   presetLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: 2,
   },
@@ -214,7 +210,6 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   errorText: {
-    color: '#ef4444',
     fontSize: FontSize.sm,
     textAlign: 'center',
   },

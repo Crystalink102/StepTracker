@@ -62,20 +62,17 @@ const styles = StyleSheet.create({
     padding: Spacing.xxl,
   },
   dialog: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.xxl,
     width: '100%',
     maxWidth: 340,
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.sm,
   },
   message: {
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
     lineHeight: 20,
     marginBottom: Spacing.xxl,

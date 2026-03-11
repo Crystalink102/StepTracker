@@ -1,8 +1,10 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LeaderboardMetric, LeaderboardPeriod, LeaderboardScope } from '@/src/hooks/useLeaderboard';
 import { usePreferences } from '@/src/context/PreferencesContext';
+import { useTheme } from '@/src/context/ThemeContext';
 import { playButtonPress } from '@/src/utils/sounds';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import type { ThemeColors } from '@/src/constants/theme';
 
 type LeaderboardFiltersProps = {
   metric: LeaderboardMetric;
@@ -36,11 +38,13 @@ function PillRow<T extends string>({
   selected,
   onSelect,
   onTap,
+  colors,
 }: {
   items: { label: string; value: T }[];
   selected: T;
   onSelect: (v: T) => void;
   onTap?: () => void;
+  colors: ThemeColors;
 }) {
   return (
     <View style={styles.row}>
@@ -49,13 +53,13 @@ function PillRow<T extends string>({
         return (
           <TouchableOpacity
             key={item.value}
-            style={[styles.pill, active && styles.activePill]}
+            style={[styles.pill, { backgroundColor: colors.surface }, active && styles.activePill]}
             onPress={() => {
               onTap?.();
               onSelect(item.value);
             }}
           >
-            <Text style={[styles.pillText, active && styles.activePillText]}>
+            <Text style={[styles.pillText, { color: colors.textMuted }, active && styles.activePillText]}>
               {item.label}
             </Text>
           </TouchableOpacity>
@@ -74,14 +78,15 @@ export default function LeaderboardFilters({
   onScopeChange,
 }: LeaderboardFiltersProps) {
   const { preferences } = usePreferences();
+  const { colors } = useTheme();
   const handleTap = () => playButtonPress(preferences.hapticFeedback);
 
   return (
     <View style={styles.container}>
-      <PillRow items={SCOPES} selected={scope} onSelect={onScopeChange} onTap={handleTap} />
-      <PillRow items={METRICS} selected={metric} onSelect={onMetricChange} onTap={handleTap} />
+      <PillRow items={SCOPES} selected={scope} onSelect={onScopeChange} onTap={handleTap} colors={colors} />
+      <PillRow items={METRICS} selected={metric} onSelect={onMetricChange} onTap={handleTap} colors={colors} />
       {metric !== 'streak' && (
-        <PillRow items={PERIODS} selected={period} onSelect={onPeriodChange} onTap={handleTap} />
+        <PillRow items={PERIODS} selected={period} onSelect={onPeriodChange} onTap={handleTap} colors={colors} />
       )}
     </View>
   );
@@ -101,14 +106,12 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.full,
-    backgroundColor: Colors.surface,
     alignItems: 'center',
   },
   activePill: {
     backgroundColor: Colors.primary,
   },
   pillText: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.semibold,
   },

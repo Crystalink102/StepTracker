@@ -3,6 +3,7 @@ import { Card } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 import { formatDuration, formatDistance, formatPace, paceUnitLabel, speedUnitLabel } from '@/src/utils/formatters';
 import { usePreferences } from '@/src/context/PreferencesContext';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type ActiveRunCardProps = {
   type: string;
@@ -22,6 +23,7 @@ export default function ActiveRunCard({
   isPaused,
 }: ActiveRunCardProps) {
   const { preferences } = usePreferences();
+  const { colors } = useTheme();
   const unit = preferences.distanceUnit;
   const speedDisplay = unit === 'mi' ? currentSpeed * 0.621371 : unit === 'm' ? currentSpeed / 3.6 : currentSpeed;
 
@@ -32,28 +34,28 @@ export default function ActiveRunCard({
         {isPaused && <Text style={styles.paused}>PAUSED</Text>}
       </View>
 
-      <Text style={styles.timer}>{formatDuration(elapsedSeconds)}</Text>
+      <Text style={[styles.timer, { color: colors.textPrimary }]}>{formatDuration(elapsedSeconds)}</Text>
 
       <View style={styles.stats}>
         <View style={styles.stat}>
-          <Text style={styles.statValue}>{formatDistance(distanceMeters, unit)}</Text>
-          <Text style={styles.statLabel}>Distance</Text>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>{formatDistance(distanceMeters, unit)}</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Distance</Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
         <View style={styles.stat}>
-          <Text style={styles.statValue}>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>
             {currentPaceSecPerKm > 0
               ? `${formatPace(currentPaceSecPerKm, unit)} ${paceUnitLabel(unit)}`
               : '--:--'}
           </Text>
-          <Text style={styles.statLabel}>Pace</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Pace</Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
         <View style={styles.stat}>
-          <Text style={styles.statValue}>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>
             {currentSpeed > 0 ? `${speedDisplay.toFixed(1)}` : '0.0'}
           </Text>
-          <Text style={styles.statLabel}>{speedUnitLabel(unit)}</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{speedUnitLabel(unit)}</Text>
         </View>
       </View>
     </Card>
@@ -84,7 +86,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   timer: {
-    color: Colors.textPrimary,
     fontSize: 48,
     fontWeight: FontWeight.bold,
     textAlign: 'center',
@@ -100,12 +101,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statValue: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
   },
   statLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: 4,
     textTransform: 'uppercase',
@@ -113,6 +112,5 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: 35,
-    backgroundColor: Colors.border,
   },
 });

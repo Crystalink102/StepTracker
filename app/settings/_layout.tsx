@@ -31,6 +31,8 @@ export default function SettingsLayout() {
       <Stack.Screen name="account" options={{ title: 'Account' }} />
       <Stack.Screen name="notifications" options={{ title: 'Notifications' }} />
       <Stack.Screen name="preferences" options={{ title: 'Preferences' }} />
+      <Stack.Screen name="gear" options={{ title: 'Gear' }} />
+      <Stack.Screen name="training-paces" options={{ title: 'Training Paces' }} />
       <Stack.Screen name="about" options={{ title: 'About' }} />
       <Stack.Screen name="privacy-policy" options={{ title: 'Privacy Policy' }} />
       <Stack.Screen name="terms" options={{ title: 'Terms of Service' }} />

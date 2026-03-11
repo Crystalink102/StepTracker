@@ -12,6 +12,7 @@ import { AchievementDefinition } from '@/src/types/database';
 import { CATEGORY_CONFIG } from '@/src/constants/achievements';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 import { usePreferences } from '@/src/context/PreferencesContext';
+import { useTheme } from '@/src/context/ThemeContext';
 import { playAchievement } from '@/src/utils/sounds';
 
 type AchievementPopupProps = {
@@ -41,6 +42,7 @@ function getIconEmoji(iconName: string): string {
 export default function AchievementPopup({ achievement, onDismiss }: AchievementPopupProps) {
   const scale = useSharedValue(0);
   const { preferences } = usePreferences();
+  const { colors } = useTheme();
 
   useEffect(() => {
     if (achievement) {
@@ -70,9 +72,9 @@ export default function AchievementPopup({ achievement, onDismiss }: Achievement
             <Text style={styles.icon}>{getIconEmoji(achievement.icon_name)}</Text>
           </View>
 
-          <Text style={styles.unlocked}>Achievement Unlocked!</Text>
-          <Text style={styles.title}>{achievement.title}</Text>
-          <Text style={styles.description}>{achievement.description}</Text>
+          <Text style={[styles.unlocked, { color: colors.textMuted }]}>Achievement Unlocked!</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>{achievement.title}</Text>
+          <Text style={[styles.description, { color: colors.textSecondary }]}>{achievement.description}</Text>
 
           {achievement.xp_reward > 0 && (
             <Text style={styles.xpReward}>+{achievement.xp_reward} XP</Text>
@@ -115,7 +117,6 @@ const styles = StyleSheet.create({
     fontSize: 48,
   },
   unlocked: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
     fontWeight: FontWeight.medium,
     textTransform: 'uppercase',
@@ -123,13 +124,11 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxxl,
     fontWeight: FontWeight.bold,
     textAlign: 'center',
   },
   description: {
-    color: Colors.textSecondary,
     fontSize: FontSize.lg,
     textAlign: 'center',
     marginTop: Spacing.sm,

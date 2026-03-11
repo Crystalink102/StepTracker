@@ -1,6 +1,8 @@
 import { View, Text, StyleSheet } from 'react-native';
 import { formatNumber } from '@/src/utils/formatters';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import type { ThemeColors } from '@/src/constants/theme';
 
 type StatsSummaryProps = {
   average: number;
@@ -8,24 +10,27 @@ type StatsSummaryProps = {
   total: number;
 };
 
-function StatItem({ label, value }: { label: string; value: string }) {
+function StatItem({ label, value, colors }: { label: string; value: string; colors: ThemeColors }) {
   return (
-    <View style={styles.stat}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
+    <View style={[styles.stat, { backgroundColor: colors.surface }]}>
+      <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: colors.textMuted }]}>{label}</Text>
     </View>
   );
 }
 
 export default function StatsSummary({ average, bestDay, total }: StatsSummaryProps) {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.container}>
-      <StatItem label="Average" value={formatNumber(average)} />
+      <StatItem label="Average" value={formatNumber(average)} colors={colors} />
       <StatItem
         label={`Best (${bestDay.label})`}
         value={formatNumber(bestDay.steps)}
+        colors={colors}
       />
-      <StatItem label="Total" value={formatNumber(total)} />
+      <StatItem label="Total" value={formatNumber(total)} colors={colors} />
     </View>
   );
 }
@@ -39,18 +44,15 @@ const styles = StyleSheet.create({
   },
   stat: {
     flex: 1,
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     alignItems: 'center',
   },
   statValue: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
   },
   statLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.medium,
     marginTop: 2,

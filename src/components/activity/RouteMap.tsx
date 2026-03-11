@@ -1,5 +1,6 @@
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import { haversineDistance } from '@/src/utils/geo';
 import { usePreferences, type DistanceUnit } from '@/src/context/PreferencesContext';
 
@@ -70,10 +71,6 @@ const DARK_MAP_STYLE = [
   },
 ];
 
-/**
- * Calculate km split positions along a route.
- * Returns array of { coord, km } for each full kilometer.
- */
 /**
  * Calculate distance split positions along a route.
  * When unit is 'mi', splits at each mile (1609.34m) instead of each km.
@@ -161,6 +158,7 @@ export default function RouteMap({
   borderRadius = BorderRadius.lg,
 }: RouteMapProps) {
   const { preferences } = usePreferences();
+  const { colors } = useTheme();
   const unit = preferences.distanceUnit;
 
   // Filter out any invalid/corrupt coordinates
@@ -176,7 +174,7 @@ export default function RouteMap({
   const finish = validCoords[validCoords.length - 1];
 
   return (
-    <View style={[styles.container, { height, borderRadius }]}>
+    <View style={[styles.container, { height, borderRadius, backgroundColor: colors.surface }]}>
       <MapView
         style={styles.map}
         initialRegion={region}
@@ -219,8 +217,8 @@ export default function RouteMap({
             anchor={{ x: 0.5, y: 0.5 }}
             tracksViewChanges={false}
           >
-            <View style={styles.kmMarker}>
-              <Text style={styles.kmText}>{split.label}</Text>
+            <View style={[styles.kmMarker, { backgroundColor: colors.surface }]}>
+              <Text style={[styles.kmText, { color: colors.textPrimary }]}>{split.label}</Text>
             </View>
           </Marker>
         ))}
@@ -275,7 +273,6 @@ export function RouteMapMini({ coordinates }: { coordinates: Coord[] }) {
 const styles = StyleSheet.create({
   container: {
     overflow: 'hidden',
-    backgroundColor: Colors.surface,
   },
   map: {
     width: '100%',
@@ -310,7 +307,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#EF4444',
   },
   kmMarker: {
-    backgroundColor: Colors.surface,
     borderRadius: 10,
     width: 20,
     height: 20,
@@ -320,7 +316,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
   },
   kmText: {
-    color: Colors.textPrimary,
     fontSize: 9,
     fontWeight: FontWeight.bold,
   },

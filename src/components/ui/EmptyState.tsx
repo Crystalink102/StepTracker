@@ -46,14 +46,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.xxxl,
   },
   title: {
-    color: Colors.textSecondary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.semibold,
     marginTop: Spacing.lg,
     textAlign: 'center',
   },
   subtitle: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
     marginTop: Spacing.sm,
     textAlign: 'center',

@@ -5,6 +5,7 @@ import { ActivityWaypoint } from '@/src/types/database';
 import { haversineDistance } from '@/src/utils/geo';
 import { formatPace, formatDuration, paceUnitLabel } from '@/src/utils/formatters';
 import type { DistanceUnit } from '@/src/context/PreferencesContext';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 type SplitData = {
@@ -109,6 +110,7 @@ type SplitTimesProps = {
 };
 
 export default function SplitTimes({ waypoints, distanceUnit }: SplitTimesProps) {
+  const { colors } = useTheme();
   const unit: DistanceUnit = distanceUnit === 'm' ? 'km' : distanceUnit;
 
   const splits = useMemo(
@@ -142,19 +144,19 @@ export default function SplitTimes({ waypoints, distanceUnit }: SplitTimesProps)
   const getPaceColor = (index: number): string => {
     if (index === fastestIdx) return '#22C55E'; // green
     if (index === slowestIdx) return '#EF4444'; // red
-    return Colors.textPrimary;
+    return colors.textPrimary;
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Split Times</Text>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
+      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Split Times</Text>
 
       {/* Header */}
-      <View style={styles.headerRow}>
-        <Text style={[styles.headerText, styles.colNumber]}>#</Text>
-        <Text style={[styles.headerText, styles.colDistance]}>Split</Text>
-        <Text style={[styles.headerText, styles.colTime]}>Time</Text>
-        <Text style={[styles.headerText, styles.colPace]}>Pace</Text>
+      <View style={[styles.headerRow, { borderBottomColor: colors.surfaceLight }]}>
+        <Text style={[styles.headerText, { color: colors.textMuted }, styles.colNumber]}>#</Text>
+        <Text style={[styles.headerText, { color: colors.textMuted }, styles.colDistance]}>Split</Text>
+        <Text style={[styles.headerText, { color: colors.textMuted }, styles.colTime]}>Time</Text>
+        <Text style={[styles.headerText, { color: colors.textMuted }, styles.colPace]}>Pace</Text>
       </View>
 
       {/* Rows */}
@@ -167,6 +169,7 @@ export default function SplitTimes({ waypoints, distanceUnit }: SplitTimesProps)
             key={split.number}
             style={[
               styles.row,
+              { borderBottomColor: colors.surfaceLight },
               index === splits.length - 1 && styles.lastRow,
             ]}
           >
@@ -174,6 +177,7 @@ export default function SplitTimes({ waypoints, distanceUnit }: SplitTimesProps)
               <View
                 style={[
                   styles.numberBadge,
+                  { backgroundColor: colors.surfaceLight },
                   index === fastestIdx && styles.fastestBadge,
                   index === slowestIdx && styles.slowestBadge,
                 ]}
@@ -181,6 +185,7 @@ export default function SplitTimes({ waypoints, distanceUnit }: SplitTimesProps)
                 <Text
                   style={[
                     styles.numberText,
+                    { color: colors.textSecondary },
                     index === fastestIdx && styles.fastestNumberText,
                     index === slowestIdx && styles.slowestNumberText,
                   ]}
@@ -193,15 +198,16 @@ export default function SplitTimes({ waypoints, distanceUnit }: SplitTimesProps)
             <Text
               style={[
                 styles.cellText,
+                { color: colors.textPrimary },
                 styles.colDistance,
-                isPartial && styles.mutedText,
+                isPartial && { color: colors.textMuted },
               ]}
             >
               {split.distanceLabel}
               {isPartial ? ' *' : ''}
             </Text>
 
-            <Text style={[styles.cellText, styles.colTime]}>
+            <Text style={[styles.cellText, { color: colors.textPrimary }, styles.colTime]}>
               {formatDuration(split.timeSeconds)}
             </Text>
 
@@ -227,17 +233,17 @@ export default function SplitTimes({ waypoints, distanceUnit }: SplitTimesProps)
         {fastestIdx >= 0 && (
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: '#22C55E' }]} />
-            <Text style={styles.legendText}>Fastest</Text>
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>Fastest</Text>
           </View>
         )}
         {slowestIdx >= 0 && (
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: '#EF4444' }]} />
-            <Text style={styles.legendText}>Slowest</Text>
+            <Text style={[styles.legendText, { color: colors.textMuted }]}>Slowest</Text>
           </View>
         )}
         {splits.some((s) => s.distanceLabel.includes('.')) && (
-          <Text style={styles.partialNote}>* partial split</Text>
+          <Text style={[styles.partialNote, { color: colors.textMuted }]}>* partial split</Text>
         )}
       </View>
     </View>
@@ -246,12 +252,10 @@ export default function SplitTimes({ waypoints, distanceUnit }: SplitTimesProps)
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
   },
   sectionTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.lg,
@@ -261,11 +265,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: Spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceLight,
     marginBottom: Spacing.xs,
   },
   headerText: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.semibold,
     textTransform: 'uppercase',
@@ -276,13 +278,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.surfaceLight,
   },
   lastRow: {
     borderBottomWidth: 0,
   },
   cellText: {
-    color: Colors.textPrimary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.medium,
   },
@@ -305,7 +305,6 @@ const styles = StyleSheet.create({
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: Colors.surfaceLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -316,7 +315,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(239, 68, 68, 0.2)',
   },
   numberText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
   },
@@ -325,9 +323,6 @@ const styles = StyleSheet.create({
   },
   slowestNumberText: {
     color: '#EF4444',
-  },
-  mutedText: {
-    color: Colors.textMuted,
   },
   paceUnit: {
     fontSize: FontSize.xs,
@@ -350,11 +345,9 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   legendText: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
   },
   partialNote: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     fontStyle: 'italic',
   },

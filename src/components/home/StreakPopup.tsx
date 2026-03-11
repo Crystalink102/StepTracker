@@ -11,6 +11,7 @@ import FlameIcon from './FlameIcon';
 import Button from '@/src/components/ui/Button';
 import Confetti from '@/src/components/ui/Confetti';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { playAchievement } from '@/src/utils/sounds';
 
@@ -75,6 +76,7 @@ function ConfettiParticle({ piece }: { piece: ConfettiPiece }) {
 }
 
 export default function StreakPopup({ visible, streak, onDismiss }: StreakPopupProps) {
+  const { colors } = useTheme();
   const flameScale = useSharedValue(0);
   const { preferences } = usePreferences();
 
@@ -123,8 +125,8 @@ export default function StreakPopup({ visible, streak, onDismiss }: StreakPopupP
             <FlameIcon size={120} streak={streak} />
           </Animated.View>
 
-          <Text style={styles.streakNumber}>{streak}</Text>
-          <Text style={styles.streakLabel}>day streak!</Text>
+          <Text style={[styles.streakNumber, { color: colors.textPrimary }]}>{streak}</Text>
+          <Text style={[styles.streakLabel, { color: colors.textSecondary }]}>day streak!</Text>
         </View>
 
         {/* Bottom button */}
@@ -152,13 +154,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   streakNumber: {
-    color: Colors.textPrimary,
     fontSize: 72,
     fontWeight: FontWeight.bold,
     marginTop: Spacing.xl,
   },
   streakLabel: {
-    color: Colors.textSecondary,
     fontSize: FontSize.xxl,
     fontWeight: FontWeight.medium,
     marginTop: Spacing.xs,

@@ -11,10 +11,12 @@ import {
 import { useRouter } from 'expo-router';
 import { resetPasswordForEmail } from '@/src/services/auth.service';
 import { Input, Button, ConfirmModal } from '@/src/components/ui';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [alertModal, setAlertModal] = useState({ visible: false, title: '', message: '' });
@@ -45,7 +47,7 @@ export default function ForgotPasswordScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
@@ -54,8 +56,8 @@ export default function ForgotPasswordScreen() {
       >
         <View style={styles.header}>
           <Text style={styles.appName}>5tepTracker</Text>
-          <Text style={styles.title}>Reset Password</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Reset Password</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             Enter your email and we'll send you a link to reset your password
           </Text>
         </View>
@@ -99,7 +101,6 @@ export default function ForgotPasswordScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -118,12 +119,10 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.display,
     fontWeight: FontWeight.bold,
   },
   subtitle: {
-    color: Colors.textSecondary,
     fontSize: FontSize.lg,
     marginTop: Spacing.sm,
     lineHeight: 24,

@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   RefreshControl,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -23,7 +24,8 @@ import * as ActivityService from '@/src/services/activity.service';
 import * as PBService from '@/src/services/personal-best.service';
 import { Activity, PersonalBest } from '@/src/types/database';
 import { EmptyState } from '@/src/components/ui';
-import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
 export default function HistoryScreen() {
@@ -35,8 +37,13 @@ export default function HistoryScreen() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [personalBests, setPersonalBests] = useState<PersonalBest[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
   const [routes, setRoutes] = useState<Record<string, { latitude: number; longitude: number }[]>>({});
+
+  const filteredActivities = showFavoritesOnly
+    ? activities.filter((a) => a.is_favorite)
+    : activities;
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -73,7 +80,7 @@ export default function HistoryScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
       <FlatList
-        data={activities}
+        data={filteredActivities}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={
           <>
@@ -101,7 +108,21 @@ export default function HistoryScreen() {
               </View>
             )}
 
-            <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>RECENT ACTIVITIES</Text>
+            <View style={styles.activitiesHeader}>
+              <Text style={[styles.sectionTitle, { color: colors.textMuted, marginBottom: 0 }]}>
+                {showFavoritesOnly ? 'FAVORITES' : 'RECENT ACTIVITIES'}
+              </Text>
+              <TouchableOpacity
+                onPress={() => setShowFavoritesOnly(!showFavoritesOnly)}
+                style={[styles.filterButton, showFavoritesOnly && { backgroundColor: Colors.primary }]}
+              >
+                <Ionicons
+                  name={showFavoritesOnly ? 'star' : 'star-outline'}
+                  size={14}
+                  color={showFavoritesOnly ? '#FFF' : colors.textMuted}
+                />
+              </TouchableOpacity>
+            </View>
           </>
         }
         renderItem={({ item }) => (
@@ -135,13 +156,11 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   listContent: {
     paddingBottom: Spacing.xxxl,
   },
   screenTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxxl,
     fontWeight: FontWeight.bold,
     paddingHorizontal: Spacing.lg,
@@ -155,7 +174,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xl,
   },
   sectionTitle: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
     letterSpacing: 1,
@@ -165,5 +183,19 @@ const styles = StyleSheet.create({
   pbList: {
     paddingHorizontal: Spacing.lg,
     gap: Spacing.md,
+  },
+  activitiesHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  filterButton: {
+    width: 32,
+    height: 32,
+    borderRadius: BorderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

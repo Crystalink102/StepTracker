@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Card } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import { formatNumber, distanceUnitShort } from '@/src/utils/formatters';
 import { useSteps } from '@/src/context/StepContext';
 import { useProfile } from '@/src/hooks/useProfile';
@@ -16,6 +17,7 @@ const ANIMATION_DURATION = 500; // ms
 const ANIMATION_FRAMES = 20;
 
 export default function StepCounter() {
+  const { colors } = useTheme();
   const { todaySteps, isTracking } = useSteps();
   const { profile } = useProfile();
   const { preferences } = usePreferences();
@@ -70,28 +72,28 @@ export default function StepCounter() {
   return (
     <Card style={styles.card} accessible accessibilityLabel={`Today's steps: ${formatNumber(todaySteps)}. Distance: ${unit === 'm' ? Math.round(displayDist) : displayDist.toFixed(2)} ${distanceUnitShort(unit)}. Calories: ${cal}. Active minutes: ${min}.`}>
       <View style={styles.header}>
-        <Text style={styles.label}>TODAY'S STEPS</Text>
+        <Text style={[styles.label, { color: colors.textMuted }]}>TODAY'S STEPS</Text>
         <View
-          style={[styles.dot, { backgroundColor: isTracking ? Colors.secondary : Colors.textMuted }]}
+          style={[styles.dot, { backgroundColor: isTracking ? Colors.secondary : colors.textMuted }]}
         />
       </View>
 
-      <Text style={styles.steps}>{formatNumber(displayedSteps)}</Text>
+      <Text style={[styles.steps, { color: colors.textPrimary }]}>{formatNumber(displayedSteps)}</Text>
 
       <View style={styles.stats}>
         <View style={styles.stat}>
-          <Text style={styles.statValue}>{unit === 'm' ? Math.round(displayDist).toLocaleString() : displayDist.toFixed(2)}</Text>
-          <Text style={styles.statLabel}>{distanceUnitShort(unit)}</Text>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>{unit === 'm' ? Math.round(displayDist).toLocaleString() : displayDist.toFixed(2)}</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>{distanceUnitShort(unit)}</Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
         <View style={styles.stat}>
-          <Text style={styles.statValue}>{cal}</Text>
-          <Text style={styles.statLabel}>cal</Text>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>{cal}</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>cal</Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
         <View style={styles.stat}>
-          <Text style={styles.statValue}>{min}</Text>
-          <Text style={styles.statLabel}>min</Text>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>{min}</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>min</Text>
         </View>
       </View>
     </Card>
@@ -111,7 +113,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   label: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.bold,
     letterSpacing: 1,
@@ -122,7 +123,6 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   steps: {
-    color: Colors.textPrimary,
     fontSize: 52,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.lg,
@@ -136,12 +136,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   statValue: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.semibold,
   },
   statLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: 2,
     textTransform: 'uppercase',
@@ -149,6 +147,5 @@ const styles = StyleSheet.create({
   divider: {
     width: 1,
     height: 30,
-    backgroundColor: Colors.border,
   },
 });

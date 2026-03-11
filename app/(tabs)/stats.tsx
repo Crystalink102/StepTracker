@@ -469,7 +469,6 @@ function BreakdownRow({ label, value }: { label: string; value: string }) {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   centered: {
     alignItems: 'center',
@@ -483,7 +482,6 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
   screenTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxxl,
     fontWeight: FontWeight.bold,
     marginTop: Spacing.lg,
@@ -493,7 +491,6 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.xxl,
   },
   sectionTitle: {
-    color: Colors.textSecondary,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.bold,
     textTransform: 'uppercase',
@@ -509,19 +506,16 @@ const styles = StyleSheet.create({
   },
   overviewCard: {
     width: '31%',
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.md,
     alignItems: 'center',
     gap: 4,
   },
   overviewValue: {
-    color: Colors.textPrimary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
   },
   overviewLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     textAlign: 'center',
   },
@@ -533,19 +527,16 @@ const styles = StyleSheet.create({
   },
   paceCard: {
     flex: 1,
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     alignItems: 'center',
     gap: Spacing.sm,
   },
   paceValue: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
   },
   paceLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -553,7 +544,6 @@ const styles = StyleSheet.create({
 
   // Personal Bests
   pbContainer: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     overflow: 'hidden',
   },
@@ -564,7 +554,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.surfaceLight,
   },
   pbLeft: {
     flexDirection: 'row',
@@ -575,7 +564,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: Colors.surfaceLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -583,15 +571,11 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.gold + '20',
   },
   pbDistance: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
   },
-  pbDistanceMuted: {
-    color: Colors.textSecondary,
-  },
+  pbDistanceMuted: {},
   pbDistanceMeters: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: 1,
   },
@@ -604,18 +588,15 @@ const styles = StyleSheet.create({
     fontWeight: FontWeight.bold,
   },
   pbPace: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: 2,
   },
   pbNone: {
-    color: Colors.textMuted,
     fontSize: FontSize.lg,
   },
 
   // Breakdown
   breakdownContainer: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     overflow: 'hidden',
   },
@@ -626,14 +607,11 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     paddingHorizontal: Spacing.lg,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.surfaceLight,
   },
   breakdownLabel: {
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
   },
   breakdownValue: {
-    color: Colors.textPrimary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
   },

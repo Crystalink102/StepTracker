@@ -13,10 +13,12 @@ import {
 import { Link, useRouter } from 'expo-router';
 import { useAuth } from '@/src/context/AuthContext';
 import { ConfirmModal } from '@/src/components/ui';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 export default function SignUpScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { signUpEmail, signUpPhone } = useAuth();
 
   const [method, setMethod] = useState<'email' | 'phone'>('email');
@@ -75,7 +77,7 @@ export default function SignUpScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView
@@ -84,12 +86,12 @@ export default function SignUpScreen() {
       >
         <View style={styles.header}>
           <Text style={styles.appName}>5tepTracker</Text>
-          <Text style={styles.title}>Create Account</Text>
-          <Text style={styles.subtitle}>Start earning XP for every step</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Create Account</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Start earning XP for every step</Text>
         </View>
 
         {/* Method Toggle */}
-        <View style={styles.toggle}>
+        <View style={[styles.toggle, { backgroundColor: colors.surface }]}>
           <TouchableOpacity
             style={[styles.toggleBtn, method === 'email' && styles.toggleBtnActive]}
             onPress={() => setMethod('email')}
@@ -97,6 +99,7 @@ export default function SignUpScreen() {
             <Text
               style={[
                 styles.toggleText,
+                { color: colors.textMuted },
                 method === 'email' && styles.toggleTextActive,
               ]}
             >
@@ -110,6 +113,7 @@ export default function SignUpScreen() {
             <Text
               style={[
                 styles.toggleText,
+                { color: colors.textMuted },
                 method === 'phone' && styles.toggleTextActive,
               ]}
             >
@@ -121,13 +125,13 @@ export default function SignUpScreen() {
         <View style={styles.form}>
           {method === 'email' ? (
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Email</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border }]}
                 value={email}
                 onChangeText={setEmail}
                 placeholder="email@example.com"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={colors.textMuted}
                 autoCapitalize="none"
                 autoCorrect={false}
                 keyboardType="email-address"
@@ -135,51 +139,51 @@ export default function SignUpScreen() {
             </View>
           ) : (
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Phone Number</Text>
+              <Text style={[styles.label, { color: colors.textSecondary }]}>Phone Number</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border }]}
                 value={phone}
                 onChangeText={setPhone}
                 placeholder="+1 234 567 8900"
-                placeholderTextColor={Colors.textMuted}
+                placeholderTextColor={colors.textMuted}
                 keyboardType="phone-pad"
               />
             </View>
           )}
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Username <Text style={styles.optionalLabel}>(optional)</Text></Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Username <Text style={[styles.optionalLabel, { color: colors.textMuted }]}>(optional)</Text></Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border }]}
               value={username}
               onChangeText={(t) => setUsername(t.replace(/[^a-zA-Z0-9_]/g, ''))}
               placeholder="e.g. calvinruns"
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={colors.textMuted}
               autoCapitalize="none"
               autoCorrect={false}
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Password</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border }]}
               value={password}
               onChangeText={setPassword}
               placeholder="Min. 8 characters"
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={colors.textMuted}
               secureTextEntry
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Confirm Password</Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>Confirm Password</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border }]}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               placeholder="Re-enter password"
-              placeholderTextColor={Colors.textMuted}
+              placeholderTextColor={colors.textMuted}
               secureTextEntry
             />
           </View>
@@ -198,7 +202,7 @@ export default function SignUpScreen() {
         </View>
 
         <View style={styles.footer}>
-          <Text style={styles.footerText}>Already have an account? </Text>
+          <Text style={[styles.footerText, { color: colors.textSecondary }]}>Already have an account? </Text>
           <Link href="/(auth)/login" asChild>
             <TouchableOpacity>
               <Text style={styles.linkText}>Log In</Text>
@@ -220,7 +224,6 @@ export default function SignUpScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -239,18 +242,15 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.display,
     fontWeight: FontWeight.bold,
   },
   subtitle: {
-    color: Colors.textSecondary,
     fontSize: FontSize.lg,
     marginTop: Spacing.sm,
   },
   toggle: {
     flexDirection: 'row',
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.xs,
     marginBottom: Spacing.xl,
@@ -265,7 +265,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   toggleText: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
   },
@@ -279,26 +278,21 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   label: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     fontWeight: FontWeight.medium,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   optionalLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.regular,
     textTransform: 'lowercase',
   },
   input: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.md,
     padding: Spacing.lg,
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     borderWidth: 1,
-    borderColor: Colors.border,
   },
   button: {
     backgroundColor: Colors.primary,
@@ -321,7 +315,6 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xxxl,
   },
   footerText: {
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
   },
   linkText: {

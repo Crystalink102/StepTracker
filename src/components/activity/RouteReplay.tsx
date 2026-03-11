@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Platform, TouchableOpacity } from 'react-native
 import { Ionicons } from '@expo/vector-icons';
 import { ActivityWaypoint } from '@/src/types/database';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 // react-native-maps doesn't support web
 let MapView: any = null;
@@ -59,6 +60,7 @@ export default function RouteReplay({
   isReplaying,
   onReplayEnd,
 }: RouteReplayProps) {
+  const { colors } = useTheme();
   const [currentIndex, setCurrentIndex] = useState(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mapRef = useRef<any>(null);
@@ -139,17 +141,17 @@ export default function RouteReplay({
     if (!isReplaying) return null;
 
     return (
-      <View style={styles.webContainer}>
-        <Text style={styles.webTitle}>Route Replay</Text>
-        <View style={styles.webProgressTrack}>
+      <View style={[styles.webContainer, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.webTitle, { color: colors.textPrimary }]}>Route Replay</Text>
+        <View style={[styles.webProgressTrack, { backgroundColor: colors.surfaceLight }]}>
           <View
             style={[styles.webProgressFill, { width: `${progress * 100}%` }]}
           />
         </View>
-        <Text style={styles.webProgressText}>
+        <Text style={[styles.webProgressText, { color: colors.textPrimary }]}>
           {Math.round(progress * 100)}% complete
         </Text>
-        <Text style={styles.webPointText}>
+        <Text style={[styles.webPointText, { color: colors.textMuted }]}>
           Point {currentIndex + 1} of {totalPoints}
         </Text>
       </View>
@@ -159,7 +161,7 @@ export default function RouteReplay({
   if (!isReplaying) return null;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
       <MapView
         ref={mapRef}
         style={styles.map}
@@ -245,7 +247,6 @@ const styles = StyleSheet.create({
     height: MAP_HEIGHT,
     borderRadius: BorderRadius.lg,
     overflow: 'hidden',
-    backgroundColor: Colors.surface,
   },
   map: {
     width: '100%',
@@ -303,21 +304,18 @@ const styles = StyleSheet.create({
 
   // Web fallback styles
   webContainer: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.xxl,
     alignItems: 'center',
     gap: Spacing.md,
   },
   webTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
   },
   webProgressTrack: {
     width: '100%',
     height: 8,
-    backgroundColor: Colors.surfaceLight,
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -327,12 +325,10 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   webProgressText: {
-    color: Colors.textPrimary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
   },
   webPointText: {
-    color: Colors.textMuted,
     fontSize: FontSize.sm,
   },
 });

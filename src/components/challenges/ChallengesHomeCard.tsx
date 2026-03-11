@@ -4,10 +4,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useChallenges } from '@/src/hooks/useChallenges';
 import Card from '@/src/components/ui/Card';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 export default function ChallengesHomeCard() {
   const router = useRouter();
   const { activeChallenges, availableChallenges } = useChallenges();
+  const { colors } = useTheme();
 
   const activeCount = activeChallenges.length;
   const availableCount = availableChallenges.length;
@@ -20,18 +22,18 @@ export default function ChallengesHomeCard() {
     >
       <Card style={styles.card}>
         <View style={styles.row}>
-          <View style={styles.iconContainer}>
+          <View style={[styles.iconContainer, { backgroundColor: colors.surfaceLight }]}>
             <Ionicons name="flag" size={22} color={Colors.primary} />
           </View>
           <View style={styles.textContainer}>
-            <Text style={styles.title}>Challenges</Text>
-            <Text style={styles.subtitle}>
+            <Text style={[styles.title, { color: colors.textPrimary }]}>Challenges</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
               {hasAnything
                 ? `${activeCount} active${availableCount > 0 ? ` · ${availableCount} to join` : ''}`
                 : 'Create or join a challenge'}
             </Text>
           </View>
-          <Ionicons name="chevron-forward" size={20} color={Colors.textMuted} />
+          <Ionicons name="chevron-forward" size={20} color={colors.textMuted} />
         </View>
 
         {/* Mini progress bars for top 2 active challenges */}
@@ -44,10 +46,10 @@ export default function ChallengesHomeCard() {
               );
               return (
                 <View key={c.id} style={styles.miniRow}>
-                  <Text style={styles.miniTitle} numberOfLines={1}>
+                  <Text style={[styles.miniTitle, { color: colors.textSecondary }]} numberOfLines={1}>
                     {c.title}
                   </Text>
-                  <View style={styles.miniBarOuter}>
+                  <View style={[styles.miniBarOuter, { backgroundColor: colors.surfaceLight }]}>
                     <View
                       style={[
                         styles.miniBarFill,
@@ -60,7 +62,7 @@ export default function ChallengesHomeCard() {
                       ]}
                     />
                   </View>
-                  <Text style={styles.miniPct}>{pct}%</Text>
+                  <Text style={[styles.miniPct, { color: colors.textMuted }]}>{pct}%</Text>
                 </View>
               );
             })}
@@ -85,7 +87,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: Colors.surfaceLight,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -93,12 +94,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
   },
   subtitle: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     marginTop: 1,
   },
@@ -112,14 +111,12 @@ const styles = StyleSheet.create({
     gap: Spacing.sm,
   },
   miniTitle: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     flex: 1,
   },
   miniBarOuter: {
     width: 80,
     height: 6,
-    backgroundColor: Colors.surfaceLight,
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -128,7 +125,6 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   miniPct: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.semibold,
     width: 28,

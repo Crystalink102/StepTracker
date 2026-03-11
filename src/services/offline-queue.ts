@@ -41,7 +41,7 @@ async function saveQueue(): Promise<void> {
 }
 
 export async function enqueue(op: Omit<QueuedOperation, 'id' | 'timestamp' | 'retryCount'>): Promise<void> {
-  if (queue.length === 0) await loadQueue();
+  if (!queueLoaded) await loadQueue();
 
   // Evict oldest operations if queue is full
   if (queue.length >= MAX_QUEUE_SIZE) {
@@ -59,7 +59,7 @@ export async function enqueue(op: Omit<QueuedOperation, 'id' | 'timestamp' | 're
 }
 
 export async function processQueue(): Promise<void> {
-  if (queue.length === 0) await loadQueue();
+  if (!queueLoaded) await loadQueue();
   if (queue.length === 0) return;
 
   const now = Date.now();

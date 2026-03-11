@@ -6,6 +6,7 @@ import { useAuth } from '@/src/context/AuthContext';
 import { useProfile } from '@/src/hooks/useProfile';
 import { Button, Input } from '@/src/components/ui';
 import { usePreferences } from '@/src/context/PreferencesContext';
+import { useTheme } from '@/src/context/ThemeContext';
 import * as ProfileService from '@/src/services/profile.service';
 import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 
@@ -14,6 +15,7 @@ const KG_PER_LB = 0.453592;
 
 export default function BodyMetricsScreen() {
   const router = useRouter();
+  const { colors } = useTheme();
   const { user } = useAuth();
   const { refresh: refreshProfile } = useProfile();
   const { preferences } = usePreferences();
@@ -95,12 +97,12 @@ export default function BodyMetricsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]}>
       <View style={styles.container}>
         <View style={styles.top}>
           <Text style={styles.step}>Step 2 of 3</Text>
-          <Text style={styles.title}>About You</Text>
-          <Text style={styles.subtitle}>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>About You</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
             This helps us calculate calories and stride length more accurately.
           </Text>
 
@@ -126,7 +128,7 @@ export default function BodyMetricsScreen() {
 
         <View style={styles.bottom}>
           {saveError ? (
-            <Text style={styles.errorText}>{saveError}</Text>
+            <Text style={[styles.errorText, { color: colors.danger }]}>{saveError}</Text>
           ) : null}
           <Button
             title="Continue"
@@ -147,7 +149,6 @@ export default function BodyMetricsScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   container: {
     flex: 1,
@@ -164,13 +165,11 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.sm,
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xxxl,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.sm,
   },
   subtitle: {
-    color: Colors.textSecondary,
     fontSize: FontSize.md,
     lineHeight: 20,
     marginBottom: Spacing.xxxl,
@@ -183,7 +182,6 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.lg,
   },
   errorText: {
-    color: '#ef4444',
     fontSize: FontSize.sm,
     textAlign: 'center',
   },

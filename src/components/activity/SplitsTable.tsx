@@ -4,6 +4,7 @@ import { ActivityWaypoint } from '@/src/types/database';
 import { haversineDistance } from '@/src/utils/geo';
 import { formatPace, paceUnitLabel } from '@/src/utils/formatters';
 import { usePreferences, type DistanceUnit } from '@/src/context/PreferencesContext';
+import { useTheme } from '@/src/context/ThemeContext';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 
 type Split = {
@@ -131,6 +132,7 @@ type SplitsTableProps = {
 
 export default function SplitsTable({ waypoints }: SplitsTableProps) {
   const { preferences } = usePreferences();
+  const { colors } = useTheme();
   const unit: DistanceUnit = preferences.distanceUnit === 'm' ? 'km' : preferences.distanceUnit;
   const splits = useMemo(() => calculateSplits(waypoints, unit), [waypoints, unit]);
 
@@ -152,16 +154,16 @@ export default function SplitsTable({ waypoints }: SplitsTableProps) {
   const hasElevation = splits.some((s) => s.elevationChange != null);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Splits</Text>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>
+      <Text style={[styles.sectionTitle, { color: colors.textPrimary }]}>Splits</Text>
 
       {/* Header */}
-      <View style={styles.headerRow}>
-        <Text style={[styles.headerText, styles.colSplit]}>{splitLabel}</Text>
-        <Text style={[styles.headerText, styles.colPace]}>Pace</Text>
-        <Text style={[styles.headerText, styles.colBar]} />
+      <View style={[styles.headerRow, { borderBottomColor: colors.surfaceLight }]}>
+        <Text style={[styles.headerText, { color: colors.textMuted }, styles.colSplit]}>{splitLabel}</Text>
+        <Text style={[styles.headerText, { color: colors.textMuted }, styles.colPace]}>Pace</Text>
+        <Text style={[styles.headerText, { color: colors.textMuted }, styles.colBar]} />
         {hasElevation && (
-          <Text style={[styles.headerText, styles.colElev]}>Elev</Text>
+          <Text style={[styles.headerText, { color: colors.textMuted }, styles.colElev]}>Elev</Text>
         )}
       </View>
 
@@ -176,16 +178,16 @@ export default function SplitsTable({ waypoints }: SplitsTableProps) {
         const partial = isPartial(split);
 
         return (
-          <View key={split.number} style={styles.row}>
-            <Text style={[styles.cellText, styles.colSplit, partial && styles.mutedText]}>
+          <View key={split.number} style={[styles.row, { borderBottomColor: colors.surfaceLight }]}>
+            <Text style={[styles.cellText, { color: colors.textPrimary }, styles.colSplit, partial && { color: colors.textMuted }]}>
               {split.number}{partial ? '*' : ''}
             </Text>
-            <Text style={[styles.cellText, styles.colPace, isFaster ? styles.fastPace : styles.slowPace]}>
+            <Text style={[styles.cellText, styles.colPace, isFaster ? styles.fastPace : { color: colors.textSecondary }]}>
               {formatPace(split.paceSecondsPerKm, unit)}
-              <Text style={styles.paceUnit}> {paceUnitLabel(unit)}</Text>
+              <Text style={[styles.paceUnit, { color: colors.textMuted }]}> {paceUnitLabel(unit)}</Text>
             </Text>
             <View style={styles.colBar}>
-              <View style={styles.barTrack}>
+              <View style={[styles.barTrack, { backgroundColor: colors.surfaceLight }]}>
                 <View
                   style={[
                     styles.barFill,
@@ -198,7 +200,7 @@ export default function SplitsTable({ waypoints }: SplitsTableProps) {
               </View>
             </View>
             {hasElevation && (
-              <Text style={[styles.cellText, styles.colElev, styles.mutedText]}>
+              <Text style={[styles.cellText, styles.colElev, { color: colors.textMuted }]}>
                 {split.elevationChange != null
                   ? `${split.elevationChange >= 0 ? '+' : ''}${Math.round(split.elevationChange)}m`
                   : '--'}
@@ -209,7 +211,7 @@ export default function SplitsTable({ waypoints }: SplitsTableProps) {
       })}
 
       {splits.some((s) => isPartial(s)) && (
-        <Text style={styles.partialNote}>* partial split</Text>
+        <Text style={[styles.partialNote, { color: colors.textMuted }]}>* partial split</Text>
       )}
     </View>
   );
@@ -217,12 +219,10 @@ export default function SplitsTable({ waypoints }: SplitsTableProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
   },
   sectionTitle: {
-    color: Colors.textPrimary,
     fontSize: FontSize.xl,
     fontWeight: FontWeight.bold,
     marginBottom: Spacing.lg,
@@ -232,11 +232,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: Spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceLight,
     marginBottom: Spacing.sm,
   },
   headerText: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     fontWeight: FontWeight.semibold,
     textTransform: 'uppercase',
@@ -247,10 +245,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Spacing.sm,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.surfaceLight,
   },
   cellText: {
-    color: Colors.textPrimary,
     fontSize: FontSize.md,
     fontWeight: FontWeight.medium,
   },
@@ -270,7 +266,6 @@ const styles = StyleSheet.create({
   },
   barTrack: {
     height: 6,
-    backgroundColor: Colors.surfaceLight,
     borderRadius: 3,
     overflow: 'hidden',
   },
@@ -281,18 +276,10 @@ const styles = StyleSheet.create({
   fastPace: {
     color: Colors.primary,
   },
-  slowPace: {
-    color: Colors.textSecondary,
-  },
-  mutedText: {
-    color: Colors.textMuted,
-  },
   paceUnit: {
     fontSize: FontSize.xs,
-    color: Colors.textMuted,
   },
   partialNote: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: Spacing.sm,
     fontStyle: 'italic',

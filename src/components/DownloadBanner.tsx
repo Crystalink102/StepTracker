@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 const DISMISSED_KEY = 'download_banner_dismissed';
 // Update this URL after each EAS build
 const DOWNLOAD_URL = 'https://expo.dev/artifacts/eas/hXoHuodYHmCGRBEzQthy6N.apk';
 
 export default function DownloadBanner() {
+  const { colors } = useTheme();
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -31,17 +33,17 @@ export default function DownloadBanner() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.surface, borderTopColor: colors.border }]}>
       <View style={styles.content}>
         <View style={styles.textWrap}>
-          <Text style={styles.title}>Get the App</Text>
-          <Text style={styles.subtitle}>Download 5tepTracker on Android for step tracking, GPS runs, and more.</Text>
+          <Text style={[styles.title, { color: colors.textPrimary }]}>Get the App</Text>
+          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>Download 5tepTracker on Android for step tracking, GPS runs, and more.</Text>
         </View>
         <TouchableOpacity style={styles.button} onPress={handleDownload}>
-          <Text style={styles.buttonText}>Download</Text>
+          <Text style={[styles.buttonText, { color: colors.white }]}>Download</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.close} onPress={dismiss}>
-          <Text style={styles.closeText}>✕</Text>
+          <Text style={[styles.closeText, { color: colors.textMuted }]}>{'\u2715'}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -54,9 +56,7 @@ const styles = StyleSheet.create({
     bottom: 85,
     left: 0,
     right: 0,
-    backgroundColor: Colors.surface,
     borderTopWidth: 1,
-    borderTopColor: Colors.border,
     paddingHorizontal: Spacing.lg,
     paddingVertical: Spacing.md,
     paddingBottom: Spacing.lg,
@@ -71,12 +71,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   title: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,
   },
   subtitle: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
     marginTop: 2,
   },
@@ -87,7 +85,6 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
   },
   buttonText: {
-    color: Colors.white,
     fontSize: FontSize.md,
     fontWeight: FontWeight.bold,
   },
@@ -95,7 +92,6 @@ const styles = StyleSheet.create({
     padding: Spacing.xs,
   },
   closeText: {
-    color: Colors.textMuted,
     fontSize: FontSize.lg,
   },
 });

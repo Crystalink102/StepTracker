@@ -5,6 +5,7 @@
 // And add cachePolicy="memory-disk" to the <Image /> component below.
 import { View, Image, Text, StyleSheet } from 'react-native';
 import { Colors, FontSize, FontWeight, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 
 type AvatarProps = {
   uri?: string | null;
@@ -13,6 +14,8 @@ type AvatarProps = {
 };
 
 export default function Avatar({ uri, name, size = 48 }: AvatarProps) {
+  const { colors } = useTheme();
+
   const initials = name
     ? name
         .split(' ')
@@ -28,7 +31,7 @@ export default function Avatar({ uri, name, size = 48 }: AvatarProps) {
         source={{ uri }}
         style={[
           styles.image,
-          { width: size, height: size, borderRadius: size / 2 },
+          { width: size, height: size, borderRadius: size / 2, backgroundColor: colors.surfaceLight },
         ]}
         accessibilityLabel={name ? `${name}'s avatar` : 'User avatar'}
       />
@@ -43,6 +46,7 @@ export default function Avatar({ uri, name, size = 48 }: AvatarProps) {
           width: size,
           height: size,
           borderRadius: size / 2,
+          backgroundColor: colors.primaryDark,
         },
       ]}
       accessible
@@ -51,7 +55,7 @@ export default function Avatar({ uri, name, size = 48 }: AvatarProps) {
       <Text
         style={[
           styles.initials,
-          { fontSize: size * 0.35 },
+          { fontSize: size * 0.35, color: colors.white },
         ]}
       >
         {initials}
@@ -61,16 +65,12 @@ export default function Avatar({ uri, name, size = 48 }: AvatarProps) {
 }
 
 const styles = StyleSheet.create({
-  image: {
-    backgroundColor: Colors.surfaceLight,
-  },
+  image: {},
   placeholder: {
-    backgroundColor: Colors.primaryDark,
     alignItems: 'center',
     justifyContent: 'center',
   },
   initials: {
-    color: Colors.white,
     fontWeight: FontWeight.bold,
   },
 });

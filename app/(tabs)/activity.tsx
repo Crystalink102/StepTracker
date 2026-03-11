@@ -149,8 +149,8 @@ export default function ActivityScreen() {
       setIntervalActive(false);
       showToast('Activity saved', 'success');
       if (result) {
-        // Navigate to run detail to show the route map
-        router.push(`/run/${result.id}` as any);
+        // Navigate to post-run save screen (Strava-style) to name & configure
+        router.push(`/run/save?id=${result.id}` as any);
       }
     } catch (err: any) {
       showToast(err.message || 'Failed to save activity', 'error');
@@ -329,7 +329,6 @@ export default function ActivityScreen() {
 const styles = StyleSheet.create({
   safe: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   container: {
     flex: 1,
@@ -343,7 +342,6 @@ const styles = StyleSheet.create({
   },
   modeToggle: {
     flexDirection: 'row',
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: 4,
   },
@@ -357,7 +355,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
   },
   modeButtonText: {
-    color: Colors.textMuted,
     fontSize: FontSize.md,
     fontWeight: FontWeight.semibold,
   },

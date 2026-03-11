@@ -1,6 +1,7 @@
 import { TouchableOpacity, View, Text, StyleSheet, Platform } from 'react-native';
 import { Badge } from '@/src/components/ui';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
+import { useTheme } from '@/src/context/ThemeContext';
 import { formatDistance, formatDuration, formatPace, paceUnitLabel } from '@/src/utils/formatters';
 import { formatRelativeDate, formatTime } from '@/src/utils/date-helpers';
 import { usePreferences } from '@/src/context/PreferencesContext';
@@ -84,11 +85,13 @@ const miniStyles = StyleSheet.create({
 });
 
 export default function RunListItem({ activity, route, onPress }: RunListItemProps) {
+  const { colors } = useTheme();
   const { preferences } = usePreferences();
   const unit = preferences.distanceUnit;
+  const displayName = activity.name || (activity.type === 'run' ? 'Run' : 'Walk');
 
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity style={[styles.container, { backgroundColor: colors.surface }]} onPress={onPress} activeOpacity={0.7}>
       {route && route.length > 1 && <MiniRoute coords={route} />}
 
       <View style={styles.header}>
@@ -97,29 +100,37 @@ export default function RunListItem({ activity, route, onPress }: RunListItemPro
             label={activity.type}
             variant={activity.type === 'run' ? 'primary' : 'secondary'}
           />
-          <Text style={styles.date}>
-            {formatRelativeDate(activity.started_at)} {'\u2022'} {formatTime(activity.started_at)}
-          </Text>
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Text style={[styles.activityName, { color: colors.textPrimary }]} numberOfLines={1}>{displayName}</Text>
+              {activity.is_favorite && (
+                <Text style={{ color: Colors.gold, fontSize: FontSize.sm }}>★</Text>
+              )}
+            </View>
+            <Text style={[styles.date, { color: colors.textSecondary }]}>
+              {formatRelativeDate(activity.started_at)} {'\u2022'} {formatTime(activity.started_at)}
+            </Text>
+          </View>
         </View>
         <Text style={styles.xp}>+{activity.xp_earned} XP</Text>
       </View>
 
       <View style={styles.stats}>
         <View style={styles.stat}>
-          <Text style={styles.statValue}>{formatDistance(activity.distance_meters, unit)}</Text>
-          <Text style={styles.statLabel}>Distance</Text>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>{formatDistance(activity.distance_meters, unit)}</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Distance</Text>
         </View>
         <View style={styles.stat}>
-          <Text style={styles.statValue}>{formatDuration(activity.duration_seconds)}</Text>
-          <Text style={styles.statLabel}>Duration</Text>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>{formatDuration(activity.duration_seconds)}</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Duration</Text>
         </View>
         <View style={styles.stat}>
-          <Text style={styles.statValue}>
+          <Text style={[styles.statValue, { color: colors.textPrimary }]}>
             {activity.avg_pace_seconds_per_km
               ? `${formatPace(activity.avg_pace_seconds_per_km, unit)} ${paceUnitLabel(unit)}`
               : '--'}
           </Text>
-          <Text style={styles.statLabel}>Pace</Text>
+          <Text style={[styles.statLabel, { color: colors.textMuted }]}>Pace</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -128,7 +139,6 @@ export default function RunListItem({ activity, route, onPress }: RunListItemPro
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.surface,
     borderRadius: BorderRadius.lg,
     padding: Spacing.lg,
     marginHorizontal: Spacing.lg,
@@ -145,9 +155,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.md,
   },
+  activityName: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
+  },
   date: {
-    color: Colors.textSecondary,
     fontSize: FontSize.sm,
+    marginTop: 2,
   },
   xp: {
     color: Colors.secondary,
@@ -162,12 +176,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   statValue: {
-    color: Colors.textPrimary,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.semibold,
   },
   statLabel: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     marginTop: 2,
     textTransform: 'uppercase',

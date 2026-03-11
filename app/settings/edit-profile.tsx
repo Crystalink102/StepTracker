@@ -182,7 +182,6 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
   centered: {
     alignItems: 'center',
@@ -209,7 +208,6 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   charCount: {
-    color: Colors.textMuted,
     fontSize: FontSize.xs,
     textAlign: 'right',
     marginTop: Spacing.xs,
