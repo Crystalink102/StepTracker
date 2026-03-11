@@ -1,9 +1,10 @@
 export { ErrorBoundary } from '@/src/components/ui/TabErrorBoundary';
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { ScrollView, View, StyleSheet, RefreshControl, ActivityIndicator } from 'react-native';
+import { ScrollView, View, Text, StyleSheet, RefreshControl, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import XPCard from '@/src/components/home/XPCard';
 import StepGoalRing from '@/src/components/home/StepGoalRing';
 import StepCounter from '@/src/components/home/StepCounter';
@@ -27,10 +28,13 @@ import { useNetwork } from '@/src/context/NetworkContext';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { useProfile } from '@/src/hooks/useProfile';
 import { useAuth } from '@/src/context/AuthContext';
+import { useActivity } from '@/src/context/ActivityContext';
+import { useToast } from '@/src/hooks/useToast';
+import { playButtonPress } from '@/src/utils/sounds';
 import * as ActivityService from '@/src/services/activity.service';
 import { Activity } from '@/src/types/database';
 import { playLevelUp } from '@/src/utils/sounds';
-import { Colors, Spacing } from '@/src/constants/theme';
+import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
 function getStartOfWeek(weekStartsMonday: boolean): Date {
@@ -56,9 +60,27 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
   const { showConfetti, celebrate, onConfettiComplete } = useCelebration();
+  const { startActivity, isActive } = useActivity();
+  const { showToast } = useToast();
   const prevLevelRef = useRef(level);
   const [refreshing, setRefreshing] = useState(false);
   const [weekActivities, setWeekActivities] = useState<Activity[]>([]);
+  const [quickStarting, setQuickStarting] = useState(false);
+
+  const handleQuickStart = useCallback(async (type: 'run' | 'walk') => {
+    if (quickStarting || isActive) return;
+    playButtonPress(preferences.hapticFeedback);
+    setQuickStarting(true);
+    try {
+      await startActivity(type);
+      showToast(`${type === 'run' ? 'Run' : 'Walk'} started!`, 'success');
+      router.push('/(tabs)/activity' as any);
+    } catch (err: any) {
+      showToast(err.message || 'Could not start. Check location permissions.', 'error');
+    } finally {
+      setQuickStarting(false);
+    }
+  }, [startActivity, isActive, quickStarting, preferences.hapticFeedback, showToast, router]);
 
   // Load activities for this week
   const loadWeekActivities = useCallback(async () => {
@@ -129,6 +151,37 @@ export default function HomeScreen() {
         <XPCard />
         <StepGoalRing />
         <StepCounter />
+
+        {/* Quick Start Card */}
+        {!isActive && (
+          <View style={[styles.quickStartCard, { backgroundColor: colors.surface }]}>
+            <TouchableOpacity
+              style={styles.quickStartRun}
+              activeOpacity={0.8}
+              onPress={() => handleQuickStart('run')}
+              disabled={quickStarting}
+            >
+              {quickStarting ? (
+                <ActivityIndicator color={Colors.white} />
+              ) : (
+                <>
+                  <Ionicons name="flash" size={22} color={Colors.white} />
+                  <Text style={styles.quickStartRunText}>Quick Start Run</Text>
+                </>
+              )}
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.quickStartWalk, { borderColor: Colors.primary }]}
+              activeOpacity={0.8}
+              onPress={() => handleQuickStart('walk')}
+              disabled={quickStarting}
+            >
+              <Ionicons name="walk" size={18} color={Colors.primary} />
+              <Text style={[styles.quickStartWalkText, { color: Colors.primary }]}>Walk</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
         {(weeklyDistanceMeters > 0 || (profile?.weekly_distance_goal_meters ?? 0) > 0) && (
           <WeeklyDistanceCard
             goalMeters={profile?.weekly_distance_goal_meters ?? 0}
@@ -169,5 +222,43 @@ const styles = StyleSheet.create({
     top: 0,
     right: Spacing.md,
     zIndex: 10,
+  },
+  quickStartCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.sm,
+    gap: Spacing.sm,
+  },
+  quickStartRun: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    backgroundColor: Colors.primary,
+    paddingVertical: Spacing.lg,
+    borderRadius: BorderRadius.md,
+  },
+  quickStartRunText: {
+    color: Colors.white,
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.bold,
+  },
+  quickStartWalk: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingVertical: Spacing.lg,
+    paddingHorizontal: Spacing.xl,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1.5,
+  },
+  quickStartWalkText: {
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.bold,
   },
 });

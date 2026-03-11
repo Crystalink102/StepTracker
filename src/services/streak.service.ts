@@ -33,10 +33,10 @@ function getDateString(date: Date): string {
  * Uses CT-aware arithmetic instead of subtracting 24h (DST-safe).
  */
 function getYesterday(): string {
-  const today = getTodayString(); // YYYY-MM-DD in CT
-  const [y, m, d] = today.split('-').map(Number);
-  const dt = new Date(y, m - 1, d - 1); // JS Date handles month/year boundaries
-  return `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+  // Subtract one day using a timestamp, then format in Central Time
+  const now = new Date();
+  const yesterday = new Date(now.getTime() - 86400000);
+  return getDateString(yesterday);
 }
 
 /** Returns the ISO week string (YYYY-Www) for a given date */

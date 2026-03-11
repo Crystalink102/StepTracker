@@ -64,16 +64,13 @@ export function useFeed() {
     async (activityId: string) => {
       if (!user) return;
 
-      // Snapshot current state for rollback
-      const prev = feedItems;
-      const item = feedItems.find((f) => f.id === activityId);
-      if (!item) return;
-
-      const wasLiked = item.has_liked;
-
-      // Optimistic update
-      setFeedItems((items) =>
-        items.map((f) =>
+      // Read current liked state via ref-safe functional update
+      let wasLiked = false;
+      setFeedItems((items) => {
+        const item = items.find((f) => f.id === activityId);
+        if (!item) return items;
+        wasLiked = item.has_liked;
+        return items.map((f) =>
           f.id === activityId
             ? {
                 ...f,
@@ -81,8 +78,8 @@ export function useFeed() {
                 like_count: wasLiked ? f.like_count - 1 : f.like_count + 1,
               }
             : f
-        )
-      );
+        );
+      });
 
       try {
         if (wasLiked) {
@@ -91,11 +88,21 @@ export function useFeed() {
           await FeedService.likeActivity(user.id, activityId);
         }
       } catch {
-        // Revert on error
-        setFeedItems(prev);
+        // Revert on error using functional update (always has fresh state)
+        setFeedItems((items) =>
+          items.map((f) =>
+            f.id === activityId
+              ? {
+                  ...f,
+                  has_liked: wasLiked,
+                  like_count: wasLiked ? f.like_count + 1 : f.like_count - 1,
+                }
+              : f
+          )
+        );
       }
     },
-    [user, feedItems]
+    [user]
   );
 
   /**

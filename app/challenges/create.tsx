@@ -114,7 +114,7 @@ export default function CreateChallengeScreen() {
     if (challenge) {
       router.back();
     } else {
-      Alert.alert('Error', 'Failed to create challenge. The challenges table may not exist yet.');
+      Alert.alert('Error', 'Failed to create challenge. Please try again.');
     }
   };
 

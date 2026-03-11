@@ -5,6 +5,7 @@ import {
   useCallback,
   useRef,
   useEffect,
+  useMemo,
   type ReactNode,
 } from 'react';
 import * as Location from 'expo-location';
@@ -593,25 +594,43 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
     [currentActivity, user, elapsedSeconds, distanceMeters, waypoints, addXP]
   );
 
+  const contextValue = useMemo<ActivityContextValue>(
+    () => ({
+      currentActivity,
+      isActive,
+      isPaused,
+      elapsedSeconds,
+      distanceMeters,
+      currentPaceSecPerKm,
+      waypoints,
+      currentSpeed,
+      laps,
+      latestLap,
+      startActivity,
+      pauseActivity,
+      resumeActivity,
+      stopActivity,
+    }),
+    [
+      currentActivity,
+      isActive,
+      isPaused,
+      elapsedSeconds,
+      distanceMeters,
+      currentPaceSecPerKm,
+      waypoints,
+      currentSpeed,
+      laps,
+      latestLap,
+      startActivity,
+      pauseActivity,
+      resumeActivity,
+      stopActivity,
+    ]
+  );
+
   return (
-    <ActivityContext.Provider
-      value={{
-        currentActivity,
-        isActive,
-        isPaused,
-        elapsedSeconds,
-        distanceMeters,
-        currentPaceSecPerKm,
-        waypoints,
-        currentSpeed,
-        laps,
-        latestLap,
-        startActivity,
-        pauseActivity,
-        resumeActivity,
-        stopActivity,
-      }}
-    >
+    <ActivityContext.Provider value={contextValue}>
       {children}
     </ActivityContext.Provider>
   );

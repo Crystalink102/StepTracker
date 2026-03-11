@@ -2,8 +2,6 @@ import { supabase } from './supabase';
 import type { Challenge, ChallengeParticipant } from '@/src/types/database';
 
 // ─── Helpers ────────────────────────────────────────────────────────
-// The challenges / challenge_participants tables may not be in the
-// generated Database type yet, so we access them via `any` cast.
 const challenges = () => (supabase as any).from('challenges');
 const participants = () => (supabase as any).from('challenge_participants');
 
@@ -52,17 +50,26 @@ export async function createChallenge(
       .single();
 
     if (error) {
-      console.warn('[Challenge] createChallenge failed:', error.message);
+      console.warn('[Challenge] createChallenge failed:', error.message, error.details, error.hint);
+      return null;
+    }
+
+    if (!challenge) {
+      console.warn('[Challenge] createChallenge returned no data');
       return null;
     }
 
     // Auto-join creator as first participant
-    await participants().insert({
+    const { error: joinError } = await participants().insert({
       challenge_id: challenge.id,
       user_id: userId,
       current_progress: 0,
       completed: false,
     });
+
+    if (joinError) {
+      console.warn('[Challenge] Auto-join failed:', joinError.message);
+    }
 
     return challenge as Challenge;
   } catch (err) {

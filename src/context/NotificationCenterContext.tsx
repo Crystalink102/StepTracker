@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppNotification } from '@/src/types/database';
 
@@ -102,17 +102,20 @@ export function NotificationCenterProvider({ children }: { children: React.React
     setNotifications([]);
   }, []);
 
+  const contextValue = useMemo(
+    () => ({
+      notifications,
+      unreadCount,
+      addNotification,
+      markRead,
+      markAllRead,
+      clearAll,
+    }),
+    [notifications, unreadCount, addNotification, markRead, markAllRead, clearAll]
+  );
+
   return (
-    <NotificationCenterContext.Provider
-      value={{
-        notifications,
-        unreadCount,
-        addNotification,
-        markRead,
-        markAllRead,
-        clearAll,
-      }}
-    >
+    <NotificationCenterContext.Provider value={contextValue}>
       {children}
     </NotificationCenterContext.Provider>
   );
