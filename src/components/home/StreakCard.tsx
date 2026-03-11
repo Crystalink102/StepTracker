@@ -18,7 +18,7 @@ export default function StreakCard({
   freezeUsed = false,
 }: StreakCardProps) {
   return (
-    <Card style={styles.card}>
+    <Card style={styles.card} accessible accessibilityLabel={`${streak}-day streak${freezeUsed ? ', streak freeze used' : ''}${freezeAvailable ? ', streak freeze available' : ''}`}>
       <View style={styles.row}>
         <FlameIcon size={32} streak={streak} />
         <View style={styles.textContainer}>

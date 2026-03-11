@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { BackHandler, Platform, ToastAndroid } from 'react-native';
 import { Tabs, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import TutorialOverlay, {
@@ -95,6 +96,23 @@ export default function TabLayout() {
   const [tutorialStep, setTutorialStep] = useState(0);
   const [showProfileSetup, setShowProfileSetup] = useState(false);
 
+  // Android back button: double-tap to exit
+  const lastBackPress = useRef(0);
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    const handler = () => {
+      const now = Date.now();
+      if (now - lastBackPress.current < 2000) {
+        return false; // let default behavior exit the app
+      }
+      lastBackPress.current = now;
+      ToastAndroid.show('Press back again to exit', ToastAndroid.SHORT);
+      return true; // prevent default
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', handler);
+    return () => sub.remove();
+  }, []);
+
   useEffect(() => {
     hasTutorialCompleted().then((done) => {
       if (!done) {
@@ -181,6 +199,7 @@ export default function TabLayout() {
           options={{
             title: 'Home',
             tabBarIcon: (props) => <HomeIcon {...props} />,
+            tabBarAccessibilityLabel: 'Home tab',
           }}
         />
         <Tabs.Screen
@@ -188,6 +207,7 @@ export default function TabLayout() {
           options={{
             title: 'Feed',
             tabBarIcon: (props) => <FeedIcon {...props} />,
+            tabBarAccessibilityLabel: 'Social feed tab',
           }}
         />
         <Tabs.Screen
@@ -195,6 +215,7 @@ export default function TabLayout() {
           options={{
             title: 'Activity',
             tabBarIcon: (props) => <ActivityIcon {...props} />,
+            tabBarAccessibilityLabel: 'Start activity tab',
           }}
         />
         <Tabs.Screen
@@ -202,6 +223,7 @@ export default function TabLayout() {
           options={{
             title: 'History',
             tabBarIcon: (props) => <HistoryIcon {...props} />,
+            tabBarAccessibilityLabel: 'Activity history tab',
           }}
         />
         <Tabs.Screen
@@ -209,6 +231,7 @@ export default function TabLayout() {
           options={{
             title: 'Ranks',
             tabBarIcon: (props) => <RanksIcon {...props} />,
+            tabBarAccessibilityLabel: 'Leaderboard tab',
           }}
         />
         <Tabs.Screen
@@ -216,6 +239,7 @@ export default function TabLayout() {
           options={{
             title: 'Stats',
             tabBarIcon: (props) => <StatsIcon {...props} />,
+            tabBarAccessibilityLabel: 'Statistics tab',
           }}
         />
         <Tabs.Screen
@@ -223,6 +247,7 @@ export default function TabLayout() {
           options={{
             title: 'Profile',
             tabBarIcon: (props) => <ProfileIcon {...props} />,
+            tabBarAccessibilityLabel: 'Profile and settings tab',
           }}
         />
       </Tabs>

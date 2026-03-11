@@ -45,7 +45,7 @@ SplashScreen.preventAutoHideAsync();
 
 function AuthGate() {
   const { isAuthenticated, isLoading, hasMFA, mfaVerified } = useAuth();
-  const { profile, isLoading: profileLoading } = useProfile();
+  const { profile } = useProfile();
   const { colors, isDark } = useTheme();
   const segments = useSegments();
   const router = useRouter();
@@ -55,9 +55,15 @@ function AuthGate() {
   // Register notifications when authenticated
   useNotifications();
 
+  // Gate on profile being actually loaded — not just the loading flag.
+  // After login, there's a 1-frame gap where isAuthenticated=true but
+  // profileLoading hasn't been set to true yet (useEffect is deferred).
+  // Checking !profile closes this gap.
+  const authReady = !isLoading && (!isAuthenticated || !!profile);
+
   useEffect(() => {
     if (!stackMounted) return;
-    if (isLoading || (isAuthenticated && profileLoading)) return;
+    if (!authReady) return;
 
     // Clear any pending navigation
     if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current);
@@ -91,9 +97,9 @@ function AuthGate() {
     }
 
     return () => { if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current); };
-  }, [isAuthenticated, isLoading, profileLoading, profile, hasMFA, mfaVerified, segments, router, stackMounted]);
+  }, [isAuthenticated, isLoading, authReady, profile, hasMFA, mfaVerified, segments, router, stackMounted]);
 
-  if (isLoading || (isAuthenticated && profileLoading)) {
+  if (!authReady) {
     return (
       <View
         style={{

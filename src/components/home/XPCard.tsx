@@ -8,7 +8,7 @@ export default function XPCard() {
   const { level, totalXP, progress, xpRemaining, xpNeeded } = useXP();
 
   return (
-    <Card style={styles.card}>
+    <Card style={styles.card} accessible accessibilityLabel={`Level ${level}, ${formatNumber(totalXP)} XP total, ${formatNumber(xpRemaining)} XP to next level`}>
       <View style={styles.header}>
         <View style={styles.levelContainer}>
           <Text style={styles.levelLabel}>LEVEL</Text>

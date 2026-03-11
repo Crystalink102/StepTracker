@@ -111,7 +111,7 @@ export default function PersonalInfoScreen() {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
       <View style={styles.form}>
         <Input
           label="Resting Heart Rate (BPM)"
