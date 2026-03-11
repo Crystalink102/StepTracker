@@ -221,12 +221,14 @@ export function StepProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [isAvailable]);
 
-  // Midnight rollover
+  // Midnight rollover — resets steps at midnight Central Time.
+  // Also re-fetches from Supabase to pick up the new day's record.
   const currentDateRef = useRef(getTodayString());
   useEffect(() => {
     const checkDate = () => {
       const now = getTodayString();
       if (now !== currentDateRef.current) {
+        console.log(`[StepContext] Day changed: ${currentDateRef.current} → ${now}`);
         currentDateRef.current = now;
         setTodaySteps(0);
         lastSyncedSteps.current = 0;
@@ -235,17 +237,32 @@ export function StepProvider({ children }: { children: ReactNode }) {
         AsyncStorage.setItem(LAST_SYNCED_KEY, '0').catch(() => {});
         // Re-enable sync immediately — no catch-up needed for a fresh day
         catchUpDone.current = true;
+
+        // Re-fetch today's steps from Supabase for the new day
+        if (user) {
+          StepService.getTodaySteps(user.id)
+            .then((record) => {
+              if (record.step_count > 0) {
+                setTodaySteps(record.step_count);
+                lastSyncedSteps.current = record.step_count;
+              }
+            })
+            .catch(() => {});
+        }
       }
     };
-    const interval = setInterval(checkDate, 30_000);
+    // Check every 10 seconds so the reset is caught quickly
+    const interval = setInterval(checkDate, 10_000);
     const sub = AppState.addEventListener('change', (state) => {
       if (state === 'active') checkDate();
     });
+    // Run immediately on mount to catch stale date from previous session
+    checkDate();
     return () => {
       clearInterval(interval);
       sub.remove();
     };
-  }, []);
+  }, [user]);
 
   // Keep refs in sync
   useEffect(() => {

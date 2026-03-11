@@ -1,4 +1,39 @@
-import { formatDate, formatRelativeDate } from '../date-helpers';
+import { formatDate, formatRelativeDate, getTodayString, getMidnightCT, APP_TIMEZONE } from '../date-helpers';
+
+describe('getTodayString', () => {
+  it('returns a YYYY-MM-DD string', () => {
+    const result = getTodayString();
+    expect(result).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+  });
+
+  it('uses Central Time timezone', () => {
+    // The result should match the date in America/Chicago
+    const now = new Date();
+    const ctDate = new Intl.DateTimeFormat('en-CA', {
+      timeZone: APP_TIMEZONE,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(now);
+    expect(getTodayString()).toBe(ctDate);
+  });
+});
+
+describe('getMidnightCT', () => {
+  it('returns a Date object in the past or at current time', () => {
+    const midnight = getMidnightCT();
+    expect(midnight).toBeInstanceOf(Date);
+    expect(midnight.getTime()).toBeLessThanOrEqual(Date.now());
+  });
+
+  it('midnight is at the start of the CT day', () => {
+    const midnight = getMidnightCT();
+    // midnight should be within the last 24 hours
+    const diff = Date.now() - midnight.getTime();
+    expect(diff).toBeGreaterThanOrEqual(0);
+    expect(diff).toBeLessThan(24 * 60 * 60 * 1000);
+  });
+});
 
 describe('formatDate', () => {
   it('formats ISO date string', () => {

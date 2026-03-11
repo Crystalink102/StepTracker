@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
+import { getMidnightCT } from '@/src/utils/date-helpers';
 
 type StepData = {
   steps: number;
@@ -106,8 +107,7 @@ async function getStepsFromHealthKit(): Promise<number | null> {
   try {
     const AppleHealthKit = (await import('react-native-health')).default;
 
-    const midnight = new Date();
-    midnight.setHours(0, 0, 0, 0);
+    const midnight = getMidnightCT();
 
     return new Promise((resolve) => {
       AppleHealthKit.getStepCount(
@@ -200,8 +200,7 @@ export async function initHealth(): Promise<StepData['source']> {
  * Falls back to raw pedometer if health platforms aren't available.
  */
 export async function getTodaySteps(): Promise<StepData> {
-  const midnight = new Date();
-  midnight.setHours(0, 0, 0, 0);
+  const midnight = getMidnightCT();
 
   // Try Health Connect (Android)
   if (Platform.OS === 'android' && healthConnectInitialized) {

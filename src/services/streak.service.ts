@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getTodayString, APP_TIMEZONE } from '@/src/utils/date-helpers';
 
 type StreakResult = {
   streak: number;
@@ -11,17 +12,28 @@ const FREEZE_AVAILABLE_KEY = 'streak_freeze_available';
 const FREEZE_WEEK_KEY = 'streak_freeze_week';
 const FREEZE_ENABLED_KEY = 'streak_freeze_enabled';
 
+/**
+ * Format any Date as YYYY-MM-DD in Central Time.
+ */
 function getDateString(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: APP_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(date);
+  const y = parts.find((p) => p.type === 'year')!.value;
+  const m = parts.find((p) => p.type === 'month')!.value;
+  const d = parts.find((p) => p.type === 'day')!.value;
+  return `${y}-${m}-${d}`;
 }
 
+/**
+ * Get yesterday's date in Central Time.
+ */
 function getYesterday(): string {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return getDateString(d);
+  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  return getDateString(yesterday);
 }
 
 /** Returns the ISO week string (YYYY-Www) for a given date */
