@@ -329,6 +329,26 @@ export async function updateProgress(
   }
 }
 
+// ─── Update ──────────────────────────────────────────────────────────
+export async function updateChallenge(
+  challengeId: string,
+  updates: { title?: string; description?: string; target_value?: number; end_date?: string }
+): Promise<boolean> {
+  try {
+    const { error } = await challenges()
+      .update(updates)
+      .eq('id', challengeId);
+    if (error) {
+      console.warn('[Challenge] updateChallenge failed:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.warn('[Challenge] updateChallenge error:', err);
+    return false;
+  }
+}
+
 // ─── Check completion (past end date) ───────────────────────────────
 export async function checkChallengeCompletion(
   challengeId: string

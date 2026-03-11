@@ -70,6 +70,15 @@ export function useChallenges() {
     [user, refresh]
   );
 
+  const update = useCallback(
+    async (challengeId: string, updates: { title?: string; description?: string; target_value?: number; end_date?: string }) => {
+      const ok = await ChallengeService.updateChallenge(challengeId, updates);
+      if (ok) await refresh();
+      return ok;
+    },
+    [refresh]
+  );
+
   return {
     activeChallenges,
     availableChallenges,
@@ -77,6 +86,7 @@ export function useChallenges() {
     create,
     join,
     leave,
+    update,
     refresh,
   };
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,9 +9,10 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useChallenges } from '@/src/hooks/useChallenges';
+import * as ChallengeService from '@/src/services/challenge.service';
 import DistanceInput from '@/src/components/ui/DistanceInput';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 import { useTheme } from '@/src/context/ThemeContext';
@@ -27,18 +28,12 @@ const CHALLENGE_TYPES: { value: Challenge['type']; label: string; icon: string }
   { value: 'activities', label: 'Activities', icon: 'fitness' },
 ];
 
-const DURATIONS: { label: string; days: number }[] = [
-  { label: '1 Week', days: 7 },
-  { label: '2 Weeks', days: 14 },
-  { label: '1 Month', days: 30 },
+const END_DATE_OPTIONS: { label: string; days: number }[] = [
+  { label: '+3 Days', days: 3 },
+  { label: '+1 Week', days: 7 },
+  { label: '+2 Weeks', days: 14 },
+  { label: '+1 Month', days: 30 },
 ];
-
-const DEFAULT_TARGETS: Record<string, number> = {
-  steps: 50000,
-  distance: 25000, // meters
-  duration: 3600,  // seconds
-  activities: 5,
-};
 
 function formatTargetPreview(type: string, value: number, distanceFmt: (m: number) => string): string {
   switch (type) {
@@ -58,34 +53,69 @@ function formatTargetPreview(type: string, value: number, distanceFmt: (m: numbe
   }
 }
 
-function getTargetPlaceholder(type: string): string {
-  switch (type) {
-    case 'steps': return 'e.g. 50000';
-    case 'distance': return 'Meters (e.g. 25000 = 25km)';
-    case 'duration': return 'Seconds (e.g. 3600 = 1hr)';
-    case 'activities': return 'e.g. 5';
-    default: return 'Target value';
-  }
+function formatDateNice(date: Date): string {
+  return date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 }
 
-export default function CreateChallengeScreen() {
+export default function EditChallengeScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { create } = useChallenges();
+  const { update } = useChallenges();
   const { colors } = useTheme();
   const { preferences } = usePreferences();
   const distanceFmt = (m: number) => formatDistance(m, preferences.distanceUnit);
 
+  const [isLoadingChallenge, setIsLoadingChallenge] = useState(true);
+  const [challenge, setChallenge] = useState<Challenge | null>(null);
+
+  // Form state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState<Challenge['type']>('steps');
-  const [targetStr, setTargetStr] = useState(DEFAULT_TARGETS.steps.toString());
-  const [targetMeters, setTargetMeters] = useState(DEFAULT_TARGETS.distance);
-  const [durationDays, setDurationDays] = useState(7);
+  const [targetStr, setTargetStr] = useState('');
+  const [targetMeters, setTargetMeters] = useState(0);
+  const [endDate, setEndDate] = useState(new Date());
   const [isSaving, setIsSaving] = useState(false);
+
+  // Load existing challenge
+  useEffect(() => {
+    if (!id) return;
+    (async () => {
+      setIsLoadingChallenge(true);
+      try {
+        const result = await ChallengeService.getChallengeDetails(id);
+        if (result) {
+          const c = result.challenge;
+          setChallenge(c);
+          setTitle(c.title);
+          setDescription(c.description || '');
+          setType(c.type);
+          setEndDate(new Date(c.end_date));
+
+          if (c.type === 'distance') {
+            setTargetMeters(c.target_value);
+          } else {
+            setTargetStr(c.target_value.toString());
+          }
+        }
+      } catch (err) {
+        console.warn('[EditChallenge] load error:', err);
+      } finally {
+        setIsLoadingChallenge(false);
+      }
+    })();
+  }, [id]);
 
   const targetValue = type === 'distance' ? targetMeters : (parseInt(targetStr, 10) || 0);
 
-  const handleCreate = async () => {
+  const handleSave = async () => {
+    if (!challenge) return;
+
     if (!title.trim()) {
       Alert.alert('Missing title', 'Give your challenge a name.');
       return;
@@ -96,27 +126,51 @@ export default function CreateChallengeScreen() {
     }
 
     setIsSaving(true);
-    const now = new Date();
-    const endDate = new Date(now);
-    endDate.setDate(endDate.getDate() + durationDays);
 
-    const challenge = await create({
+    const ok = await update(challenge.id, {
       title: title.trim(),
       description: description.trim(),
-      type,
       target_value: targetValue,
-      start_date: now.toISOString(),
       end_date: endDate.toISOString(),
     });
 
     setIsSaving(false);
 
-    if (challenge) {
+    if (ok) {
       router.back();
     } else {
-      Alert.alert('Error', 'Failed to create challenge. The challenges table may not exist yet.');
+      Alert.alert('Error', 'Failed to save changes. Please try again.');
     }
   };
+
+  const handleExtendEndDate = (days: number) => {
+    const newDate = new Date(endDate);
+    newDate.setDate(newDate.getDate() + days);
+    setEndDate(newDate);
+  };
+
+  // ─── Loading state ─────────────────────────────────────────────────
+  if (isLoadingChallenge) {
+    return (
+      <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  if (!challenge) {
+    return (
+      <View style={[styles.container, styles.center, { backgroundColor: colors.background }]}>
+        <Ionicons name="alert-circle-outline" size={48} color={colors.textMuted} />
+        <Text style={[styles.errorText, { color: colors.textSecondary }]}>Challenge not found</Text>
+      </View>
+    );
+  }
+
+  const daysLeft = Math.max(
+    0,
+    Math.ceil((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+  );
 
   return (
     <ScrollView
@@ -131,7 +185,7 @@ export default function CreateChallengeScreen() {
         style={[styles.input, { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border }]}
         value={title}
         onChangeText={setTitle}
-        placeholder="Walk 50k steps this week"
+        placeholder="Challenge title"
         placeholderTextColor={colors.textMuted}
         maxLength={60}
       />
@@ -148,37 +202,34 @@ export default function CreateChallengeScreen() {
         maxLength={200}
       />
 
-      {/* Type picker */}
-      <Text style={[styles.label, { color: colors.textSecondary }]}>Type</Text>
+      {/* Type (read-only) */}
+      <Text style={[styles.label, { color: colors.textSecondary }]}>Type (cannot be changed)</Text>
       <View style={styles.row}>
         {CHALLENGE_TYPES.map((t) => (
-          <TouchableOpacity
+          <View
             key={t.value}
-            style={[styles.chip, { backgroundColor: colors.surface, borderColor: colors.border }, type === t.value && styles.chipActive]}
-            onPress={() => {
-              setType(t.value);
-              if (t.value === 'distance') {
-                setTargetMeters(DEFAULT_TARGETS.distance);
-              } else {
-                setTargetStr(DEFAULT_TARGETS[t.value].toString());
-              }
-            }}
+            style={[
+              styles.chip,
+              { backgroundColor: colors.surface, borderColor: colors.border },
+              type === t.value && styles.chipActive,
+              type !== t.value && styles.chipDisabled,
+            ]}
           >
             <Ionicons
               name={t.icon as any}
               size={16}
-              color={type === t.value ? Colors.white : colors.textSecondary}
+              color={type === t.value ? Colors.white : colors.textMuted}
             />
             <Text
               style={[
                 styles.chipText,
-                { color: colors.textSecondary },
+                { color: colors.textMuted },
                 type === t.value && styles.chipTextActive,
               ]}
             >
               {t.label}
             </Text>
-          </TouchableOpacity>
+          </View>
         ))}
       </View>
 
@@ -194,30 +245,38 @@ export default function CreateChallengeScreen() {
           style={[styles.input, { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border }]}
           value={targetStr}
           onChangeText={setTargetStr}
-          placeholder={getTargetPlaceholder(type)}
+          placeholder={
+            type === 'steps'
+              ? 'e.g. 50000'
+              : type === 'duration'
+              ? 'Seconds (e.g. 3600 = 1hr)'
+              : 'e.g. 5'
+          }
           placeholderTextColor={colors.textMuted}
           keyboardType="number-pad"
         />
       )}
 
-      {/* Duration */}
-      <Text style={[styles.label, { color: colors.textSecondary }]}>Duration</Text>
+      {/* End Date */}
+      <Text style={[styles.label, { color: colors.textSecondary }]}>End Date</Text>
+      <View style={[styles.dateDisplay, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+        <Ionicons name="calendar-outline" size={18} color={colors.textSecondary} />
+        <Text style={[styles.dateText, { color: colors.textPrimary }]}>
+          {formatDateNice(endDate)}
+        </Text>
+        <Text style={[styles.daysLeftText, { color: colors.textMuted }]}>
+          ({daysLeft} days left)
+        </Text>
+      </View>
+      <Text style={[styles.extendLabel, { color: colors.textMuted }]}>Extend by:</Text>
       <View style={styles.row}>
-        {DURATIONS.map((d) => (
+        {END_DATE_OPTIONS.map((opt) => (
           <TouchableOpacity
-            key={d.days}
-            style={[styles.chip, { backgroundColor: colors.surface, borderColor: colors.border }, durationDays === d.days && styles.chipActive]}
-            onPress={() => setDurationDays(d.days)}
+            key={opt.days}
+            style={[styles.chip, { backgroundColor: colors.surface, borderColor: colors.border }]}
+            onPress={() => handleExtendEndDate(opt.days)}
           >
-            <Text
-              style={[
-                styles.chipText,
-                { color: colors.textSecondary },
-                durationDays === d.days && styles.chipTextActive,
-              ]}
-            >
-              {d.label}
-            </Text>
+            <Text style={[styles.chipText, { color: colors.textSecondary }]}>{opt.label}</Text>
           </TouchableOpacity>
         ))}
       </View>
@@ -236,7 +295,7 @@ export default function CreateChallengeScreen() {
               {CHALLENGE_TYPES.find((t) => t.value === type)?.label}
             </Text>
           </View>
-          <Text style={[styles.previewDays, { color: colors.textMuted }]}>{durationDays}d</Text>
+          <Text style={[styles.previewDays, { color: colors.textMuted }]}>{daysLeft}d</Text>
         </View>
         <Text style={[styles.previewTitle, { color: colors.textPrimary }]}>{title || 'Your Challenge Title'}</Text>
         <Text style={[styles.previewTarget, { color: colors.textSecondary }]}>
@@ -249,17 +308,17 @@ export default function CreateChallengeScreen() {
         ) : null}
       </View>
 
-      {/* Create button */}
+      {/* Save button */}
       <TouchableOpacity
-        style={[styles.createBtn, isSaving && styles.createBtnDisabled]}
-        onPress={handleCreate}
+        style={[styles.saveBtn, isSaving && styles.saveBtnDisabled]}
+        onPress={handleSave}
         disabled={isSaving}
         activeOpacity={0.8}
       >
         {isSaving ? (
           <ActivityIndicator color={Colors.white} />
         ) : (
-          <Text style={styles.createBtnText}>Create Challenge</Text>
+          <Text style={styles.saveBtnText}>Save Changes</Text>
         )}
       </TouchableOpacity>
     </ScrollView>
@@ -270,9 +329,17 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  center: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   content: {
     padding: Spacing.lg,
     paddingBottom: 60,
+  },
+  errorText: {
+    fontSize: FontSize.lg,
+    marginTop: Spacing.md,
   },
   label: {
     fontSize: FontSize.sm,
@@ -309,12 +376,36 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.primary,
     borderColor: Colors.primary,
   },
+  chipDisabled: {
+    opacity: 0.5,
+  },
   chipText: {
     fontSize: FontSize.md,
     fontWeight: FontWeight.medium,
   },
   chipTextActive: {
     color: Colors.white,
+  },
+  dateDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+    borderWidth: 1,
+  },
+  dateText: {
+    fontSize: FontSize.lg,
+    fontWeight: FontWeight.medium,
+    flex: 1,
+  },
+  daysLeftText: {
+    fontSize: FontSize.sm,
+  },
+  extendLabel: {
+    fontSize: FontSize.xs,
+    marginTop: Spacing.sm,
+    marginBottom: Spacing.xs,
   },
   previewCard: {
     borderRadius: BorderRadius.lg,
@@ -358,17 +449,17 @@ const styles = StyleSheet.create({
   previewDesc: {
     fontSize: FontSize.sm,
   },
-  createBtn: {
+  saveBtn: {
     backgroundColor: Colors.primary,
     padding: Spacing.lg,
     borderRadius: BorderRadius.md,
     alignItems: 'center',
     marginTop: Spacing.xxl,
   },
-  createBtnDisabled: {
+  saveBtnDisabled: {
     opacity: 0.6,
   },
-  createBtnText: {
+  saveBtnText: {
     color: Colors.white,
     fontSize: FontSize.lg,
     fontWeight: FontWeight.bold,

@@ -29,6 +29,7 @@ export default function ChallengesLayout() {
       <Stack.Screen name="index" options={{ title: 'Challenges' }} />
       <Stack.Screen name="create" options={{ title: 'New Challenge' }} />
       <Stack.Screen name="[id]" options={{ title: 'Challenge' }} />
+      <Stack.Screen name="edit" options={{ title: 'Edit Challenge' }} />
     </Stack>
   );
 }

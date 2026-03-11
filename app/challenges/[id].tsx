@@ -168,6 +168,18 @@ export default function ChallengeDetailScreen() {
         />
       }
     >
+      {/* Edit button (creator only) */}
+      {isCreator && (
+        <TouchableOpacity
+          style={[styles.editBtn, { backgroundColor: colors.surface, borderColor: colors.border }]}
+          onPress={() => router.push(`/challenges/edit?id=${challenge.id}`)}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="pencil" size={16} color={Colors.primary} />
+          <Text style={styles.editBtnText}>Edit Challenge</Text>
+        </TouchableOpacity>
+      )}
+
       {/* Challenge info header */}
       <View style={[styles.infoCard, { backgroundColor: colors.surface }]}>
         <View style={styles.infoHeader}>
@@ -508,6 +520,22 @@ const styles = StyleSheet.create({
     fontSize: FontSize.md,
     textAlign: 'center',
     paddingVertical: Spacing.lg,
+  },
+  // ─── Edit ──────
+  editBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.md,
+    marginBottom: Spacing.md,
+    borderWidth: 1,
+  },
+  editBtnText: {
+    color: Colors.primary,
+    fontSize: FontSize.md,
+    fontWeight: FontWeight.semibold,
   },
   // ─── Leave ──────
   leaveBtn: {
