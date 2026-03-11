@@ -60,6 +60,7 @@ export async function getFeed(
       .select('*')
       .in('user_id', friendIds)
       .eq('status', 'completed')
+      .neq('privacy', 'private')
       .order('ended_at', { ascending: false })
       .range(offset, offset + limit - 1);
 

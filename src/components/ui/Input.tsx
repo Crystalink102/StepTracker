@@ -34,7 +34,7 @@ export default function Input({
           styles.input,
           { backgroundColor: colors.surface, color: colors.textPrimary, borderColor: colors.border },
           isFocused && styles.inputFocused,
-          error && styles.inputError,
+          error && { borderColor: colors.danger },
           style,
         ]}
         placeholderTextColor={colors.textMuted}
@@ -44,7 +44,7 @@ export default function Input({
         accessibilityLabel={props.accessibilityLabel ?? label ?? undefined}
         accessibilityHint={error ? `Error: ${error}` : props.accessibilityHint}
       />
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <Text style={[styles.error, { color: colors.danger }]}>{error}</Text>}
     </View>
   );
 }
@@ -68,11 +68,7 @@ const styles = StyleSheet.create({
   inputFocused: {
     borderColor: Colors.primary,
   },
-  inputError: {
-    borderColor: Colors.danger,
-  },
   error: {
-    color: Colors.danger,
     fontSize: FontSize.sm,
   },
 });

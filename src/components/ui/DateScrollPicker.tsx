@@ -226,7 +226,7 @@ export default function DateScrollPicker({
     <View style={containerStyle}>
       {label && <Text style={[styles.label, { color: colors.textSecondary }]}>{label}</Text>}
       <TouchableOpacity
-        style={[styles.field, { backgroundColor: colors.surface, borderColor: colors.border }, error && styles.fieldError]}
+        style={[styles.field, { backgroundColor: colors.surface, borderColor: colors.border }, error && { borderColor: colors.danger }]}
         onPress={openPicker}
         activeOpacity={0.7}
         accessibilityRole="button"
@@ -237,7 +237,7 @@ export default function DateScrollPicker({
         </Text>
         <Ionicons name="calendar-outline" size={20} color={colors.textMuted} />
       </TouchableOpacity>
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && <Text style={[styles.error, { color: colors.danger }]}>{error}</Text>}
 
       <Modal
         transparent
@@ -261,7 +261,7 @@ export default function DateScrollPicker({
               </TouchableOpacity>
               {clearable && (
                 <TouchableOpacity onPress={handleClear} hitSlop={8}>
-                  <Text style={[styles.headerBtn, { color: Colors.danger }]}>Clear</Text>
+                  <Text style={[styles.headerBtn, { color: colors.danger }]}>Clear</Text>
                 </TouchableOpacity>
               )}
               <TouchableOpacity onPress={handleDone} hitSlop={8}>
@@ -330,14 +330,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  fieldError: {
-    borderColor: Colors.danger,
-  },
   fieldText: {
     fontSize: FontSize.lg,
   },
   error: {
-    color: Colors.danger,
     fontSize: FontSize.sm,
     marginTop: Spacing.xs,
   },
