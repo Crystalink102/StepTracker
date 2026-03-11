@@ -16,6 +16,8 @@ export type WeightUnit = 'kg' | 'lb';
 
 export type ThemeMode = 'dark' | 'light' | 'system';
 
+export type AudioCueFrequency = 'every_km' | 'every_half_km' | 'every_5min' | 'every_10min';
+
 export type Preferences = {
   distanceUnit: DistanceUnit;
   heightUnit: HeightUnit;
@@ -26,6 +28,9 @@ export type Preferences = {
   keepScreenOn: boolean;
   weekStartsMonday: boolean;
   audioCues: boolean;
+  autoLap: boolean;
+  autoLapDistance: 'km' | 'mi';
+  audioCueFrequency: AudioCueFrequency;
   theme: ThemeMode;
 };
 
@@ -39,6 +44,9 @@ const DEFAULT_PREFERENCES: Preferences = {
   keepScreenOn: true,
   weekStartsMonday: true,
   audioCues: false,
+  autoLap: true,
+  autoLapDistance: 'km',
+  audioCueFrequency: 'every_km',
   theme: 'dark',
 };
 

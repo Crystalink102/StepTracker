@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { usePreferences, type DistanceUnit, type HeightUnit, type WeightUnit, type ThemeMode } from '@/src/context/PreferencesContext';
+import { usePreferences, type DistanceUnit, type HeightUnit, type WeightUnit, type ThemeMode, type AudioCueFrequency } from '@/src/context/PreferencesContext';
 import { resetTutorial } from '@/src/components/tutorial/TutorialOverlay';
 import { isFreezeEnabled, setFreezeEnabled } from '@/src/services/streak.service';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
@@ -178,6 +178,41 @@ export default function PreferencesScreen() {
         value={preferences.audioCues}
         onToggle={(v) => updatePreference('audioCues', v)}
       />
+
+      {preferences.audioCues && (
+        <SettingSegment<AudioCueFrequency>
+          label="Cue Frequency"
+          description="How often audio cues are announced"
+          options={[
+            { label: 'Every km', value: 'every_km' },
+            { label: 'Every \u00BDkm', value: 'every_half_km' },
+            { label: 'Every 5min', value: 'every_5min' },
+            { label: 'Every 10min', value: 'every_10min' },
+          ]}
+          value={preferences.audioCueFrequency}
+          onChange={(v) => updatePreference('audioCueFrequency', v)}
+        />
+      )}
+
+      <SettingToggle
+        label="Auto-Lap"
+        description="Automatically mark laps at set distances"
+        value={preferences.autoLap}
+        onToggle={(v) => updatePreference('autoLap', v)}
+      />
+
+      {preferences.autoLap && (
+        <SettingSegment<'km' | 'mi'>
+          label="Lap Distance"
+          description="Auto-lap every kilometer or mile"
+          options={[
+            { label: 'km', value: 'km' },
+            { label: 'mi', value: 'mi' },
+          ]}
+          value={preferences.autoLapDistance}
+          onChange={(v) => updatePreference('autoLapDistance', v)}
+        />
+      )}
 
       <SectionHeader title="GENERAL" />
 

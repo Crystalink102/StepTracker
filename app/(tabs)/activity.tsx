@@ -17,6 +17,7 @@ import RunControls from '@/src/components/activity/RunControls';
 import HeartRateInput from '@/src/components/activity/HeartRateInput';
 import IntervalSetup from '@/src/components/activity/IntervalSetup';
 import IntervalDisplay from '@/src/components/activity/IntervalDisplay';
+import LapBanner from '@/src/components/activity/LapBanner';
 import { ConfirmModal } from '@/src/components/ui';
 import * as ProfileService from '@/src/services/profile.service';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
@@ -40,6 +41,7 @@ export default function ActivityScreen() {
     currentPaceSecPerKm,
     currentSpeed,
     waypoints,
+    latestLap,
     startActivity,
     pauseActivity,
     resumeActivity,
@@ -191,6 +193,7 @@ export default function ActivityScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
+      {isActive && <LapBanner lap={latestLap} />}
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
