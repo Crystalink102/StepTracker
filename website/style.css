@@ -118,9 +118,9 @@ a {
   align-items: center;
   background: var(--primary);
   color: #fff;
-  padding: 8px 16px;
-  border-radius: 10px;
-  font-size: 22px;
+  padding: 5px 10px;
+  border-radius: 7px;
+  font-size: 16px;
   font-weight: 800;
   letter-spacing: -0.5px;
 }
