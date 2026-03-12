@@ -23,9 +23,24 @@ async function initHealthConnect(): Promise<boolean> {
     const ok = await HC.initialize();
     if (!ok) return false;
 
-    const granted = await HC.requestPermission([
-      { accessType: 'read', recordType: 'Steps' },
-    ]);
+    // Wait for the activity's permission launcher to be registered.
+    // The native HealthConnectPermissionDelegate uses a lateinit property
+    // that isn't ready until the activity is fully initialized.
+    await new Promise((r) => setTimeout(r, 1500));
+
+    let granted;
+    try {
+      granted = await HC.requestPermission([
+        { accessType: 'read', recordType: 'Steps' },
+      ]);
+    } catch (permErr: any) {
+      // If the permission delegate isn't ready, fall back gracefully
+      if (permErr?.message?.includes('lateinit') || permErr?.message?.includes('requestPermission')) {
+        console.warn('[Health] Permission delegate not ready, will retry later');
+        return false;
+      }
+      throw permErr;
+    }
 
     // Check that Steps read permission was actually granted
     const hasSteps = granted.some(

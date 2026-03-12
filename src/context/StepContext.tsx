@@ -59,16 +59,31 @@ export function StepProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (Platform.OS === 'web') return;
     if (!isAuthenticated) return;
+    let cancelled = false;
 
-    HealthService.initHealth()
-      .then((source) => {
-        setStepSource(source);
-        setIsAvailable(source !== 'none');
-      })
-      .catch(() => {
+    const tryInit = async (retries = 3) => {
+      for (let i = 0; i < retries; i++) {
+        if (cancelled) return;
+        try {
+          const source = await HealthService.initHealth();
+          if (cancelled) return;
+          setStepSource(source);
+          setIsAvailable(source !== 'none');
+          return;
+        } catch {
+          if (i < retries - 1) {
+            await new Promise((r) => setTimeout(r, 2000));
+          }
+        }
+      }
+      if (!cancelled) {
         setStepSource('none');
         setIsAvailable(false);
-      });
+      }
+    };
+
+    tryInit();
+    return () => { cancelled = true; };
   }, [isAuthenticated]);
 
   // Sync steps to Supabase and award XP for new steps
