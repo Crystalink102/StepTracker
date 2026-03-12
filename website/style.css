@@ -123,14 +123,14 @@ a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   background: var(--primary);
   color: #fff;
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 18px;
   font-weight: 900;
-  margin-right: 2px;
+  margin-right: -2px;
 }
 
 .nav-links {
