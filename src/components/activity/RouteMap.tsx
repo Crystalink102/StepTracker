@@ -9,10 +9,14 @@ let MapView: any = null;
 let Polyline: any = null;
 let Marker: any = null;
 if (Platform.OS !== 'web') {
-  const Maps = require('react-native-maps');
-  MapView = Maps.default;
-  Polyline = Maps.Polyline;
-  Marker = Maps.Marker;
+  try {
+    const Maps = require('react-native-maps');
+    MapView = Maps.default;
+    Polyline = Maps.Polyline;
+    Marker = Maps.Marker;
+  } catch {
+    // Maps not available
+  }
 }
 
 type Coord = {

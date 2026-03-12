@@ -11,9 +11,13 @@ import { Activity } from '@/src/types/database';
 let MapView: any = null;
 let Polyline: any = null;
 if (Platform.OS !== 'web') {
-  const Maps = require('react-native-maps');
-  MapView = Maps.default;
-  Polyline = Maps.Polyline;
+  try {
+    const Maps = require('react-native-maps');
+    MapView = Maps.default;
+    Polyline = Maps.Polyline;
+  } catch {
+    // Maps not available
+  }
 }
 
 type Coord = { latitude: number; longitude: number };

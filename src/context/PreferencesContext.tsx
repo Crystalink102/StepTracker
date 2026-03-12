@@ -72,8 +72,12 @@ export function PreferencesProvider({ children }: { children: ReactNode }) {
     AsyncStorage.getItem(STORAGE_KEY)
       .then((raw) => {
         if (raw) {
-          const parsed = JSON.parse(raw);
-          setPreferences({ ...DEFAULT_PREFERENCES, ...parsed });
+          try {
+            const parsed = JSON.parse(raw);
+            setPreferences({ ...DEFAULT_PREFERENCES, ...parsed });
+          } catch {
+            // corrupted data, use defaults
+          }
         }
       })
       .catch(() => {})

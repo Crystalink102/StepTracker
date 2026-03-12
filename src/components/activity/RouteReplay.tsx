@@ -11,11 +11,15 @@ let Polyline: any = null;
 let Marker: any = null;
 let AnimatedRegion: any = null;
 if (Platform.OS !== 'web') {
-  const Maps = require('react-native-maps');
-  MapView = Maps.default;
-  Polyline = Maps.Polyline;
-  Marker = Maps.Marker;
-  AnimatedRegion = Maps.AnimatedRegion;
+  try {
+    const Maps = require('react-native-maps');
+    MapView = Maps.default;
+    Polyline = Maps.Polyline;
+    Marker = Maps.Marker;
+    AnimatedRegion = Maps.AnimatedRegion;
+  } catch {
+    // Maps not available
+  }
 }
 
 /** Dark map style for Google Maps (Android) */
