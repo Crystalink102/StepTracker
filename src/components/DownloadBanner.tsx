@@ -6,7 +6,7 @@ import { useTheme } from '@/src/context/ThemeContext';
 
 const DISMISSED_KEY = 'download_banner_dismissed';
 // Update this URL after each EAS build
-const DOWNLOAD_URL = 'https://expo.dev/artifacts/eas/hXoHuodYHmCGRBEzQthy6N.apk';
+const DOWNLOAD_URL = 'https://github.com/Crystalink102/StepTracker/releases/latest';
 
 export default function DownloadBanner() {
   const { colors } = useTheme();
