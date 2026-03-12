@@ -114,23 +114,21 @@ a {
 }
 
 .nav-logo {
+  display: inline-flex;
+  align-items: center;
+  background: var(--primary);
+  color: #fff;
+  padding: 8px 16px;
+  border-radius: 10px;
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -0.5px;
 }
 
 .logo-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: var(--primary);
-  color: #fff;
-  border-radius: 8px;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 900;
-  margin-right: -2px;
+  margin-right: 0;
 }
 
 .nav-links {
