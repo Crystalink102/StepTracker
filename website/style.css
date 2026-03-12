@@ -118,11 +118,11 @@ a {
   align-items: center;
   background: var(--primary);
   color: #fff;
-  padding: 5px 10px;
-  border-radius: 7px;
-  font-size: 16px;
+  padding: 6px 20px;
+  border-radius: 8px;
+  font-size: 20px;
   font-weight: 800;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
 }
 
 .logo-icon {
