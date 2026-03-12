@@ -4,6 +4,7 @@ import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 import { formatNumber } from '@/src/utils/formatters';
 import { useXP } from '@/src/hooks/useXP';
+import NotificationBell from '@/src/components/home/NotificationBell';
 
 export default function XPCard() {
   const { colors } = useTheme();
@@ -12,9 +13,12 @@ export default function XPCard() {
   return (
     <Card style={styles.card} accessible accessibilityLabel={`Level ${level}, ${formatNumber(totalXP)} XP total, ${formatNumber(xpRemaining)} XP to next level`}>
       <View style={styles.header}>
-        <View style={styles.levelContainer}>
-          <Text style={[styles.levelLabel, { color: colors.textMuted }]}>LEVEL</Text>
-          <Text style={[styles.levelNumber, { color: colors.textPrimary }]}>{level}</Text>
+        <View style={styles.headerLeft}>
+          <NotificationBell />
+          <View style={styles.levelContainer}>
+            <Text style={[styles.levelLabel, { color: colors.textMuted }]}>LEVEL</Text>
+            <Text style={[styles.levelNumber, { color: colors.textPrimary }]}>{level}</Text>
+          </View>
         </View>
         <Badge label={`${formatNumber(totalXP)} XP`} variant="secondary" />
       </View>
@@ -48,6 +52,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: Spacing.lg,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
   },
   levelContainer: {
     flexDirection: 'row',

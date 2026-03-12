@@ -16,7 +16,6 @@ import WeeklySummaryCard from '@/src/components/home/WeeklySummaryCard';
 import ChallengesHomeCard from '@/src/components/challenges/ChallengesHomeCard';
 import StreakPopup from '@/src/components/home/StreakPopup';
 import AchievementPopup from '@/src/components/achievements/AchievementPopup';
-import NotificationBell from '@/src/components/home/NotificationBell';
 import Confetti from '@/src/components/ui/Confetti';
 import { OfflineBanner } from '@/src/components/ui';
 import OfflineQueueCard from '@/src/components/home/OfflineQueueCard';
@@ -133,9 +132,6 @@ export default function HomeScreen() {
       <Confetti visible={showConfetti} onComplete={onConfettiComplete} />
       {!isOnline && <OfflineBanner />}
       <OfflineQueueCard />
-      <View style={styles.bellContainer}>
-        <NotificationBell />
-      </View>
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
@@ -216,12 +212,6 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingBottom: Spacing.xxxl,
-  },
-  bellContainer: {
-    position: 'absolute',
-    top: 0,
-    right: Spacing.md,
-    zIndex: 10,
   },
   quickStartCard: {
     flexDirection: 'row',
