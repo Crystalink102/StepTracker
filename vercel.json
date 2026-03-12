@@ -1,7 +1,10 @@
 {
-  "buildCommand": "npx expo export -p web",
+  "buildCommand": "rm -rf dist && mkdir -p dist && cp -r website/. dist/",
   "outputDirectory": "dist",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/" }
+  "routes": [
+    { "src": "/privacy", "dest": "/privacy.html" },
+    { "src": "/terms", "dest": "/terms.html" },
+    { "src": "/(favicon\\.png|style\\.css)", "dest": "/$1" },
+    { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
