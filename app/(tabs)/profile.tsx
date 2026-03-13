@@ -104,6 +104,7 @@ export default function ProfileScreen() {
     { label: 'Training Paces', route: '/settings/training-paces' as const },
     { label: 'Preferences', route: '/settings/preferences' as const },
     { label: 'Account', route: '/settings/account' as const },
+    { label: 'Support', route: '/settings/support' as const },
     { label: 'About', route: '/settings/about' as const },
   ];
 

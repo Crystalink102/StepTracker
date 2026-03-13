@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Support - 5tepTracker</title>
+  <meta name="description" content="Get help with 5tepTracker. Browse FAQs or contact our support team." />
+  <meta name="theme-color" content="#09090B" />
+  <link rel="icon" href="/favicon.png" type="image/png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    .support { max-width: 800px; margin: 0 auto; padding: 120px 24px 80px; }
+    .support h1 { font-size: 36px; font-weight: 800; margin-bottom: 8px; }
+    .support .support-sub { font-size: 16px; color: var(--text-secondary); margin-bottom: 48px; }
+    .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 14px; margin-bottom: 24px; }
+    .back-link:hover { color: var(--primary-light); }
+
+    /* FAQ */
+    .faq-section { margin-bottom: 64px; }
+    .faq-section h2 { font-size: 24px; font-weight: 700; margin-bottom: 24px; }
+    .faq-item { border: 1px solid var(--border); border-radius: 12px; margin-bottom: 12px; overflow: hidden; transition: border-color 0.2s; }
+    .faq-item:hover { border-color: var(--primary); }
+    .faq-question { width: 100%; background: var(--surface); border: none; color: var(--text); padding: 20px 24px; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 16px; text-align: left; }
+    .faq-question:hover { background: var(--surface-light); }
+    .faq-arrow { flex-shrink: 0; width: 20px; height: 20px; transition: transform 0.3s ease; color: var(--text-muted); }
+    .faq-item.open .faq-arrow { transform: rotate(180deg); color: var(--primary); }
+    .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; }
+    .faq-item.open .faq-answer { max-height: 300px; }
+    .faq-answer-inner { padding: 0 24px 20px; font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+    /* Category pills */
+    .faq-categories { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 24px; }
+    .faq-cat { padding: 8px 16px; border-radius: 100px; border: 1px solid var(--border); background: var(--surface); color: var(--text-secondary); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: inherit; }
+    .faq-cat:hover, .faq-cat.active { border-color: var(--primary); color: var(--primary-light); background: rgba(168, 85, 247, 0.1); }
+
+    /* Contact Form */
+    .contact-section h2 { font-size: 24px; font-weight: 700; margin-bottom: 8px; }
+    .contact-section .contact-sub { font-size: 14px; color: var(--text-secondary); margin-bottom: 32px; }
+    .contact-form { display: flex; flex-direction: column; gap: 20px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .form-group label { font-size: 14px; font-weight: 600; color: var(--text); }
+    .form-group input, .form-group select, .form-group textarea {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-size: 15px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+      border-color: var(--primary);
+    }
+    .form-group input::placeholder, .form-group textarea::placeholder {
+      color: var(--text-muted);
+    }
+    .form-group select { cursor: pointer; -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2371717A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 40px; }
+    .form-group select option { background: var(--surface); color: var(--text); }
+    .form-group textarea { resize: vertical; min-height: 140px; }
+    .form-submit { align-self: flex-start; }
+    .form-note { font-size: 13px; color: var(--text-muted); }
+
+    /* Success message */
+    .form-success { display: none; background: rgba(34, 197, 94, 0.1); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px; padding: 20px 24px; text-align: center; }
+    .form-success.show { display: block; }
+    .form-success h3 { color: #22C55E; font-size: 18px; margin-bottom: 4px; }
+    .form-success p { color: var(--text-secondary); font-size: 14px; }
+
+    @media (max-width: 640px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="nav scrolled">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo"><span class="logo-icon">5</span>tepTracker</a>
+      <div class="nav-links">
+        <a href="/#features">Features</a>
+        <a href="/#how-it-works">How It Works</a>
+        <a href="/support">Support</a>
+        <a href="/#download" class="nav-cta">Get the App</a>
+      </div>
+      <button class="nav-menu" id="navMenu" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="/#features">Features</a>
+      <a href="/#how-it-works">How It Works</a>
+      <a href="/support">Support</a>
+      <a href="/#download" class="nav-cta">Get the App</a>
+    </div>
+  </nav>
+
+  <div class="support">
+    <a href="/" class="back-link">&larr; Back to home</a>
+    <h1>Help & <span class="gradient-text">Support</span></h1>
+    <p class="support-sub">Find answers below or send us a message — we're here to help.</p>
+
+    <!-- FAQ Section -->
+    <div class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+
+      <div class="faq-categories">
+        <button class="faq-cat active" data-cat="all">All</button>
+        <button class="faq-cat" data-cat="account">Account</button>
+        <button class="faq-cat" data-cat="tracking">Tracking</button>
+        <button class="faq-cat" data-cat="social">Social</button>
+        <button class="faq-cat" data-cat="privacy">Privacy</button>
+      </div>
+
+      <div class="faq-list">
+        <div class="faq-item" data-cat="tracking">
+          <button class="faq-question">
+            Why are my step counts different from other apps?
+            <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">
+            5tepTracker uses Google Health Connect on Android and Apple HealthKit on iOS for accurate, ML-filtered step counting. Different apps may use different sensors or algorithms, so slight variations are normal. For the most accurate results, make sure Health Connect is installed and permissions are granted.
+          </div></div>
+        </div>
+
+        <div class="faq-item" data-cat="tracking">
+          <button class="faq-question">
+            How do I enable Health Connect?
+            <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">
+            On Android, Health Connect comes pre-installed on most devices running Android 14+. For older devices, install it from the Google Play Store. Open 5tepTracker, and it will prompt you to grant step, distance, and calorie permissions. You can manage these anytime in Settings > Apps > Health Connect.
+          </div></div>
+        </div>
+
+        <div class="faq-item" data-cat="tracking">
+          <button class="faq-question">
+            My steps aren't syncing. What should I do?
+            <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">
+            Make sure you have an internet connection and Health Connect permissions are granted. Try closing and reopening the app. Steps sync every 60 seconds when the app is open. If the issue persists, check that your device's battery optimization isn't killing the app in the background.
+          </div></div>
+        </div>
+
+        <div class="faq-item" data-cat="tracking">
+          <button class="faq-question">
+            How does GPS run tracking work?
+            <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">
+            Tap the start button on the Activity tab to begin tracking. The app uses your phone's GPS to record your route, pace, and distance in real time. For the best accuracy, make sure location permissions are set to "Allow all the time" and you have a clear view of the sky.
+          </div></div>
+        </div>
+
+        <div class="faq-item" data-cat="account">
+          <button class="faq-question">
+            How do I reset my password?
+            <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">
+            On the login screen, tap "Forgot password?" and enter your email. You'll receive a password reset link. Check your spam folder if you don't see it within a few minutes.
+          </div></div>
+        </div>
+
+        <div class="faq-item" data-cat="account">
+          <button class="faq-question">
+            How do I delete my account?
+            <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">
+            Go to Settings > Account > Delete Account. This permanently removes your account and all associated data including step history, activities, friends, and achievements. This action cannot be undone.
+          </div></div>
+        </div>
+
+        <div class="faq-item" data-cat="account">
+          <button class="faq-question">
+            What is two-factor authentication (MFA)?
+            <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">
+            MFA adds an extra layer of security to your account. After enabling it, you'll need to enter a 6-digit code from an authenticator app (like Google Authenticator) each time you log in. You can set this up in Settings > Security.
+          </div></div>
+        </div>
+
+        <div class="faq-item" data-cat="social">
+          <button class="faq-question">
+            How do I add friends?
+            <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">
+            Go to the Friends tab and tap the search icon. Search by username or display name. Send a friend request, and once they accept, you'll see each other's steps on the leaderboard and activity feed.
+          </div></div>
+        </div>
+
+        <div class="faq-item" data-cat="social">
+          <button class="faq-question">
+            Can other people see my GPS routes?
+            <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">
+            No. Your GPS routes and detailed location data are always private. Friends can only see your daily step count, XP level, and activity summaries (like distance and duration) — never your exact routes.
+          </div></div>
+        </div>
+
+        <div class="faq-item" data-cat="privacy">
+          <button class="faq-question">
+            What data do you collect and how is it stored?
+            <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">
+            We collect your email, display name, fitness data (steps, distance, calories), and GPS location during tracked activities. All data is stored securely using Supabase on AWS with row-level security. We never sell your data. Read our full <a href="/privacy" style="color: var(--primary-light);">Privacy Policy</a> for details.
+          </div></div>
+        </div>
+
+        <div class="faq-item" data-cat="privacy">
+          <button class="faq-question">
+            Can I export or download my data?
+            <svg class="faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="faq-answer"><div class="faq-answer-inner">
+            Yes. You can view all your data within the app. If you need a full export, contact us at support@5teptracker.com and we'll provide your data within a few business days.
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact Form -->
+    <div class="contact-section">
+      <h2>Still Need <span class="gradient-text">Help?</span></h2>
+      <p class="contact-sub">Send us a message and we'll get back to you as soon as possible.</p>
+
+      <div class="form-success" id="formSuccess">
+        <h3>Message Sent</h3>
+        <p>Thanks for reaching out. We'll get back to you within 24-48 hours.</p>
+      </div>
+
+      <form class="contact-form" id="contactForm" action="https://formsubmit.co/support@5teptracker.com" method="POST">
+        <!-- FormSubmit config -->
+        <input type="hidden" name="_subject" value="5tepTracker Support Request">
+        <input type="hidden" name="_captcha" value="false">
+        <input type="hidden" name="_template" value="table">
+        <input type="hidden" name="_next" id="formNext">
+        <input type="text" name="_honey" style="display:none">
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" placeholder="Your name" required>
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" placeholder="you@example.com" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="category">Category</label>
+          <select id="category" name="category" required>
+            <option value="" disabled selected>Select a topic</option>
+            <option value="Bug Report">Bug Report</option>
+            <option value="Account Issue">Account Issue</option>
+            <option value="Step Tracking">Step Tracking</option>
+            <option value="GPS / Activity Tracking">GPS / Activity Tracking</option>
+            <option value="Friends & Social">Friends & Social</option>
+            <option value="Feature Request">Feature Request</option>
+            <option value="Privacy & Data">Privacy & Data</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" placeholder="Describe your issue or question..." required></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg form-submit">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Send Message
+        </button>
+        <p class="form-note">We typically respond within 24-48 hours.</p>
+      </form>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a href="/" class="nav-logo"><span class="logo-icon">5</span>tepTracker</a>
+        <p>Level up your fitness, one step at a time.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4>App</h4>
+          <a href="/#features">Features</a>
+          <a href="/#how-it-works">How It Works</a>
+          <a href="/#download">Download</a>
+        </div>
+        <div class="footer-col">
+          <h4>Support</h4>
+          <a href="/support">Help & FAQ</a>
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/terms">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 5tepTracker. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile menu toggle
+    const menuBtn = document.getElementById('navMenu');
+    const mobileMenu = document.getElementById('mobileMenu');
+    if (menuBtn && mobileMenu) {
+      menuBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('open');
+        menuBtn.classList.toggle('open');
+      });
+      mobileMenu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          mobileMenu.classList.remove('open');
+          menuBtn.classList.remove('open');
+        });
+      });
+    }
+
+    // FAQ accordion
+    document.querySelectorAll('.faq-question').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = btn.parentElement;
+        const wasOpen = item.classList.contains('open');
+        // Close all
+        document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+        // Toggle clicked
+        if (!wasOpen) item.classList.add('open');
+      });
+    });
+
+    // FAQ category filter
+    document.querySelectorAll('.faq-cat').forEach(cat => {
+      cat.addEventListener('click', () => {
+        document.querySelectorAll('.faq-cat').forEach(c => c.classList.remove('active'));
+        cat.classList.add('active');
+        const filter = cat.dataset.cat;
+        document.querySelectorAll('.faq-item').forEach(item => {
+          if (filter === 'all' || item.dataset.cat === filter) {
+            item.style.display = '';
+          } else {
+            item.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    // Form: set _next to current page so user returns here after submit
+    const nextInput = document.getElementById('formNext');
+    if (nextInput) {
+      nextInput.value = window.location.href.split('?')[0] + '?sent=1';
+    }
+
+    // Show success message if redirected back after submit
+    if (window.location.search.includes('sent=1')) {
+      const form = document.getElementById('contactForm');
+      const success = document.getElementById('formSuccess');
+      if (form) form.style.display = 'none';
+      if (success) success.classList.add('show');
+      // Clean URL
+      history.replaceState(null, '', window.location.pathname);
+    }
+  </script>
+</body>
+</html>

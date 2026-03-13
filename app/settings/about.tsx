@@ -118,7 +118,7 @@ export default function AboutScreen() {
           </View>
         ))}
         <Text style={[styles.legalBody, { color: colors.textMuted }]}>
-          Contact: privacy@steptracker.app
+          Contact: support@5teptracker.com
         </Text>
       </CollapsibleSection>
 
@@ -132,7 +132,7 @@ export default function AboutScreen() {
           </View>
         ))}
         <Text style={[styles.legalBody, { color: colors.textMuted }]}>
-          Contact: support@steptracker.app
+          Contact: support@5teptracker.com
         </Text>
       </CollapsibleSection>
 
