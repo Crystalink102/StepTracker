@@ -133,33 +133,33 @@ export async function enrollMFA() {
     factorType: 'totp',
     friendlyName: '5tepTracker Authenticator',
   });
-  if (error) throw error;
+  if (error) throw friendlyAuthError(error);
   return data;
 }
 
 export async function verifyMFA(factorId: string, code: string) {
   const { data: challenge, error: challengeError } =
     await supabase.auth.mfa.challenge({ factorId });
-  if (challengeError) throw challengeError;
+  if (challengeError) throw friendlyAuthError(challengeError);
 
   const { data, error } = await supabase.auth.mfa.verify({
     factorId,
     challengeId: challenge.id,
     code,
   });
-  if (error) throw error;
+  if (error) throw friendlyAuthError(error);
   return data;
 }
 
 export async function getMFAFactors() {
   const { data, error } = await supabase.auth.mfa.listFactors();
-  if (error) throw error;
+  if (error) throw friendlyAuthError(error);
   return data;
 }
 
 export async function getAssuranceLevel() {
   const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-  if (error) throw error;
+  if (error) throw friendlyAuthError(error);
   return data;
 }
 
