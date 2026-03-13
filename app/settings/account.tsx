@@ -4,12 +4,12 @@ import { useAuth } from '@/src/context/AuthContext';
 import { useToast } from '@/src/hooks/useToast';
 import { Button, ConfirmModal } from '@/src/components/ui';
 import { deleteAccount } from '@/src/services/auth.service';
-import { Colors, FontSize, FontWeight, Spacing } from '@/src/constants/theme';
+import { FontSize, FontWeight, Spacing } from '@/src/constants/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
 export default function AccountScreen() {
   const { colors } = useTheme();
-  const { user, logout, hasMFA } = useAuth();
+  const { user, logout } = useAuth();
   const { showToast } = useToast();
 
   const [showLogout, setShowLogout] = useState(false);
@@ -62,12 +62,7 @@ export default function AccountScreen() {
         <Text style={[styles.sectionValue, { color: colors.textPrimary }]}>{user?.phone || 'Not set'}</Text>
       </View>
 
-      <View style={[styles.section, { borderBottomColor: colors.surface }]}>
-        <Text style={[styles.sectionTitle, { color: colors.textMuted }]}>2FA Status</Text>
-        <Text style={[styles.sectionValue, { color: hasMFA ? Colors.secondary : colors.textMuted }]}>
-          {hasMFA ? 'Enabled' : 'Disabled'}
-        </Text>
-      </View>
+
 
       <View style={styles.actions}>
         <Button title="Log Out" variant="ghost" onPress={handleLogout} />

@@ -81,4 +81,4 @@ GPS routes and detailed health data are NEVER shared.
 - **Location**: Only collected during active GPS tracking sessions (runs/walks). Never collected in background unless user explicitly enables background tracking for an active session.
 - **No ads**: App contains no advertising SDKs.
 - **No analytics SDKs**: No Firebase Analytics, Mixpanel, etc.
-- **Authentication**: Supabase Auth with optional TOTP MFA.
+- **Authentication**: Supabase Auth with email verification.

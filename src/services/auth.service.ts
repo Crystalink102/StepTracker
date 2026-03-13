@@ -126,44 +126,6 @@ export async function verifyOTP(
 }
 
 // ============================================================
-// MFA (TOTP)
-// ============================================================
-export async function enrollMFA() {
-  const { data, error } = await supabase.auth.mfa.enroll({
-    factorType: 'totp',
-    friendlyName: '5tepTracker Authenticator',
-  });
-  if (error) throw friendlyAuthError(error);
-  return data;
-}
-
-export async function verifyMFA(factorId: string, code: string) {
-  const { data: challenge, error: challengeError } =
-    await supabase.auth.mfa.challenge({ factorId });
-  if (challengeError) throw friendlyAuthError(challengeError);
-
-  const { data, error } = await supabase.auth.mfa.verify({
-    factorId,
-    challengeId: challenge.id,
-    code,
-  });
-  if (error) throw friendlyAuthError(error);
-  return data;
-}
-
-export async function getMFAFactors() {
-  const { data, error } = await supabase.auth.mfa.listFactors();
-  if (error) throw friendlyAuthError(error);
-  return data;
-}
-
-export async function getAssuranceLevel() {
-  const { data, error } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-  if (error) throw friendlyAuthError(error);
-  return data;
-}
-
-// ============================================================
 // Password Reset
 // ============================================================
 export async function resetPasswordForEmail(email: string) {

@@ -19,7 +19,7 @@ import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/const
 export default function LoginScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { loginEmail, loginPhone, hasMFA } = useAuth();
+  const { loginEmail, loginPhone } = useAuth();
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');

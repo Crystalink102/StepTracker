@@ -14,8 +14,6 @@ export default function AuthLayout() {
       <Stack.Screen name="sign-up" />
       <Stack.Screen name="forgot-password" />
       <Stack.Screen name="verify-otp" />
-      <Stack.Screen name="verify-mfa" />
-      <Stack.Screen name="setup-mfa" />
     </Stack>
   );
 }

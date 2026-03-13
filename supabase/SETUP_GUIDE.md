@@ -39,12 +39,7 @@
 4. Click "Create bucket"
 5. Now go back to **SQL Editor** and run the storage policies (the commented-out section at the bottom of migration.sql - uncomment them first)
 
-## Step 5: Enable MFA (TOTP)
-1. Go to **Authentication** (sidebar) > **Configuration** > **Multi-Factor Authentication**
-2. Toggle ON "Enable Multi-Factor Authentication"
-3. Make sure "TOTP" is enabled
-
-## Step 6: Configure Auth Settings
+## Step 5: Configure Auth Settings
 1. Still in **Authentication** > **Configuration** > **General**
 2. Set "Minimum password length" to 8
 3. Under **Email**, make sure "Enable Email Signup" is ON

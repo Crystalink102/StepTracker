@@ -17,8 +17,6 @@ type AuthState = {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  hasMFA: boolean;
-  mfaVerified: boolean;
 };
 
 type AuthActions = {
@@ -28,9 +26,6 @@ type AuthActions = {
   loginPhone: (phone: string, password: string) => Promise<void>;
   verifyOTP: (token: string, type: 'sms' | 'email', identifier: string) => Promise<void>;
   resendConfirmation: (type: 'email' | 'sms', identifier: string) => Promise<void>;
-  enrollMFA: () => Promise<{ qr: string; secret: string; factorId: string }>;
-  verifyMFA: (factorId: string, code: string) => Promise<void>;
-  getMFAFactors: () => Promise<any>;
   logout: () => Promise<void>;
 };
 
@@ -42,28 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [hasMFA, setHasMFA] = useState(false);
-  const [mfaVerified, setMfaVerified] = useState(false);
 
   const isAuthenticated = !!session && !!user;
-
-  // Check MFA status for the current session
-  const checkMFAStatus = useCallback(async () => {
-    try {
-      const { data: factors } = await supabase.auth.mfa.listFactors();
-      const verifiedFactors = factors?.totp?.filter((f) => f.status === 'verified') ?? [];
-      setHasMFA(verifiedFactors.length > 0);
-
-      if (verifiedFactors.length > 0) {
-        const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-        setMfaVerified(aal?.currentLevel === 'aal2');
-      } else {
-        setMfaVerified(false);
-      }
-    } catch {
-      // MFA check is best-effort
-    }
-  }, []);
 
   // Initialize auth state
   useEffect(() => {
@@ -94,7 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setSession(currentSession);
           setUser(currentSession?.user ?? null);
-          if (currentSession) await checkMFAStatus();
         }
       } catch (err) {
         console.warn('[Auth] Failed to get session:', err);
@@ -112,24 +86,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(newSession);
         setUser(newSession?.user ?? null);
         if (newSession) {
-          await checkMFAStatus();
-          // Track login location — if new location, force MFA re-verification
+          // Track login location
           if (event === 'SIGNED_IN' && newSession.user) {
             try {
-              const { isNewLocation } = await trackLoginLocation(
+              await trackLoginLocation(
                 newSession.user.id,
                 newSession.user.email ?? null
               );
-              if (isNewLocation) {
-                setMfaVerified(false);
-              }
             } catch {
               // Location tracking is best-effort
             }
           }
         } else {
-          setHasMFA(false);
-          setMfaVerified(false);
           // Clear offline queue on logout to prevent cross-user data leaks
           clearQueue().catch(() => {});
         }
@@ -137,7 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
 
     return () => subscription.unsubscribe();
-  }, [checkMFAStatus]);
+  }, []);
 
   const signUpEmail = useCallback(async (email: string, password: string) => {
     await AuthService.signUpWithEmail(email, password);
@@ -173,27 +141,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  const enrollMFA = useCallback(async () => {
-    const data = await AuthService.enrollMFA();
-    return {
-      qr: data.totp.qr_code,
-      secret: data.totp.secret,
-      factorId: data.id,
-    };
-  }, []);
-
-  const verifyMFA = useCallback(
-    async (factorId: string, code: string) => {
-      await AuthService.verifyMFA(factorId, code);
-      await checkMFAStatus();
-    },
-    [checkMFAStatus]
-  );
-
-  const getMFAFactorsAction = useCallback(async () => {
-    return AuthService.getMFAFactors();
-  }, []);
-
   const logout = useCallback(async () => {
     try {
       // Timeout signOut — it can hang on Expo Go with stale sessions
@@ -209,8 +156,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // which can fail to fire on Expo Go
       setSession(null);
       setUser(null);
-      setHasMFA(false);
-      setMfaVerified(false);
       clearQueue().catch(() => {});
     }
   }, []);
@@ -222,17 +167,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         isLoading,
         isAuthenticated,
-        hasMFA,
-        mfaVerified,
         signUpEmail,
         signUpPhone,
         loginEmail,
         loginPhone,
         verifyOTP,
         resendConfirmation,
-        enrollMFA,
-        verifyMFA,
-        getMFAFactors: getMFAFactorsAction,
         logout,
       }}
     >

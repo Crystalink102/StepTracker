@@ -35,7 +35,7 @@ Unlock badges for hitting milestones — step goals, streak records, challenge c
 View weekly summaries, training load, pace trends, and distance breakdowns. Track personal bests across standard distances from 100m to marathon.
 
 **SECURITY**
-Your account is protected with optional two-factor authentication (TOTP). Your data is stored securely with row-level security — only you can see your data, and only friends can see your steps.
+Your account is protected with email verification. Your data is stored securely with row-level security — only you can see your data, and only friends can see your steps.
 
 Download 5tepTracker and start leveling up today.
 

@@ -44,7 +44,7 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 function AuthGate() {
-  const { isAuthenticated, isLoading, hasMFA, mfaVerified } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
   const { profile, isLoading: profileLoading } = useProfile();
   const { colors, isDark } = useTheme();
   const segments = useSegments();
@@ -82,26 +82,17 @@ function AuthGate() {
 
     const inAuthGroup = segments[0] === '(auth)';
     const inOnboarding = segments[0] === '(onboarding)';
-    const needsMFAVerification = isAuthenticated && hasMFA && !mfaVerified;
-    const onMFAScreen = inAuthGroup && segments[1] === 'verify-mfa';
-    // On native, force MFA setup for users who haven't enrolled (except "cxshfo")
-    const needsMFASetup = Platform.OS !== 'web' && isAuthenticated && !hasMFA && profile?.username !== 'cxshfo';
-    const onMFASetupScreen = inAuthGroup && segments[1] === 'setup-mfa';
     const needsOnboarding = isAuthenticated && profile && profile.height_cm === null;
 
     let target: string | null = null;
 
     if (!isAuthenticated && !inAuthGroup) {
       target = '/(auth)/login';
-    } else if (needsMFAVerification && !onMFAScreen) {
-      target = '/(auth)/verify-mfa';
-    } else if (needsMFASetup && !onMFASetupScreen) {
-      target = '/(auth)/setup-mfa';
-    } else if (isAuthenticated && !needsMFAVerification && !needsMFASetup && inAuthGroup) {
+    } else if (isAuthenticated && inAuthGroup) {
       target = needsOnboarding ? '/(onboarding)/welcome' : '/(tabs)';
-    } else if (needsOnboarding && !inOnboarding && !needsMFAVerification && !needsMFASetup) {
+    } else if (needsOnboarding && !inOnboarding) {
       target = '/(onboarding)/welcome';
-    } else if (isAuthenticated && inOnboarding && !needsOnboarding && !needsMFAVerification && !needsMFASetup) {
+    } else if (isAuthenticated && inOnboarding && !needsOnboarding) {
       target = '/(tabs)';
     }
 
@@ -114,7 +105,7 @@ function AuthGate() {
     }
 
     return () => { if (navTimeoutRef.current) clearTimeout(navTimeoutRef.current); };
-  }, [isAuthenticated, isLoading, authReady, profile, profileGaveUp, hasMFA, mfaVerified, segments, router, stackMounted]);
+  }, [isAuthenticated, isLoading, authReady, profile, profileGaveUp, segments, router, stackMounted]);
 
   if (!authReady) {
     return (

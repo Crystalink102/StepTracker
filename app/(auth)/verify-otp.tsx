@@ -51,8 +51,8 @@ export default function VerifyOTPScreen() {
           // Non-critical — user can set username later in profile setup
         }
       }
-      // After OTP verification, send to MFA setup (required for all accounts)
-      router.replace('/(auth)/setup-mfa');
+      // OTP verified — AuthGate will route to onboarding or main app
+      router.replace('/(tabs)' as any);
     } catch (err: any) {
       showAlert('Verification Failed', err.message || 'Invalid code. Try again.');
     } finally {
