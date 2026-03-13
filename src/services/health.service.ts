@@ -23,33 +23,30 @@ async function initHealthConnect(): Promise<boolean> {
     const ok = await HC.initialize();
     if (!ok) return false;
 
-    // Wait for the activity's permission launcher to be registered.
-    // The native HealthConnectPermissionDelegate uses a lateinit property
-    // that isn't ready until the activity is fully initialized.
-    await new Promise((r) => setTimeout(r, 1500));
+    // Don't call requestPermission() on init — the native permission delegate
+    // uses a lateinit property that crashes the entire process if called before
+    // the activity is fully ready. Instead, just try to read data directly.
+    // If permissions are already granted, this will succeed.
+    // If not, it'll fail gracefully and we fall back to pedometer.
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setHours(0, 0, 0, 0);
 
-    let granted;
-    try {
-      granted = await HC.requestPermission([
-        { accessType: 'read', recordType: 'Steps' },
-      ]);
-    } catch (permErr: any) {
-      // If the permission delegate isn't ready, fall back gracefully
-      if (permErr?.message?.includes('lateinit') || permErr?.message?.includes('requestPermission')) {
-        console.warn('[Health] Permission delegate not ready, will retry later');
-        return false;
-      }
-      throw permErr;
+    const { records } = await HC.readRecords('Steps', {
+      timeRangeFilter: {
+        operator: 'between',
+        startTime: midnight.toISOString(),
+        endTime: now.toISOString(),
+      },
+    });
+
+    // If we can read records, permissions are already granted
+    if (records !== undefined) {
+      healthConnectInitialized = true;
+      return true;
     }
 
-    // Check that Steps read permission was actually granted
-    const hasSteps = granted.some(
-      (p: any) => p.recordType === 'Steps' && p.accessType === 'read'
-    );
-    if (!hasSteps) return false;
-
-    healthConnectInitialized = true;
-    return true;
+    return false;
   } catch (err) {
     console.warn('[Health] Health Connect not available:', err);
     return false;
