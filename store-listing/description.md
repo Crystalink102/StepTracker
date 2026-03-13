@@ -53,4 +53,4 @@ Health & Fitness
 support@5teptracker.com
 
 ## Privacy Policy URL
-[YOUR_VERCEL_DOMAIN]/privacy
+https://5teptracker.com/privacy
