@@ -155,6 +155,34 @@ export default function DateScrollPicker({
   const currentYear = new Date().getFullYear();
   const effectiveMaxYear = maxYear ?? currentYear;
 
+  // All hooks must be declared before any early return (Rules of Hooks)
+  const [modalVisible, setModalVisible] = useState(false);
+  const [tempMonth, setTempMonth] = useState(0);
+  const [tempDay, setTempDay] = useState(0);
+  const [tempYear, setTempYear] = useState(0);
+
+  const years = useMemo(() => {
+    const arr: string[] = [];
+    for (let y = minYear; y <= effectiveMaxYear; y++) arr.push(String(y));
+    return arr;
+  }, [minYear, effectiveMaxYear]);
+
+  const maxDays = useMemo(() => {
+    const month = tempMonth + 1;
+    const year = minYear + tempYear;
+    return daysInMonth(month, year);
+  }, [tempMonth, tempYear, minYear]);
+
+  const days = useMemo(
+    () => Array.from({ length: maxDays }, (_, i) => String(i + 1)),
+    [maxDays],
+  );
+
+  // Clamp day when month/year change reduces available days
+  useEffect(() => {
+    if (tempDay >= maxDays) setTempDay(maxDays - 1);
+  }, [maxDays, tempDay]);
+
   // ─── Web: use native HTML date input ─────────────────────────
   if (Platform.OS === 'web') {
     const minDate = `${minYear}-01-01`;
@@ -213,33 +241,6 @@ export default function DateScrollPicker({
   }
 
   // ─── Mobile: scroll wheel picker ─────────────────────────────
-
-  const [modalVisible, setModalVisible] = useState(false);
-  const [tempMonth, setTempMonth] = useState(0);
-  const [tempDay, setTempDay] = useState(0);
-  const [tempYear, setTempYear] = useState(0);
-
-  const years = useMemo(() => {
-    const arr: string[] = [];
-    for (let y = minYear; y <= effectiveMaxYear; y++) arr.push(String(y));
-    return arr;
-  }, [minYear, effectiveMaxYear]);
-
-  const maxDays = useMemo(() => {
-    const month = tempMonth + 1;
-    const year = minYear + tempYear;
-    return daysInMonth(month, year);
-  }, [tempMonth, tempYear, minYear]);
-
-  const days = useMemo(
-    () => Array.from({ length: maxDays }, (_, i) => String(i + 1)),
-    [maxDays],
-  );
-
-  // Clamp day when month/year change reduces available days
-  useEffect(() => {
-    if (tempDay >= maxDays) setTempDay(maxDays - 1);
-  }, [maxDays, tempDay]);
 
   const openPicker = () => {
     if (value && /^\d{4}-\d{2}-\d{2}$/.test(value)) {

@@ -201,7 +201,7 @@ export default function ActivityScreen() {
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: colors.background }]} edges={['top']}>
-      {isActive && <LapBanner lap={latestLap} />}
+      {isActive && <LapBanner lap={latestLap} distanceUnit={preferences.distanceUnit} />}
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}

@@ -6,9 +6,10 @@ import type { Lap } from '@/src/context/ActivityContext';
 
 type Props = {
   lap: Lap | null;
+  distanceUnit?: string;
 };
 
-export default function LapBanner({ lap }: Props) {
+export default function LapBanner({ lap, distanceUnit = 'km' }: Props) {
   const { colors } = useTheme();
   const slideAnim = useRef(new Animated.Value(-80)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
@@ -68,9 +69,13 @@ export default function LapBanner({ lap }: Props) {
 
   if (!displayedLap) return null;
 
-  const paceMin = Math.floor(displayedLap.paceSecPerKm / 60);
-  const paceSec = Math.round(displayedLap.paceSecPerKm % 60);
-  const paceText = `${paceMin}:${paceSec.toString().padStart(2, '0')}/km`;
+  const KM_PER_MILE = 1.60934;
+  const rawPace = distanceUnit === 'mi'
+    ? displayedLap.paceSecPerKm * KM_PER_MILE
+    : displayedLap.paceSecPerKm;
+  const paceMin = Math.floor(rawPace / 60);
+  const paceSec = Math.round(rawPace % 60);
+  const paceText = `${paceMin}:${paceSec.toString().padStart(2, '0')}/${distanceUnit === 'mi' ? 'mi' : 'km'}`;
 
   return (
     <Animated.View
