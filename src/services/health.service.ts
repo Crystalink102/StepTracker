@@ -27,7 +27,11 @@ async function initHealthConnect(): Promise<boolean> {
     const midnight = new Date(now);
     midnight.setHours(0, 0, 0, 0);
 
-    // Try reading directly first — works if permissions already granted
+    // Only try to read records — if permissions are already granted this works.
+    // NEVER call requestPermission() here — the native HealthConnectPermissionDelegate
+    // crashes with "lateinit property requestPermission has not been initialized"
+    // because the Activity hasn't registered the permission launcher yet.
+    // Users grant permissions via Health Connect app settings instead.
     try {
       const { records } = await HC.readRecords('Steps', {
         timeRangeFilter: {
@@ -42,35 +46,7 @@ async function initHealthConnect(): Promise<boolean> {
         return true;
       }
     } catch {
-      // Permissions not granted yet — request them below
-    }
-
-    // Request permissions — wrapped in try-catch because the native
-    // permission delegate can crash on some devices if the activity
-    // isn't fully ready. A short delay helps avoid the lateinit crash.
-    try {
-      await new Promise((r) => setTimeout(r, 500));
-      await HC.requestPermission([
-        { accessType: 'read', recordType: 'Steps' },
-        { accessType: 'read', recordType: 'Distance' },
-        { accessType: 'read', recordType: 'TotalCaloriesBurned' },
-      ]);
-
-      // Verify permissions were actually granted by trying to read
-      const { records } = await HC.readRecords('Steps', {
-        timeRangeFilter: {
-          operator: 'between',
-          startTime: midnight.toISOString(),
-          endTime: now.toISOString(),
-        },
-      });
-
-      if (records !== undefined) {
-        healthConnectInitialized = true;
-        return true;
-      }
-    } catch (permErr) {
-      console.warn('[Health] Health Connect permission request failed:', permErr);
+      console.warn('[Health] Health Connect read failed — permissions not granted yet');
     }
 
     return false;
