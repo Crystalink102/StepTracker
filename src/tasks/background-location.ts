@@ -110,7 +110,26 @@ export async function startBackgroundLocation() {
   }
 
   const { status: bg } = await Location.requestBackgroundPermissionsAsync();
-  if (bg !== 'granted') throw new Error('Background location permission denied');
+  if (bg !== 'granted') {
+    // User chose "Only while using the app" — fall back to foreground-only GPS.
+    // GPS will work while app is open but stop when backgrounded.
+    console.warn('[BackgroundLocation] Background permission denied, using foreground-only tracking');
+    if (foregroundSub) {
+      try { foregroundSub.remove(); } catch { /* cleanup */ }
+      foregroundSub = null;
+    }
+    foregroundSub = await Location.watchPositionAsync(
+      {
+        accuracy: Location.Accuracy.BestForNavigation,
+        timeInterval: 1000,
+        distanceInterval: 0,
+      },
+      (loc) => {
+        if (globalLocationCallback) globalLocationCallback(loc);
+      }
+    );
+    return;
+  }
 
   const isTracking = await Location.hasStartedLocationUpdatesAsync(
     BACKGROUND_LOCATION_TASK

@@ -23,27 +23,54 @@ async function initHealthConnect(): Promise<boolean> {
     const ok = await HC.initialize();
     if (!ok) return false;
 
-    // Don't call requestPermission() on init — the native permission delegate
-    // uses a lateinit property that crashes the entire process if called before
-    // the activity is fully ready. Instead, just try to read data directly.
-    // If permissions are already granted, this will succeed.
-    // If not, it'll fail gracefully and we fall back to pedometer.
     const now = new Date();
     const midnight = new Date(now);
     midnight.setHours(0, 0, 0, 0);
 
-    const { records } = await HC.readRecords('Steps', {
-      timeRangeFilter: {
-        operator: 'between',
-        startTime: midnight.toISOString(),
-        endTime: now.toISOString(),
-      },
-    });
+    // Try reading directly first — works if permissions already granted
+    try {
+      const { records } = await HC.readRecords('Steps', {
+        timeRangeFilter: {
+          operator: 'between',
+          startTime: midnight.toISOString(),
+          endTime: now.toISOString(),
+        },
+      });
 
-    // If we can read records, permissions are already granted
-    if (records !== undefined) {
-      healthConnectInitialized = true;
-      return true;
+      if (records !== undefined) {
+        healthConnectInitialized = true;
+        return true;
+      }
+    } catch {
+      // Permissions not granted yet — request them below
+    }
+
+    // Request permissions — wrapped in try-catch because the native
+    // permission delegate can crash on some devices if the activity
+    // isn't fully ready. A short delay helps avoid the lateinit crash.
+    try {
+      await new Promise((r) => setTimeout(r, 500));
+      await HC.requestPermission([
+        { accessType: 'read', recordType: 'Steps' },
+        { accessType: 'read', recordType: 'Distance' },
+        { accessType: 'read', recordType: 'TotalCaloriesBurned' },
+      ]);
+
+      // Verify permissions were actually granted by trying to read
+      const { records } = await HC.readRecords('Steps', {
+        timeRangeFilter: {
+          operator: 'between',
+          startTime: midnight.toISOString(),
+          endTime: now.toISOString(),
+        },
+      });
+
+      if (records !== undefined) {
+        healthConnectInitialized = true;
+        return true;
+      }
+    } catch (permErr) {
+      console.warn('[Health] Health Connect permission request failed:', permErr);
     }
 
     return false;

@@ -2,6 +2,7 @@
   "buildCommand": "rm -rf dist && mkdir -p dist && cp -r website/. dist/",
   "outputDirectory": "dist",
   "routes": [
+    { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/privacy", "dest": "/privacy.html" },
     { "src": "/terms", "dest": "/terms.html" },
     { "src": "/support", "dest": "/support.html" },

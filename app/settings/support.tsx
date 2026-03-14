@@ -66,21 +66,18 @@ export default function SupportScreen() {
         message.trim(),
       ].join('\n');
 
-      // Try FormSubmit API first (stays in-app)
-      const res = await fetch('https://formsubmit.co/ajax/support@5teptracker.com', {
+      // Send via Vercel API route (uses Resend to email support)
+      const res = await fetch('https://5teptracker.com/api/support', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Accept: 'application/json',
         },
         body: JSON.stringify({
-          _subject: subject,
-          _template: 'table',
-          Category: selectedLabel,
-          Username: username,
-          Email: email,
-          Platform: Platform.OS,
-          Message: message.trim(),
+          category: selectedLabel,
+          username,
+          email,
+          platform: Platform.OS,
+          message: message.trim(),
         }),
       });
 
