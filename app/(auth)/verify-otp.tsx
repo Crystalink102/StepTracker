@@ -51,8 +51,7 @@ export default function VerifyOTPScreen() {
           // Non-critical — user can set username later in profile setup
         }
       }
-      // OTP verified — AuthGate will route to onboarding or main app
-      router.replace('/(tabs)' as any);
+      // OTP verified — AuthGate handles routing to onboarding or main app
     } catch (err: any) {
       showAlert('Verification Failed', err.message || 'Invalid code. Try again.');
     } finally {

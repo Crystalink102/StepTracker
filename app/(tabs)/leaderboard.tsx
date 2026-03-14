@@ -1,6 +1,6 @@
 export { ErrorBoundary } from '@/src/components/ui/TabErrorBoundary';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { View, Text, FlatList, StyleSheet, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/src/context/AuthContext';
@@ -26,6 +26,13 @@ export default function LeaderboardScreen() {
     isLoading,
     refresh,
   } = useLeaderboard();
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    try { await refresh(); } catch { /* handled internally */ }
+    finally { setRefreshing(false); }
+  }, [refresh]);
 
   const topThree = useMemo(() => entries.slice(0, 3), [entries]);
   const rest = useMemo(() => entries.slice(3), [entries]);
@@ -70,8 +77,8 @@ export default function LeaderboardScreen() {
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
-            refreshing={isLoading}
-            onRefresh={refresh}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
             tintColor={Colors.primary}
           />
         }

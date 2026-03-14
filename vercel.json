@@ -1,6 +1,9 @@
 {
   "buildCommand": "rm -rf dist && mkdir -p dist && cp -r website/. dist/",
   "outputDirectory": "dist",
+  "crons": [
+    { "path": "/api/keepalive", "schedule": "0 8 * * *" }
+  ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },
     { "src": "/privacy", "dest": "/privacy.html" },

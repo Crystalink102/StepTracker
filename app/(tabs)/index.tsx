@@ -1,13 +1,15 @@
 export { ErrorBoundary } from '@/src/components/ui/TabErrorBoundary';
 
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { ScrollView, View, Text, StyleSheet, RefreshControl, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { ScrollView, View, Text, StyleSheet, RefreshControl, ActivityIndicator, TouchableOpacity, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 import XPCard from '@/src/components/home/XPCard';
 import StepGoalRing from '@/src/components/home/StepGoalRing';
 import StepCounter from '@/src/components/home/StepCounter';
+import LastRunCard from '@/src/components/home/LastRunCard';
 import StreakCard from '@/src/components/home/StreakCard';
 import RunningStreakCard from '@/src/components/home/RunningStreakCard';
 import WeeklyDistanceCard from '@/src/components/home/WeeklyDistanceCard';
@@ -65,6 +67,8 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [weekActivities, setWeekActivities] = useState<Activity[]>([]);
   const [quickStarting, setQuickStarting] = useState(false);
+  const [hasBackgroundLocation, setHasBackgroundLocation] = useState(true); // default to showing steps
+  const [lastRun, setLastRun] = useState<Activity | null>(null);
 
   const handleQuickStart = useCallback(async (type: 'run' | 'walk') => {
     if (quickStarting || isActive) return;
@@ -80,6 +84,37 @@ export default function HomeScreen() {
       setQuickStarting(false);
     }
   }, [startActivity, isActive, quickStarting, preferences.hapticFeedback, showToast, router]);
+
+  // Check background location permission to decide home screen layout
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      setHasBackgroundLocation(true); // web always shows steps
+      return;
+    }
+    (async () => {
+      try {
+        const { status } = await Location.getBackgroundPermissionsAsync();
+        setHasBackgroundLocation(status === 'granted');
+      } catch {
+        setHasBackgroundLocation(true); // default to steps on error
+      }
+    })();
+  }, []);
+
+  // Load most recent completed run/walk when not using background location
+  const loadLastRun = useCallback(async () => {
+    if (!user || hasBackgroundLocation) return;
+    try {
+      const history = await ActivityService.getActivityHistory(user.id, 1);
+      setLastRun(history.length > 0 ? history[0] : null);
+    } catch {
+      // silently fail
+    }
+  }, [user, hasBackgroundLocation]);
+
+  useEffect(() => {
+    loadLastRun();
+  }, [loadLastRun]);
 
   // Load activities for this week
   const loadWeekActivities = useCallback(async () => {
@@ -110,13 +145,14 @@ export default function HomeScreen() {
         refreshProfile(),
         refreshAchievements(),
         loadWeekActivities(),
+        loadLastRun(),
       ]);
     } catch {
       // Swallow errors — individual hooks handle their own
     } finally {
       setRefreshing(false);
     }
-  }, [refreshXP, refreshProfile, refreshAchievements, loadWeekActivities]);
+  }, [refreshXP, refreshProfile, refreshAchievements, loadWeekActivities, loadLastRun]);
 
   // Celebrate level-ups
   useEffect(() => {
@@ -145,8 +181,18 @@ export default function HomeScreen() {
         }
       >
         <XPCard />
-        <StepGoalRing />
-        <StepCounter />
+        {hasBackgroundLocation ? (
+          <>
+            <StepGoalRing />
+            <StepCounter />
+          </>
+        ) : (
+          <LastRunCard
+            activity={lastRun}
+            distanceUnit={preferences.distanceUnit}
+            onStartRun={() => handleQuickStart('run')}
+          />
+        )}
 
         {/* Quick Start Card */}
         {!isActive && (

@@ -204,6 +204,84 @@ async function getStepsFromPedometer(midnight: Date): Promise<number | null> {
   }
 }
 
+// ── Data Sources ────────────────────────────────────────────────────────
+
+export type HealthDataSource = {
+  packageName: string;
+  appName: string;
+  deviceModel?: string;
+  deviceManufacturer?: string;
+  isWatch: boolean;
+};
+
+const KNOWN_APPS: Record<string, string> = {
+  'com.sec.android.app.shealth': 'Samsung Health',
+  'com.samsung.android.wear.shealth': 'Samsung Health (Watch)',
+  'com.google.android.apps.fitness': 'Google Fit',
+  'com.google.android.gms.health': 'Google Health Services',
+  'com.fitbit.FitbitMobile': 'Fitbit',
+  'com.garmin.android.apps.connectmobile': 'Garmin Connect',
+  'com.xiaomi.wearable': 'Xiaomi Wear',
+  'com.huawei.health': 'Huawei Health',
+  'com.polar.flow': 'Polar Flow',
+  'com.strava': 'Strava',
+  'com.withings.wiscale2': 'Withings',
+};
+
+function friendlyAppName(pkg: string): string {
+  return KNOWN_APPS[pkg] || pkg.split('.').pop() || pkg;
+}
+
+/**
+ * Get the list of apps/devices that have contributed step data today.
+ * Only works on Android with Health Connect.
+ */
+export async function getStepDataSources(): Promise<HealthDataSource[]> {
+  if (Platform.OS !== 'android' || !healthConnectInitialized) return [];
+
+  try {
+    const HC = await import('react-native-health-connect');
+    const midnight = getMidnightCT();
+    const { records } = await HC.readRecords('Steps', {
+      timeRangeFilter: {
+        operator: 'between',
+        startTime: midnight.toISOString(),
+        endTime: new Date().toISOString(),
+      },
+    });
+
+    const seen = new Set<string>();
+    const sources: HealthDataSource[] = [];
+
+    for (const r of records ?? []) {
+      const meta = (r as any).metadata;
+      if (!meta?.dataOrigin) continue;
+      const pkg = meta.dataOrigin;
+      if (seen.has(pkg)) continue;
+      seen.add(pkg);
+
+      const device = meta.device;
+      const deviceType = device?.type;
+      sources.push({
+        packageName: pkg,
+        appName: friendlyAppName(pkg),
+        deviceModel: device?.model,
+        deviceManufacturer: device?.manufacturer,
+        isWatch: deviceType === 1 || // TYPE_WATCH
+          deviceType === 5 || // TYPE_FITNESS_BAND
+          pkg.includes('wear') ||
+          pkg.includes('watch') ||
+          pkg.includes('wearable'),
+      });
+    }
+
+    return sources;
+  } catch (err) {
+    console.warn('[Health] Failed to read data sources:', err);
+    return [];
+  }
+}
+
 // ── Public API ──────────────────────────────────────────────────────────
 
 /**

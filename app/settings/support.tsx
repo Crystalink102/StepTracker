@@ -196,7 +196,7 @@ export default function SupportScreen() {
       <TouchableOpacity
         style={[styles.submitBtn, (!selected || message.trim().length < 10 || sending) && styles.submitDisabled]}
         onPress={handleSubmit}
-        disabled={sending}
+        disabled={!selected || message.trim().length < 10 || sending}
         activeOpacity={0.8}
       >
         {sending ? (

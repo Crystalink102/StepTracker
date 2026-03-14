@@ -101,6 +101,7 @@ export default function ProfileScreen() {
     { label: 'Edit Profile', route: '/settings/edit-profile' as const },
     { label: 'Personal Info', route: '/settings/personal-info' as const },
     { label: 'Gear & Shoes', route: '/settings/gear' as const },
+    { label: 'Watches & Wearables', route: '/settings/wearables' as const },
     { label: 'Training Paces', route: '/settings/training-paces' as const },
     { label: 'Preferences', route: '/settings/preferences' as const },
     { label: 'Account', route: '/settings/account' as const },
@@ -177,7 +178,7 @@ export default function ProfileScreen() {
             <TouchableOpacity
               key={item.route}
               style={[styles.settingsItem, { backgroundColor: colors.surface }]}
-              onPress={() => router.push(item.route)}
+              onPress={() => router.push(item.route as any)}
             >
               <Text style={[styles.settingsLabel, { color: colors.textPrimary }]}>{item.label}</Text>
               <Text style={[styles.arrow, { color: colors.textMuted }]}>›</Text>

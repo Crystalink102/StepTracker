@@ -34,6 +34,7 @@ export default function SettingsLayout() {
       <Stack.Screen name="gear" options={{ title: 'Gear' }} />
       <Stack.Screen name="training-paces" options={{ title: 'Training Paces' }} />
       <Stack.Screen name="race-predictor" options={{ title: 'Race Predictor' }} />
+      <Stack.Screen name="wearables" options={{ title: 'Watches & Wearables' }} />
       <Stack.Screen name="support" options={{ title: 'Support' }} />
       <Stack.Screen name="about" options={{ title: 'About' }} />
     </Stack>

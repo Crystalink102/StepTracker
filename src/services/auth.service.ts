@@ -52,6 +52,11 @@ export async function signUpWithEmail(email: string, password: string) {
     },
   });
   if (error) throw friendlyAuthError(error);
+  // Supabase returns a fake user with no identities when email is already taken
+  // (to prevent email enumeration). Detect this and show a helpful message.
+  if (data.user && data.user.identities && data.user.identities.length === 0) {
+    throw new Error('An account with this email already exists. Try logging in instead.');
+  }
   return data;
 }
 

@@ -45,7 +45,7 @@ export default function AccountScreen() {
       await logout();
     } catch (err: any) {
       showToast('Failed to delete account', 'error');
-      setErrorMessage(err.message);
+      setErrorMessage(err?.message || 'Something went wrong. Please try again.');
       setShowError(true);
     }
   };

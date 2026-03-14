@@ -124,7 +124,7 @@ export async function scheduleStreakReminder(currentStreak: number): Promise<voi
     trigger: {
       type: notif.SchedulableTriggerInputTypes.DAILY,
       hour: 20,
-      minute: 0,
+      minute: 30,
     },
   });
 }

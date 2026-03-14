@@ -303,10 +303,18 @@ export async function updateProgress(
   progress: number
 ): Promise<boolean> {
   try {
+    // Check target first to determine completed status in a single update
+    const { data: challenge } = await challenges()
+      .select('target_value')
+      .eq('id', challengeId)
+      .maybeSingle();
+
+    const isCompleted = challenge ? progress >= (challenge as any).target_value : false;
+
     const { error } = await participants()
       .update({
         current_progress: progress,
-        completed: false,
+        completed: isCompleted,
       })
       .eq('challenge_id', challengeId)
       .eq('user_id', userId);
@@ -314,19 +322,6 @@ export async function updateProgress(
     if (error) {
       console.warn('[Challenge] updateProgress failed:', error.message);
       return false;
-    }
-
-    // Check if this participant hit the target
-    const { data: challenge } = await challenges()
-      .select('target_value')
-      .eq('id', challengeId)
-      .single();
-
-    if (challenge && progress >= (challenge as any).target_value) {
-      await participants()
-        .update({ completed: true })
-        .eq('challenge_id', challengeId)
-        .eq('user_id', userId);
     }
 
     return true;

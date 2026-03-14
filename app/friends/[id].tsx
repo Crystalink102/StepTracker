@@ -109,7 +109,7 @@ export default function FriendProfileScreen() {
             `and(requester_id.eq.${user!.id},addressee_id.eq.${id}),and(requester_id.eq.${id},addressee_id.eq.${user!.id})`
           )
           .limit(1)
-          .single();
+          .maybeSingle();
 
         if (cancelled) return;
 

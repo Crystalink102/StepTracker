@@ -183,9 +183,8 @@ export async function getActiveActivity(userId: string) {
     .in('status', ['active', 'paused'])
     .order('started_at', { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
-  if (error && error.code === 'PGRST116') return null; // No active activity
   if (error) throw error;
   return data;
 }
@@ -362,9 +361,8 @@ export async function getDefaultGear(userId: string): Promise<Gear | null> {
     .eq('is_default', true)
     .eq('is_retired', false)
     .limit(1)
-    .single();
+    .maybeSingle();
 
-  if (error && error.code === 'PGRST116') return null;
   if (error) throw error;
   return data;
 }

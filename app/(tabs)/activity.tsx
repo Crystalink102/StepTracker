@@ -163,13 +163,21 @@ export default function ActivityScreen() {
 
   const handlePause = useCallback(async () => {
     playButtonPress(preferences.hapticFeedback);
-    await pauseActivity();
-  }, [pauseActivity, preferences.hapticFeedback]);
+    try {
+      await pauseActivity();
+    } catch (err: any) {
+      showToast(err.message || 'Failed to pause', 'error');
+    }
+  }, [pauseActivity, preferences.hapticFeedback, showToast]);
 
   const handleResume = useCallback(async () => {
     playButtonPress(preferences.hapticFeedback);
-    await resumeActivity();
-  }, [resumeActivity, preferences.hapticFeedback]);
+    try {
+      await resumeActivity();
+    } catch (err: any) {
+      showToast(err.message || 'Failed to resume', 'error');
+    }
+  }, [resumeActivity, preferences.hapticFeedback, showToast]);
 
   const handleHeartRateChange = useCallback(
     (hr: number | undefined, source: 'manual' | 'auto') => {

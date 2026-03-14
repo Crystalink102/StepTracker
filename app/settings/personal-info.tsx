@@ -87,11 +87,15 @@ export default function PersonalInfoScreen() {
 
       if (heightValue) {
         const val = parseFloat(heightValue);
-        heightCm = heightUnit === 'ft' ? Math.round(val * CM_PER_INCH) : val;
+        if (!isNaN(val) && val > 0) {
+          heightCm = heightUnit === 'ft' ? Math.round(val * CM_PER_INCH) : val;
+        }
       }
       if (weightValue) {
         const val = parseFloat(weightValue);
-        weightKg = weightUnit === 'lb' ? Math.round(val * KG_PER_LB * 10) / 10 : val;
+        if (!isNaN(val) && val > 0) {
+          weightKg = weightUnit === 'lb' ? Math.round(val * KG_PER_LB * 10) / 10 : val;
+        }
       }
 
       let weeklyGoalMeters: number = 0;
