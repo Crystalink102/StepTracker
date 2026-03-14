@@ -100,17 +100,44 @@ export async function removeFriend(friendshipId: string): Promise<void> {
 export async function getPendingRequests(userId: string): Promise<
   (Friendship & { requester: { username: string; display_name: string | null; avatar_url: string | null } })[]
 > {
-  const { data, error } = await supabase
+  // Fetch pending friendships first
+  const { data: friendships, error } = await supabase
     .from('friendships')
-    .select('*, requester:profiles!friendships_requester_id_fkey(username, display_name, avatar_url)')
+    .select('*')
     .eq('addressee_id', userId)
-    .eq('status', 'pending');
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
 
   if (error) {
     console.warn('[Social] getPendingRequests failed:', error.message);
     return [];
   }
-  return (data ?? []) as unknown as (Friendship & { requester: { username: string; display_name: string | null; avatar_url: string | null } })[];
+  if (!friendships || friendships.length === 0) return [];
+
+  // Fetch requester profiles separately (FK points to auth.users, not profiles)
+  const requesterIds = friendships.map((f) => f.requester_id);
+  const { data: profiles, error: profileError } = await supabase
+    .from('profiles')
+    .select('id, username, display_name, avatar_url')
+    .in('id', requesterIds);
+
+  if (profileError) {
+    console.warn('[Social] getPendingRequests profiles failed:', profileError.message);
+    return [];
+  }
+
+  const profileMap = new Map(
+    (profiles ?? []).map((p) => [p.id, p])
+  );
+
+  return friendships.map((f) => ({
+    ...f,
+    requester: {
+      username: profileMap.get(f.requester_id)?.username ?? '',
+      display_name: profileMap.get(f.requester_id)?.display_name ?? null,
+      avatar_url: profileMap.get(f.requester_id)?.avatar_url ?? null,
+    },
+  })) as (Friendship & { requester: { username: string; display_name: string | null; avatar_url: string | null } })[];
 }
 
 export async function getPendingCount(userId: string): Promise<number> {
