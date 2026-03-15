@@ -424,6 +424,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
         distance_meters: distanceMeters,
       });
     } catch (err) {
+      pausedAtMsRef.current = null;
       setIsPaused(false);
       throw err;
     }

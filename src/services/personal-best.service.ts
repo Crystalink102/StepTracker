@@ -62,7 +62,7 @@ function segmentTimeFromWaypoints(
       const segmentTime = currTime - prevTime;
 
       // How far into this segment did we hit the target?
-      const ratio = segmentDist > 0 ? (segmentDist - overshoot) / segmentDist : 1;
+      const ratio = segmentDist > 0 ? Math.max(0, Math.min(1, (segmentDist - overshoot) / segmentDist)) : 1;
       const hitTime = prevTime + segmentTime * ratio;
 
       return Math.round((hitTime - startTime) / 1000);

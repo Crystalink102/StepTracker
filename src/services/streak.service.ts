@@ -30,13 +30,13 @@ function getDateString(date: Date): string {
 
 /**
  * Get yesterday's date in Central Time.
- * Uses CT-aware arithmetic instead of subtracting 24h (DST-safe).
+ * Uses date arithmetic (setDate) instead of subtracting 24h so DST
+ * transitions (23h or 25h days) don't shift to the wrong date.
  */
 function getYesterday(): string {
-  // Subtract one day using a timestamp, then format in Central Time
   const now = new Date();
-  const yesterday = new Date(now.getTime() - 86400000);
-  return getDateString(yesterday);
+  now.setDate(now.getDate() - 1);
+  return getDateString(now);
 }
 
 /** Returns the ISO week string (YYYY-Www) for a given date */
