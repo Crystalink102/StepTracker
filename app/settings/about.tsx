@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Constants from 'expo-constants';
+import * as Application from 'expo-application';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 import { useTheme } from '@/src/context/ThemeContext';
 
@@ -84,8 +84,8 @@ function CollapsibleSection({
 
 export default function AboutScreen() {
   const { colors } = useTheme();
-  const version = Constants.expoConfig?.version ?? '1.0.0';
-  const buildNumber = Constants.expoConfig?.android?.versionCode ?? 1;
+  const version = Application.nativeApplicationVersion ?? '1.0.0';
+  const buildNumber = Application.nativeBuildVersion ?? '1';
 
   return (
     <ScrollView
