@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Delete Account - 5tepTracker</title>
+  <meta name="description" content="Request deletion of your 5tepTracker account and all associated data." />
+  <meta name="theme-color" content="#09090B" />
+  <link rel="icon" href="/favicon.png" type="image/png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <style>
+    .delete-page { max-width: 700px; margin: 0 auto; padding: 120px 24px 80px; }
+    .delete-page h1 { font-size: 36px; font-weight: 800; margin-bottom: 8px; }
+    .delete-page .sub { font-size: 16px; color: var(--text-secondary); margin-bottom: 48px; }
+    .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); font-size: 14px; margin-bottom: 24px; }
+    .back-link:hover { color: var(--primary-light); }
+    .section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 32px; margin-bottom: 24px; }
+    .section h2 { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+    .section p, .section li { font-size: 15px; color: var(--text-secondary); line-height: 1.7; }
+    .section ol { padding-left: 20px; margin-bottom: 16px; }
+    .section li { margin-bottom: 8px; }
+    .section .note { font-size: 13px; color: var(--text-muted); margin-top: 16px; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 0; }
+    .email-link { color: var(--primary-light); }
+    .email-link:hover { text-decoration: underline; }
+    .data-list { list-style: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .data-list li { font-size: 14px; color: var(--text-secondary); padding: 8px 12px; background: var(--surface-light); border-radius: 8px; }
+    .data-list li::before { content: "\2022 "; color: var(--primary); font-weight: bold; }
+    @media (max-width: 640px) { .data-list { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <nav class="nav scrolled">
+    <div class="nav-inner">
+      <a href="/" class="nav-logo"><span class="logo-icon">5</span>tepTracker</a>
+      <div class="nav-links">
+        <a href="/#features">Features</a>
+        <a href="/#how-it-works">How It Works</a>
+        <a href="/support">Support</a>
+        <a href="/#download" class="nav-cta">Get the App</a>
+      </div>
+      <button class="nav-menu" id="navMenu" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <div class="mobile-menu" id="mobileMenu">
+      <a href="/#features">Features</a>
+      <a href="/#how-it-works">How It Works</a>
+      <a href="/support">Support</a>
+      <a href="/#download" class="nav-cta">Get the App</a>
+    </div>
+  </nav>
+
+  <div class="delete-page">
+    <a href="/" class="back-link">&larr; Back to home</a>
+    <h1>Delete Your <span class="gradient-text">Account</span></h1>
+    <p class="sub">You can delete your account and all associated data at any time.</p>
+
+    <div class="section">
+      <h2>Option 1: Delete from the App</h2>
+      <p>The fastest way to delete your account is directly within the app:</p>
+      <ol>
+        <li>Open <strong>5tepTracker</strong></li>
+        <li>Go to <strong>Settings</strong> (gear icon)</li>
+        <li>Tap <strong>Account</strong></li>
+        <li>Tap <strong>Delete Account</strong></li>
+        <li>Confirm the deletion</li>
+      </ol>
+      <p>Your account and all data will be permanently deleted immediately.</p>
+    </div>
+
+    <div class="section">
+      <h2>Option 2: Request Deletion by Email</h2>
+      <p>If you can no longer access the app, you can request account deletion by emailing us:</p>
+      <p style="margin-top: 16px; margin-bottom: 16px;">
+        <a href="mailto:support@5teptracker.com?subject=Account%20Deletion%20Request&body=Please%20delete%20my%205tepTracker%20account%20and%20all%20associated%20data.%0A%0AAccount%20email%3A%20%5Byour%20email%20here%5D" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px; text-decoration: none;">
+          Request Account Deletion
+        </a>
+      </p>
+      <p>Include the email address or phone number associated with your account. We will process your request and delete all data within 7 business days.</p>
+    </div>
+
+    <div class="section">
+      <h2>What Data Gets Deleted</h2>
+      <p>When you delete your account, the following data is permanently removed:</p>
+      <ul class="data-list">
+        <li>Profile information</li>
+        <li>Step history</li>
+        <li>Activity records &amp; routes</li>
+        <li>Achievements &amp; XP</li>
+        <li>Friends &amp; social data</li>
+        <li>Challenge participation</li>
+        <li>Personal bests</li>
+        <li>Notification preferences</li>
+      </ul>
+      <p class="note">This action is permanent and cannot be undone. There is no recovery period.</p>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <a href="/" class="nav-logo"><span class="logo-icon">5</span>tepTracker</a>
+        <p>Level up your fitness, one step at a time.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <h4>App</h4>
+          <a href="/#features">Features</a>
+          <a href="/#how-it-works">How It Works</a>
+          <a href="/#download">Download</a>
+        </div>
+        <div class="footer-col">
+          <h4>Support</h4>
+          <a href="/support">Help & FAQ</a>
+          <a href="/privacy">Privacy Policy</a>
+          <a href="/terms">Terms of Service</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 5tepTracker. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    const menuBtn = document.getElementById('navMenu');
+    const mobileMenu = document.getElementById('mobileMenu');
+    if (menuBtn && mobileMenu) {
+      menuBtn.addEventListener('click', () => {
+        mobileMenu.classList.toggle('open');
+        menuBtn.classList.toggle('open');
+      });
+      mobileMenu.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          mobileMenu.classList.remove('open');
+          menuBtn.classList.remove('open');
+        });
+      });
+    }
+  </script>
+</body>
+</html>
