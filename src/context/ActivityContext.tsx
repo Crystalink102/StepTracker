@@ -31,7 +31,7 @@ import {
   stopBackgroundLocation,
   setLocationCallback,
 } from '@/src/tasks/background-location';
-import { Platform } from 'react-native';
+import { Platform, AppState } from 'react-native';
 import { haversineDistance, paceSecondsPerKm } from '@/src/utils/geo';
 import { xpFromActivity } from '@/src/utils/xp-calculator';
 import { isPlausibleGPSMove, smoothedPace, caloriesFromActivity } from '@/src/utils/fitness';
@@ -98,6 +98,11 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   const timerRef = useRef<ReturnType<typeof setInterval> | undefined>(undefined);
   const isStoppingRef = useRef(false);
   const lastWaypointRef = useRef<Waypoint | null>(null);
+
+  // Timestamp-based timing refs (survive background/JS thread suspension)
+  const activityStartMsRef = useRef(0);
+  const totalPausedMsRef = useRef(0);
+  const pausedAtMsRef = useRef<number | null>(null);
   const isActive = !!currentActivity && currentActivity.status !== 'completed';
 
   // Refs to avoid stale closures in the location callback.
@@ -118,25 +123,36 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
   const prefsRef = useRef(preferences);
   prefsRef.current = preferences;
 
+  // Calculate elapsed seconds from real timestamps (not a counter that freezes in background)
+  const calcElapsed = useCallback(() => {
+    if (activityStartMsRef.current === 0) return 0;
+    let paused = totalPausedMsRef.current;
+    if (pausedAtMsRef.current != null) {
+      paused += Date.now() - pausedAtMsRef.current;
+    }
+    return Math.floor((Date.now() - activityStartMsRef.current - paused) / 1000);
+  }, []);
+
   // Timer for elapsed time + time-based audio cues
   useEffect(() => {
     if (isActive && !isPaused) {
+      // Immediately sync elapsed time (catches up after background resume)
+      setElapsedSeconds(calcElapsed());
+
       timerRef.current = setInterval(() => {
-        setElapsedSeconds((prev) => {
-          const next = prev + 1;
-          // Time-based audio cue check
-          const freq = preferences.audioCueFrequency;
-          if (freq === 'every_5min' || freq === 'every_10min') {
-            checkTimeMilestone(
-              next,
-              distanceRef.current,
-              paceRef.current,
-              preferences.distanceUnit,
-              freq
-            );
-          }
-          return next;
-        });
+        const elapsed = calcElapsed();
+        setElapsedSeconds(elapsed);
+        // Time-based audio cue check
+        const freq = preferences.audioCueFrequency;
+        if (freq === 'every_5min' || freq === 'every_10min') {
+          checkTimeMilestone(
+            elapsed,
+            distanceRef.current,
+            paceRef.current,
+            preferences.distanceUnit,
+            freq
+          );
+        }
       }, 1000);
     } else {
       if (timerRef.current) {
@@ -148,7 +164,18 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [isActive, isPaused, preferences.audioCueFrequency, preferences.distanceUnit]);
+  }, [isActive, isPaused, preferences.audioCueFrequency, preferences.distanceUnit, calcElapsed]);
+
+  // Recalculate elapsed time immediately when app returns to foreground
+  useEffect(() => {
+    if (!isActive || isPaused) return;
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        setElapsedSeconds(calcElapsed());
+      }
+    });
+    return () => subscription.remove();
+  }, [isActive, isPaused, calcElapsed]);
 
   // --- Audio cues ---
 
@@ -330,6 +357,9 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       currentLapStartDistanceRef.current = 0;
       currentLapStartTimeRef.current = 0;
       lapCountRef.current = 0;
+      activityStartMsRef.current = 0;
+      totalPausedMsRef.current = 0;
+      pausedAtMsRef.current = null;
       if (timerRef.current) {
         clearInterval(timerRef.current);
         timerRef.current = undefined;
@@ -374,6 +404,9 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       currentLapStartDistanceRef.current = 0;
       currentLapStartTimeRef.current = 0;
       lapCountRef.current = 0;
+      activityStartMsRef.current = Date.now();
+      totalPausedMsRef.current = 0;
+      pausedAtMsRef.current = null;
       announceStart(type);
     },
     [user]
@@ -381,6 +414,7 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
 
   const pauseActivity = useCallback(async () => {
     if (!currentActivity) return;
+    pausedAtMsRef.current = Date.now();
     setIsPaused(true);
     announcePause();
     try {
@@ -397,6 +431,10 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
 
   const resumeActivity = useCallback(async () => {
     if (!currentActivity) return;
+    if (pausedAtMsRef.current != null) {
+      totalPausedMsRef.current += Date.now() - pausedAtMsRef.current;
+      pausedAtMsRef.current = null;
+    }
     setIsPaused(false);
     announceResume();
     try {
@@ -576,6 +614,9 @@ export function ActivityProvider({ children }: { children: ReactNode }) {
       currentLapStartDistanceRef.current = 0;
       currentLapStartTimeRef.current = 0;
       lapCountRef.current = 0;
+      activityStartMsRef.current = 0;
+      totalPausedMsRef.current = 0;
+      pausedAtMsRef.current = null;
 
       return completed;
       } catch (err) {

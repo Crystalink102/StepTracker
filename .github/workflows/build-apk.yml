@@ -1,4 +1,4 @@
-name: Build APK
+name: Build Android
 
 on:
   workflow_dispatch:
@@ -7,6 +7,14 @@ on:
         description: 'Release version (e.g. v1.0.0)'
         required: true
         default: 'v1.0.0'
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'apk'
+        type: choice
+        options:
+          - apk
+          - aab
 
 permissions:
   contents: write
@@ -43,18 +51,40 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Build APK
+        if: ${{ inputs.build_type == 'apk' }}
         run: eas build --platform android --profile preview --local --non-interactive --output ./5tepTracker.apk
 
-      - name: Create GitHub Release
+      - name: Build AAB (Production)
+        if: ${{ inputs.build_type == 'aab' }}
+        run: eas build --platform android --profile production --local --non-interactive --output ./5tepTracker.aab
+
+      - name: Create GitHub Release (APK)
+        if: ${{ inputs.build_type == 'apk' }}
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.version }}
-          name: 5tepTracker ${{ github.event.inputs.version }}
+          tag_name: ${{ inputs.version }}
+          name: 5tepTracker ${{ inputs.version }}
           body: |
-            ## 5tepTracker ${{ github.event.inputs.version }}
+            ## 5tepTracker ${{ inputs.version }}
 
             Download the APK below and install it on your Android device.
           files: ./5tepTracker.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release (AAB)
+        if: ${{ inputs.build_type == 'aab' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.version }}
+          name: 5tepTracker ${{ inputs.version }} (Play Store)
+          body: |
+            ## 5tepTracker ${{ inputs.version }}
+
+            Production AAB for Google Play Store upload.
+          files: ./5tepTracker.aab
           draft: false
           prerelease: false
         env:

@@ -54,13 +54,21 @@ export function useAchievements() {
           if (newlyUnlocked.length > 0) {
             // Show popup for first unlocked achievement
             setPendingPopup(newlyUnlocked[0]);
-            // Send notification for each unlocked achievement
-            for (const achievement of newlyUnlocked) {
+            // Send a single batched push notification for all unlocked achievements
+            if (newlyUnlocked.length === 1) {
               NotificationService.sendAchievementNotification(
-                achievement.title,
-                achievement.xp_reward
+                newlyUnlocked[0].title,
+                newlyUnlocked[0].xp_reward
               ).catch(() => {});
-              // Add to in-app notification center
+            } else {
+              const totalXP = newlyUnlocked.reduce((sum, a) => sum + a.xp_reward, 0);
+              NotificationService.sendAchievementNotification(
+                `${newlyUnlocked.length} achievements unlocked!`,
+                totalXP
+              ).catch(() => {});
+            }
+            // Add each to in-app notification center (these are silent, not push)
+            for (const achievement of newlyUnlocked) {
               addNotification(
                 'achievement',
                 'Achievement Unlocked!',

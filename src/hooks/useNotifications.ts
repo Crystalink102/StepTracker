@@ -83,7 +83,6 @@ export function useNotifications() {
       }
 
       if (profile.notify_streak_warning) {
-        await NotificationService.scheduleStreakReminder(profile.current_streak ?? 0);
         await NotificationService.scheduleStreakWarning();
       }
 
