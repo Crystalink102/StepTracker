@@ -5,6 +5,7 @@ import { useAuth } from '@/src/context/AuthContext';
 import { useProfile } from './useProfile';
 import * as NotificationService from '@/src/services/notification.service';
 import * as StepService from '@/src/services/step.service';
+import { getCTDateParts, getTodayString } from '@/src/utils/date-helpers';
 
 export function useNotifications() {
   const { user } = useAuth();
@@ -89,14 +90,11 @@ export function useNotifications() {
       if (profile.notify_weekly_summary) {
         // Try to get this week's steps for a richer notification body
         try {
-          const now = new Date();
-          const dayOfWeek = now.getDay(); // 0 = Sunday
-          const startOfWeek = new Date(now);
-          startOfWeek.setDate(now.getDate() - dayOfWeek);
-          startOfWeek.setHours(0, 0, 0, 0);
+          const { year, month, day, dayOfWeek } = getCTDateParts();
           const pad = (n: number) => String(n).padStart(2, '0');
-          const startDate = `${startOfWeek.getFullYear()}-${pad(startOfWeek.getMonth() + 1)}-${pad(startOfWeek.getDate())}`;
-          const endDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+          const startOfWeek = new Date(Date.UTC(year, month - 1, day - dayOfWeek));
+          const startDate = `${startOfWeek.getUTCFullYear()}-${pad(startOfWeek.getUTCMonth() + 1)}-${pad(startOfWeek.getUTCDate())}`;
+          const endDate = getTodayString();
 
           const history = await StepService.getStepHistory(user.id, startDate, endDate);
           const weeklySteps = history.reduce((sum, d) => sum + d.step_count, 0);

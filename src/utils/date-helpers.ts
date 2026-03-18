@@ -8,7 +8,7 @@ export const APP_TIMEZONE = 'America/Chicago';
 /**
  * Get the current date parts in Central Time.
  */
-function getCTDateParts(): { year: number; month: number; day: number } {
+export function getCTDateParts(): { year: number; month: number; day: number; dayOfWeek: number } {
   const now = new Date();
   // Intl.DateTimeFormat gives us the date in the target timezone
   const parts = new Intl.DateTimeFormat('en-US', {
@@ -16,12 +16,16 @@ function getCTDateParts(): { year: number; month: number; day: number } {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
+    weekday: 'short',
   }).formatToParts(now);
 
   const year = Number(parts.find((p) => p.type === 'year')!.value);
   const month = Number(parts.find((p) => p.type === 'month')!.value);
   const day = Number(parts.find((p) => p.type === 'day')!.value);
-  return { year, month, day };
+  const weekdayStr = parts.find((p) => p.type === 'weekday')!.value;
+  const dayOfWeekMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+  const dayOfWeek = dayOfWeekMap[weekdayStr] ?? 0;
+  return { year, month, day, dayOfWeek };
 }
 
 /**

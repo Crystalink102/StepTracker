@@ -3,6 +3,7 @@ import { useAuth } from '@/src/context/AuthContext';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import * as StepService from '@/src/services/step.service';
 import { DailySteps } from '@/src/types/database';
+import { getCTDateParts, getMidnightCT } from '@/src/utils/date-helpers';
 
 export type StepStatPeriod = 'week' | 'month';
 
@@ -13,28 +14,20 @@ export type StepDay = {
 };
 
 function getWeekRange(weekStartsMonday: boolean) {
-  const now = new Date();
-  const day = now.getDay(); // 0 = Sun, 1 = Mon, ...
-  let diff: number;
-  if (weekStartsMonday) {
-    diff = now.getDate() - day + (day === 0 ? -6 : 1); // Monday start
-  } else {
-    diff = now.getDate() - day; // Sunday start
-  }
-  const start = new Date(now);
-  start.setDate(diff);
-  start.setHours(0, 0, 0, 0);
-
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-
+  const { dayOfWeek } = getCTDateParts();
+  const diff = weekStartsMonday
+    ? (dayOfWeek === 0 ? 6 : dayOfWeek - 1)
+    : dayOfWeek;
+  const midnight = getMidnightCT();
+  const start = new Date(midnight.getTime() - diff * 24 * 60 * 60 * 1000);
+  const end = new Date(start.getTime() + 6 * 24 * 60 * 60 * 1000);
   return { start, end };
 }
 
 function getMonthRange() {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), 1);
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  const { year, month } = getCTDateParts();
+  const start = new Date(Date.UTC(year, month - 1, 1));
+  const end = new Date(Date.UTC(year, month, 0));
   return { start, end };
 }
 

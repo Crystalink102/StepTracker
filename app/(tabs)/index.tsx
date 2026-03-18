@@ -37,17 +37,15 @@ import { Activity } from '@/src/types/database';
 import { playLevelUp } from '@/src/utils/sounds';
 import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '@/src/constants/theme';
 import { useTheme } from '@/src/context/ThemeContext';
+import { getMidnightCT, getCTDateParts } from '@/src/utils/date-helpers';
 
 function getStartOfWeek(weekStartsMonday: boolean): Date {
-  const now = new Date();
-  const day = now.getDay(); // 0 = Sunday
+  const { dayOfWeek } = getCTDateParts();
   const diff = weekStartsMonday
-    ? (day === 0 ? 6 : day - 1) // Monday-based
-    : day; // Sunday-based
-  const start = new Date(now);
-  start.setDate(now.getDate() - diff);
-  start.setHours(0, 0, 0, 0);
-  return start;
+    ? (dayOfWeek === 0 ? 6 : dayOfWeek - 1) // Monday-based
+    : dayOfWeek; // Sunday-based
+  const midnight = getMidnightCT();
+  return new Date(midnight.getTime() - diff * 24 * 60 * 60 * 1000);
 }
 
 export default function HomeScreen() {
