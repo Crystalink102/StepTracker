@@ -28,7 +28,7 @@
       1. Go to console.cloud.google.com > APIs & Services > Credentials
       2. Click on the Maps API key
       3. Under "Application restrictions", select "Android apps"
-      4. Add: Package name `com.steptracker.app` + SHA-1 from EAS build
+      4. Add: Package name `com.fivesteptracker.app` + SHA-1 from EAS build
       5. Under "API restrictions", restrict to "Maps SDK for Android" only
       Get SHA-1 with: `eas credentials -p android`
 
@@ -44,7 +44,7 @@
       5. Run `eas credentials` to configure
 
 ### App Config Verification
-- [x] Package name: com.steptracker.app
+- [x] Package name: com.fivesteptracker.app
 - [x] Version: 1.0.0
 - [x] Version code: 1 (auto-increment enabled)
 - [x] Target SDK: 34
