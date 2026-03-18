@@ -83,24 +83,42 @@ describe('activeMinutesFromSteps', () => {
 });
 
 describe('isPlausibleGPSMove', () => {
-  it('accepts moves between 2m and 50m', () => {
-    expect(isPlausibleGPSMove(5)).toBe(true);
-    expect(isPlausibleGPSMove(30)).toBe(true);
+  it('accepts moves when actually moving (speed >= 0.5 m/s)', () => {
+    expect(isPlausibleGPSMove(5, 1.5)).toBe(true);
+    expect(isPlausibleGPSMove(30, 2.0)).toBe(true);
   });
 
-  it('rejects too-small moves', () => {
-    expect(isPlausibleGPSMove(0.5)).toBe(false);
-    expect(isPlausibleGPSMove(0.9)).toBe(false);
+  it('rejects too-small moves even when moving', () => {
+    expect(isPlausibleGPSMove(0.5, 1.5)).toBe(false);
+    expect(isPlausibleGPSMove(0.9, 1.5)).toBe(false);
   });
 
   it('rejects too-large jumps', () => {
-    expect(isPlausibleGPSMove(100)).toBe(false);
-    expect(isPlausibleGPSMove(51)).toBe(false);
+    expect(isPlausibleGPSMove(100, 2.0)).toBe(false);
+    expect(isPlausibleGPSMove(51, 2.0)).toBe(false);
   });
 
-  it('accepts boundary values', () => {
-    expect(isPlausibleGPSMove(2)).toBe(true);
-    expect(isPlausibleGPSMove(50)).toBe(true);
+  it('accepts boundary values when moving', () => {
+    expect(isPlausibleGPSMove(1.5, 1.0)).toBe(true);
+    expect(isPlausibleGPSMove(50, 3.0)).toBe(true);
+  });
+
+  it('requires 8m minimum at standstill (no speed)', () => {
+    expect(isPlausibleGPSMove(5)).toBe(false);
+    expect(isPlausibleGPSMove(8)).toBe(true);
+    expect(isPlausibleGPSMove(10)).toBe(true);
+  });
+
+  it('requires 2m minimum at slow walk (speed 0.2-0.5 m/s)', () => {
+    expect(isPlausibleGPSMove(1.5, 0.3)).toBe(false);
+    expect(isPlausibleGPSMove(2, 0.3)).toBe(true);
+    expect(isPlausibleGPSMove(5, 0.4)).toBe(true);
+  });
+
+  it('uses accuracy-based floor at standstill with poor signal', () => {
+    // accuracyMeters=30 => minMove = max(8, 30*0.5) = 15
+    expect(isPlausibleGPSMove(10, 0, 30)).toBe(false);
+    expect(isPlausibleGPSMove(15, 0, 30)).toBe(true);
   });
 });
 
