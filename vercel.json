@@ -10,7 +10,7 @@
     { "src": "/terms", "dest": "/terms.html" },
     { "src": "/support", "dest": "/support.html" },
     { "src": "/delete-account", "dest": "/delete-account.html" },
-    { "src": "/(favicon\\.png|style\\.css)", "dest": "/$1" },
+    { "src": "/(favicon\\.png|style\\.css|5tepTrackerAd\\.mp4)", "dest": "/$1" },
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
