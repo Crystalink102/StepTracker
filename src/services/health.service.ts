@@ -1,14 +1,10 @@
 import { Platform } from 'react-native';
-import Constants from 'expo-constants';
 import { getMidnightCT } from '@/src/utils/date-helpers';
 
 type StepData = {
   steps: number;
   source: 'health-connect' | 'healthkit' | 'pedometer' | 'none';
 };
-
-// Expo Go can't use native-only health modules (react-native-health, react-native-health-connect)
-const isExpoGo = Constants.executionEnvironment === 'storeClient';
 
 // ── Android: Health Connect ─────────────────────────────────────────────
 
@@ -27,11 +23,7 @@ async function initHealthConnect(): Promise<boolean> {
     const midnight = new Date(now);
     midnight.setHours(0, 0, 0, 0);
 
-    // Only try to read records — if permissions are already granted this works.
-    // NEVER call requestPermission() here — the native HealthConnectPermissionDelegate
-    // crashes with "lateinit property requestPermission has not been initialized"
-    // because the Activity hasn't registered the permission launcher yet.
-    // Users grant permissions via Health Connect app settings instead.
+    // First try reading — works if permissions already granted
     try {
       const { records } = await HC.readRecords('Steps', {
         timeRangeFilter: {
@@ -46,7 +38,34 @@ async function initHealthConnect(): Promise<boolean> {
         return true;
       }
     } catch {
-      console.warn('[Health] Health Connect read failed — permissions not granted yet');
+      // Permissions not granted yet — request them (safe on production APK builds)
+      console.log('[Health] Requesting Health Connect permissions...');
+    }
+
+    // Request permissions — this opens the Health Connect permission dialog
+    // Note: this crashes in Expo Go but works fine in production APK/AAB builds
+    try {
+      await HC.requestPermission([
+        { accessType: 'read', recordType: 'Steps' },
+        { accessType: 'read', recordType: 'Distance' },
+        { accessType: 'read', recordType: 'TotalCaloriesBurned' },
+      ]);
+
+      // Try reading again after permission request
+      const { records } = await HC.readRecords('Steps', {
+        timeRangeFilter: {
+          operator: 'between',
+          startTime: midnight.toISOString(),
+          endTime: now.toISOString(),
+        },
+      });
+
+      if (records !== undefined) {
+        healthConnectInitialized = true;
+        return true;
+      }
+    } catch (permErr) {
+      console.warn('[Health] Health Connect permission request failed:', permErr);
     }
 
     return false;
@@ -266,12 +285,6 @@ export async function getStepDataSources(): Promise<HealthDataSource[]> {
  */
 export async function initHealth(): Promise<StepData['source']> {
   if (Platform.OS === 'web') return 'none';
-
-  // In Expo Go, skip native health modules entirely — go straight to pedometer
-  if (isExpoGo) {
-    console.log('[Health] Expo Go detected, using pedometer fallback');
-    return 'pedometer';
-  }
 
   if (Platform.OS === 'android') {
     const hcOk = await initHealthConnect();
