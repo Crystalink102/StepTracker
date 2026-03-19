@@ -363,6 +363,24 @@ a {
   color: var(--text-secondary);
 }
 
+/* ─── Promo Video ─────────────────────────────────────────────── */
+.promo-video {
+  padding: 60px 0;
+  display: flex;
+  justify-content: center;
+}
+.promo-video-inner {
+  width: 280px;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 2px solid var(--surface-light);
+  box-shadow: 0 0 80px rgba(168, 85, 247, 0.12);
+}
+.promo-video-inner video {
+  width: 100%;
+  display: block;
+}
+
 /* ─── Features ────────────────────────────────────────────────── */
 .features {
   padding: 100px 0;
