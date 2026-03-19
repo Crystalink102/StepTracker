@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+import { Platform, Linking } from 'react-native';
 import { getMidnightCT } from '@/src/utils/date-helpers';
 
 type StepData = {
@@ -23,7 +23,7 @@ async function initHealthConnect(): Promise<boolean> {
     const midnight = new Date(now);
     midnight.setHours(0, 0, 0, 0);
 
-    // First try reading — works if permissions already granted
+    // Try reading — works if permissions already granted
     try {
       const { records } = await HC.readRecords('Steps', {
         timeRangeFilter: {
@@ -38,34 +38,7 @@ async function initHealthConnect(): Promise<boolean> {
         return true;
       }
     } catch {
-      // Permissions not granted yet — request them (safe on production APK builds)
-      console.log('[Health] Requesting Health Connect permissions...');
-    }
-
-    // Request permissions — this opens the Health Connect permission dialog
-    // Note: this crashes in Expo Go but works fine in production APK/AAB builds
-    try {
-      await HC.requestPermission([
-        { accessType: 'read', recordType: 'Steps' },
-        { accessType: 'read', recordType: 'Distance' },
-        { accessType: 'read', recordType: 'TotalCaloriesBurned' },
-      ]);
-
-      // Try reading again after permission request
-      const { records } = await HC.readRecords('Steps', {
-        timeRangeFilter: {
-          operator: 'between',
-          startTime: midnight.toISOString(),
-          endTime: now.toISOString(),
-        },
-      });
-
-      if (records !== undefined) {
-        healthConnectInitialized = true;
-        return true;
-      }
-    } catch (permErr) {
-      console.warn('[Health] Health Connect permission request failed:', permErr);
+      console.warn('[Health] Health Connect read failed — permissions not granted yet');
     }
 
     return false;
@@ -275,6 +248,42 @@ export async function getStepDataSources(): Promise<HealthDataSource[]> {
     console.warn('[Health] Failed to read data sources:', err);
     return [];
   }
+}
+
+// ── Permissions ─────────────────────────────────────────────────────────
+
+/**
+ * Open Health Connect settings so the user can grant permissions to 5tepTracker.
+ * Returns true if the intent was opened.
+ */
+export async function openHealthConnectSettings(): Promise<boolean> {
+  if (Platform.OS !== 'android') return false;
+  try {
+    await Linking.sendIntent('androidx.health.ACTION_MANAGE_HEALTH_PERMISSIONS', [
+      { key: 'packageName', value: 'com.fivesteptracker.app' },
+    ]);
+    return true;
+  } catch {
+    // Fallback: open Health Connect app directly
+    try {
+      await Linking.openURL('content://com.google.android.health.connect');
+      return true;
+    } catch {
+      try {
+        await Linking.openSettings();
+        return true;
+      } catch {
+        return false;
+      }
+    }
+  }
+}
+
+/**
+ * Whether Health Connect has been successfully initialized with permissions.
+ */
+export function isHealthConnectReady(): boolean {
+  return healthConnectInitialized;
 }
 
 // ── Public API ──────────────────────────────────────────────────────────

@@ -21,6 +21,7 @@ import AchievementPopup from '@/src/components/achievements/AchievementPopup';
 import Confetti from '@/src/components/ui/Confetti';
 import { OfflineBanner } from '@/src/components/ui';
 import OfflineQueueCard from '@/src/components/home/OfflineQueueCard';
+import HealthConnectBanner from '@/src/components/home/HealthConnectBanner';
 import { useStreak } from '@/src/hooks/useStreak';
 import { useAchievements } from '@/src/hooks/useAchievements';
 import { useXP } from '@/src/hooks/useXP';
@@ -30,6 +31,7 @@ import { usePreferences } from '@/src/context/PreferencesContext';
 import { useProfile } from '@/src/hooks/useProfile';
 import { useAuth } from '@/src/context/AuthContext';
 import { useActivity } from '@/src/context/ActivityContext';
+import { useSteps } from '@/src/context/StepContext';
 import { useToast } from '@/src/hooks/useToast';
 import { playButtonPress } from '@/src/utils/sounds';
 import * as ActivityService from '@/src/services/activity.service';
@@ -53,6 +55,7 @@ export default function HomeScreen() {
   const { streak, showPopup, dismissPopup, freezeUsed, freezeAvailable, freezeEnabled } = useStreak();
   const { pendingPopup, dismissPopup: dismissAchievement, refresh: refreshAchievements } = useAchievements();
   const { isOnline } = useNetwork();
+  const { isAvailable: stepsAvailable } = useSteps();
   const { level, isLoading: xpLoading, refresh: refreshXP } = useXP();
   const { preferences } = usePreferences();
   const { profile, refresh: refreshProfile } = useProfile();
@@ -179,6 +182,7 @@ export default function HomeScreen() {
         }
       >
         <XPCard />
+        {!stepsAvailable && Platform.OS === 'android' && <HealthConnectBanner />}
         {hasBackgroundLocation ? (
           <>
             <StepGoalRing />
