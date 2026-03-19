@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { View, ScrollView, StyleSheet, Platform, TouchableOpacity, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import * as Location from 'expo-location';
 import { useActivity } from '@/src/context/ActivityContext';
 import { usePreferences } from '@/src/context/PreferencesContext';
 import { useXP } from '@/src/hooks/useXP';
@@ -13,6 +14,7 @@ import { playButtonPress } from '@/src/utils/sounds';
 import { useIntervalTimer, IntervalConfig, DEFAULT_INTERVAL_CONFIG } from '@/src/hooks/useIntervalTimer';
 import ActiveRunCard from '@/src/components/activity/ActiveRunCard';
 import LiveRouteMap from '@/src/components/activity/LiveRouteMap';
+import LocationPreviewMap from '@/src/components/activity/LocationPreviewMap';
 import RunControls from '@/src/components/activity/RunControls';
 import HeartRateInput from '@/src/components/activity/HeartRateInput';
 import IntervalSetup from '@/src/components/activity/IntervalSetup';
@@ -82,6 +84,26 @@ export default function ActivityScreen() {
     isPaused,
     preferences.hapticFeedback,
   );
+
+  // Pre-fetch current location for map preview
+  const [previewLocation, setPreviewLocation] = useState<{ latitude: number; longitude: number } | null>(null);
+  useEffect(() => {
+    if (isActive || Platform.OS === 'web') return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted' || cancelled) return;
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        if (!cancelled) {
+          setPreviewLocation({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+        }
+      } catch {
+        // silently fail — preview is optional
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [isActive]);
 
   // Load resting HR from profile
   useEffect(() => {
@@ -290,6 +312,11 @@ export default function ActivityScreen() {
             distanceMeters={distanceMeters}
             currentPaceSecPerKm={currentPaceSecPerKm}
           />
+        )}
+
+        {/* Location preview map before starting */}
+        {!isActive && previewLocation && (
+          <LocationPreviewMap location={previewLocation} />
         )}
 
         {isActive && currentActivity && (
