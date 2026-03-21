@@ -121,15 +121,19 @@ export default function RouteReplay({
 
     const point = coords[currentIndex];
     if (point) {
-      mapRef.current.animateToRegion(
-        {
-          latitude: point.latitude,
-          longitude: point.longitude,
-          latitudeDelta: 0.005,
-          longitudeDelta: 0.005,
-        },
-        intervalMs * 0.8
-      );
+      try {
+        mapRef.current.animateToRegion(
+          {
+            latitude: point.latitude,
+            longitude: point.longitude,
+            latitudeDelta: 0.005,
+            longitudeDelta: 0.005,
+          },
+          intervalMs * 0.8
+        );
+      } catch {
+        // MapView may not be fully initialized on Android
+      }
     }
   }, [currentIndex, isReplaying, coords, intervalMs]);
 

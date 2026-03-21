@@ -166,15 +166,19 @@ export default function LiveRouteMap({
     lastAnimateRef.current = now;
 
     const latest = waypoints[waypoints.length - 1];
-    mapRef.current.animateToRegion(
-      {
-        latitude: latest.latitude,
-        longitude: latest.longitude,
-        latitudeDelta: 0.008,
-        longitudeDelta: 0.008,
-      },
-      500
-    );
+    try {
+      mapRef.current.animateToRegion(
+        {
+          latitude: latest.latitude,
+          longitude: latest.longitude,
+          latitudeDelta: 0.008,
+          longitudeDelta: 0.008,
+        },
+        500
+      );
+    } catch {
+      // MapView may not be fully initialized on Android
+    }
   }, [waypoints.length]);
 
   // Downsample waypoints for rendering performance (max 500 points on map)

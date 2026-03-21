@@ -249,10 +249,10 @@ export default function FriendProfileScreen() {
               </View>
               <View style={styles.activityStats}>
                 <Text style={[styles.activityDistance, { color: colors.textPrimary }]}>
-                  {formatDistance(activity.distance_meters, preferences.distanceUnit)}
+                  {formatDistance(activity.distance_meters || 0, preferences.distanceUnit)}
                 </Text>
                 <Text style={[styles.activityDuration, { color: colors.textMuted }]}>
-                  {Math.floor(activity.duration_seconds / 60)} min
+                  {Math.floor((activity.duration_seconds || 0) / 60)} min
                 </Text>
               </View>
             </View>

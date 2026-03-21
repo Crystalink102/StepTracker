@@ -83,8 +83,8 @@ function computeLifetimeStats(
     if (a.type === 'run') totalRuns++;
     else totalWalks++;
 
-    if (a.type === 'run' && a.distance_meters > longestRunM) longestRunM = a.distance_meters;
-    if (a.duration_seconds > longestDurationSec) longestDurationSec = a.duration_seconds;
+    if (a.type === 'run' && (a.distance_meters || 0) > longestRunM) longestRunM = a.distance_meters || 0;
+    if ((a.duration_seconds || 0) > longestDurationSec) longestDurationSec = a.duration_seconds || 0;
 
     if (a.avg_pace_seconds_per_km && a.avg_pace_seconds_per_km > 0) {
       paceSum += a.avg_pace_seconds_per_km;

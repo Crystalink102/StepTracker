@@ -28,12 +28,20 @@ type RunListItemProps = {
   onPress: () => void;
 };
 
-function MiniRoute({ coords }: { coords: Coord[] }) {
-  if (!MapView || coords.length < 2) return null;
+function isValidCoord(c: Coord): boolean {
+  return (
+    isFinite(c.latitude) && isFinite(c.longitude) &&
+    Math.abs(c.latitude) <= 90 && Math.abs(c.longitude) <= 180
+  );
+}
 
-  let minLat = coords[0].latitude, maxLat = coords[0].latitude;
-  let minLng = coords[0].longitude, maxLng = coords[0].longitude;
-  coords.forEach((c) => {
+function MiniRoute({ coords }: { coords: Coord[] }) {
+  const valid = coords.filter(isValidCoord);
+  if (!MapView || valid.length < 2) return null;
+
+  let minLat = valid[0].latitude, maxLat = valid[0].latitude;
+  let minLng = valid[0].longitude, maxLng = valid[0].longitude;
+  valid.forEach((c) => {
     minLat = Math.min(minLat, c.latitude);
     maxLat = Math.max(maxLat, c.latitude);
     minLng = Math.min(minLng, c.longitude);
@@ -66,7 +74,7 @@ function MiniRoute({ coords }: { coords: Coord[] }) {
         liteMode={Platform.OS === 'android'}
       >
         <Polyline
-          coordinates={coords}
+          coordinates={valid}
           strokeColor={Colors.primary}
           strokeWidth={3}
         />

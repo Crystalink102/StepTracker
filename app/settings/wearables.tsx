@@ -91,9 +91,13 @@ export default function WearablesScreen() {
     if (Platform.OS === 'android') {
       try {
         const HC = await import('react-native-health-connect');
-        HC.openHealthConnectSettings();
+        if (HC?.openHealthConnectSettings) {
+          HC.openHealthConnectSettings();
+        } else {
+          Linking.openURL('market://details?id=com.google.android.apps.healthdata');
+        }
       } catch {
-        Linking.openURL('market://details?id=com.google.android.apps.healthdata');
+        Linking.openURL('market://details?id=com.google.android.apps.healthdata').catch(() => {});
       }
     }
   }, []);

@@ -70,7 +70,7 @@ export default function EditProfileScreen() {
         quality: 0.7,
       });
 
-      if (result.canceled || !user) return;
+      if (result.canceled || !user || !result.assets?.length) return;
 
       const avatarUrl = await StorageService.uploadAvatar(
         user.id,

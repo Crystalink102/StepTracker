@@ -70,6 +70,7 @@ export default function ProfileScreen() {
     // Fetch activity stats
     ActivityService.getActivityHistory(user.id, 1000)
       .then((activities) => {
+        if (!activities) return;
         setTotalActivities(activities.length);
         const distM = activities.reduce((sum, a) => sum + (a.distance_meters || 0), 0);
         setTotalDistanceKm(distM / 1000);

@@ -107,13 +107,13 @@ export default function CommentSheet({
   );
 
   const renderComment = ({ item }: { item: CommentWithAuthor }) => {
-    const displayName = item.author.display_name || item.author.username;
+    const displayName = item.author?.display_name || item.author?.username || 'User';
     const isOwn = user?.id === item.user_id;
 
     return (
       <View style={styles.commentRow}>
         <Avatar
-          uri={item.author.avatar_url}
+          uri={item.author?.avatar_url}
           name={displayName}
           size={32}
         />
