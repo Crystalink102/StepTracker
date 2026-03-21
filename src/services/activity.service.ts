@@ -114,7 +114,7 @@ export async function getActivityWithWaypoints(activityId: string) {
 
   return {
     activity: activityResult.data,
-    waypoints: waypointsResult.data,
+    waypoints: waypointsResult.data ?? [],
   };
 }
 

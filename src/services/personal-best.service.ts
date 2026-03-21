@@ -20,7 +20,7 @@ export async function getPersonalBests(userId: string) {
     .order('distance_meters', { ascending: true });
 
   if (error) throw error;
-  return data;
+  return data ?? [];
 }
 
 /**

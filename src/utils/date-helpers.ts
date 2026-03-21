@@ -19,10 +19,10 @@ export function getCTDateParts(): { year: number; month: number; day: number; da
     weekday: 'short',
   }).formatToParts(now);
 
-  const year = Number(parts.find((p) => p.type === 'year')!.value);
-  const month = Number(parts.find((p) => p.type === 'month')!.value);
-  const day = Number(parts.find((p) => p.type === 'day')!.value);
-  const weekdayStr = parts.find((p) => p.type === 'weekday')!.value;
+  const year = Number(parts.find((p) => p.type === 'year')?.value ?? now.getFullYear());
+  const month = Number(parts.find((p) => p.type === 'month')?.value ?? (now.getMonth() + 1));
+  const day = Number(parts.find((p) => p.type === 'day')?.value ?? now.getDate());
+  const weekdayStr = parts.find((p) => p.type === 'weekday')?.value ?? 'Sun';
   const dayOfWeekMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
   const dayOfWeek = dayOfWeekMap[weekdayStr] ?? 0;
   return { year, month, day, dayOfWeek };
