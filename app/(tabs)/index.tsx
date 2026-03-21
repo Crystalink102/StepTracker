@@ -135,7 +135,7 @@ export default function HomeScreen() {
   }, [loadWeekActivities]);
 
   const weeklyDistanceMeters = useMemo(() => {
-    return weekActivities.reduce((sum, a) => sum + a.distance_meters, 0);
+    return weekActivities.reduce((sum, a) => sum + (a.distance_meters || 0), 0);
   }, [weekActivities]);
 
   const onRefresh = useCallback(async () => {
