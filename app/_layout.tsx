@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, Text, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, ActivityIndicator, Platform, LogBox } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Linking from 'expo-linking';
 import { AuthProvider, useAuth } from '@/src/context/AuthContext';
@@ -19,6 +19,12 @@ import { ToastProvider } from '@/src/context/ToastContext';
 import { NotificationCenterProvider } from '@/src/context/NotificationCenterContext';
 
 import DownloadBanner from '@/src/components/DownloadBanner';
+
+// Suppress non-critical warnings that can cause noise on Android
+LogBox.ignoreLogs([
+  'new NativeEventEmitter',
+  'Sending `onAnimatedValueUpdate`',
+]);
 
 // Root ErrorBoundary must NOT use useTheme() — it renders outside providers.
 export function ErrorBoundary({ error, retry }: { error: Error; retry: () => void }) {

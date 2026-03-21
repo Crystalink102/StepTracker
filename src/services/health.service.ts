@@ -15,8 +15,23 @@ async function initHealthConnect(): Promise<boolean> {
   if (healthConnectInitialized) return true;
 
   try {
-    const HC = await import('react-native-health-connect');
-    const ok = await HC.initialize();
+    // Dynamic import with timeout to prevent hanging
+    const importPromise = import('react-native-health-connect');
+    const timeout = new Promise<null>((resolve) =>
+      setTimeout(() => resolve(null), 5000)
+    );
+    const HC = await Promise.race([importPromise, timeout]);
+    if (!HC) {
+      console.warn('[Health] Health Connect import timed out');
+      return false;
+    }
+
+    // initialize() can throw or hang on devices without Health Connect
+    const initPromise = HC.initialize();
+    const initTimeout = new Promise<boolean>((resolve) =>
+      setTimeout(() => resolve(false), 5000)
+    );
+    const ok = await Promise.race([initPromise, initTimeout]);
     if (!ok) return false;
 
     const now = new Date();
@@ -259,23 +274,35 @@ export async function getStepDataSources(): Promise<HealthDataSource[]> {
 export async function openHealthConnectSettings(): Promise<boolean> {
   if (Platform.OS !== 'android') return false;
   try {
-    await Linking.sendIntent('androidx.health.ACTION_MANAGE_HEALTH_PERMISSIONS', [
-      { key: 'packageName', value: 'com.fivesteptracker.app' },
-    ]);
+    // Linking.sendIntent is Android-only and may not exist in all builds
+    if (typeof Linking.sendIntent === 'function') {
+      await Linking.sendIntent('androidx.health.ACTION_MANAGE_HEALTH_PERMISSIONS', [
+        { key: 'packageName', value: 'com.fivesteptracker.app' },
+      ]);
+      return true;
+    }
+  } catch {
+    // Fall through to next fallback
+  }
+
+  // Fallback: open Health Connect app directly
+  try {
+    const healthConnectUrl = 'content://com.google.android.health.connect';
+    const canOpen = await Linking.canOpenURL(healthConnectUrl);
+    if (canOpen) {
+      await Linking.openURL(healthConnectUrl);
+      return true;
+    }
+  } catch {
+    // Fall through to next fallback
+  }
+
+  // Last resort: open device settings
+  try {
+    await Linking.openSettings();
     return true;
   } catch {
-    // Fallback: open Health Connect app directly
-    try {
-      await Linking.openURL('content://com.google.android.health.connect');
-      return true;
-    } catch {
-      try {
-        await Linking.openSettings();
-        return true;
-      } catch {
-        return false;
-      }
-    }
+    return false;
   }
 }
 
